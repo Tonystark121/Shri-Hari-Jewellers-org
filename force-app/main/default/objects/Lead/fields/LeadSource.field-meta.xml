@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>LeadSource</fullName>
+    <description>Granular inbound channel the lead originated from. Set by the source system at creation.</description>
+    <inlineHelpText>The specific channel this lead came from. Set automatically by the source system; change only if the original capture was incorrect.</inlineHelpText>
     <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <type>Picklist</type>

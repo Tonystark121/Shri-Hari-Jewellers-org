@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>City__c</fullName>
+    <label>City</label>
+    <description>City the store is located in. Used to filter Agentforce store locator results.</description>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+</CustomField>

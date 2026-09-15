@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Account__c</fullName>
+    <label>Household Account</label>
+    <description>The household this purchase belongs to. Matched by mobile number when the POS pushes the transaction.</description>
+    <type>MasterDetail</type>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Transaction Records</relationshipLabel>
+    <relationshipName>Transaction_Records</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>true</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    <trackTrending>false</trackTrending>
+</CustomField>

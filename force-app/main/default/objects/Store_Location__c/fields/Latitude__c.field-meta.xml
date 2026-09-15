@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Latitude__c</fullName>
+    <label>Latitude</label>
+    <description>Store latitude in decimal degrees.</description>
+    <type>Number</type>
+    <precision>18</precision>
+    <scale>6</scale>
+    <required>false</required>
+    <unique>false</unique>
+    <trackTrending>false</trackTrending>
+</CustomField>

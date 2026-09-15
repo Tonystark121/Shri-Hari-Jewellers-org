@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Store_Code__c</fullName>
+    <label>Store Code</label>
+    <description>Unique store identifier. Sent by the POS system in the transaction payload to identify the selling store.</description>
+    <inlineHelpText>Short unique code for this store, as used by the POS system.</inlineHelpText>
+    <type>Text</type>
+    <length>20</length>
+    <externalId>true</externalId>
+    <unique>true</unique>
+    <caseSensitive>false</caseSensitive>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+</CustomField>
