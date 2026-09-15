@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Business_Type__c</fullName>
-    <label>Business Type</label>
     <description>Whether this lead is a retail (B2C) or wholesale (B2B) enquiry. Set at creation by the source system and updated by the tele-calling agent during qualification.</description>
-    <inlineHelpText>Set to B2C for retail customers and B2B for wholesale/trade enquiries. Leave as Unknown until confirmed on the qualification call.</inlineHelpText>
-    <type>Picklist</type>
+    <label>Business Type</label>
     <required>false</required>
-    <trackTrending>false</trackTrending>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
     <valueSet>
         <restricted>true</restricted>
         <valueSetDefinition>

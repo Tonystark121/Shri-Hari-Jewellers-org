@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Store_Association__c</fullName>
-    <label>Store Association</label>
+    <deleteConstraint>SetNull</deleteConstraint>
     <description>Store this walk-in or enquiry is associated with. Drives store-scoped sharing for Store Managers and carries across to the household Account on lead conversion.</description>
-    <inlineHelpText>The store handling this lead. Set automatically for walk-ins captured on the Mobile App.</inlineHelpText>
-    <type>Lookup</type>
+    <label>Store Association</label>
     <referenceTo>Store_Location__c</referenceTo>
     <relationshipLabel>Associated Leads</relationshipLabel>
     <relationshipName>Associated_Leads</relationshipName>
-    <deleteConstraint>SetNull</deleteConstraint>
     <required>false</required>
-    <trackTrending>false</trackTrending>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Lookup</type>
 </CustomField>
