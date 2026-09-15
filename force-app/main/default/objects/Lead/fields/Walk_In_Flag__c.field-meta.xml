@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Walk_In_Flag__c</fullName>
+    <label>Walk-In Flag</label>
+    <description>True when the lead was captured in-store by staff using the Mobile App walk-in flow. Drives routing to the Store Walk-In queue.</description>
+    <inlineHelpText>Checked automatically when a lead is captured at a store via the Mobile App walk-in flow.</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+    <trackTrending>false</trackTrending>
+</CustomField>
