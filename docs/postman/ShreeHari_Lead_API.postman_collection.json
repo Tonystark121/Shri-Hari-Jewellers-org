@@ -1,0 +1,93 @@
+{
+  "info": {
+    "name": "Shree Hari — Website Lead API (UAT)",
+    "description": "Token + Create Lead calls for the Shree Hari Website API External Client App. Set client_id and client_secret in the environment before running. Run '1. Get Access Token' first — it stores access_token automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "instance_url", "value": "https://agility-efficiency-7306--uat.sandbox.my.salesforce.com" },
+    { "key": "client_id", "value": "" },
+    { "key": "client_secret", "value": "" },
+    { "key": "access_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Get Access Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    pm.collectionVariables.set('access_token', pm.response.json().access_token);",
+              "    pm.test('Token received', function () { pm.expect(pm.response.json().access_token).to.be.a('string'); });",
+              "} else {",
+              "    console.log('Token request failed:', pm.response.text());",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "grant_type", "value": "client_credentials" },
+            { "key": "client_id", "value": "{{client_id}}" },
+            { "key": "client_secret", "value": "{{client_secret}}" }
+          ]
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/oauth2/token",
+          "host": ["{{instance_url}}"],
+          "path": ["services", "oauth2", "token"]
+        }
+      }
+    },
+    {
+      "name": "2. Create Lead — B2C website enquiry",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"salutation\"   : \"Ms.\",\n  \"firstName\"    : \"Ananya\",\n  \"lastName\"     : \"Sharma\",\n  \"phone\"        : \"+91-9830012345\",\n  \"email\"        : \"ananya.sharma@example.com\",\n  \"leadSource\"   : \"Shopify\",\n  \"businessType\" : \"B2C\",\n  \"street\"       : \"12/1 Lake View Road\",\n  \"city\"         : \"Kolkata\",\n  \"state\"        : \"West Bengal\",\n  \"postalCode\"   : \"700029\",\n  \"country\"      : \"India\",\n  \"storeCode\"    : \"000001\",\n  \"rating\"       : \"Warm\",\n  \"description\"  : \"Enquiry from the bridal collection page - 22K gold necklace set, budget around 3,50,000 INR, needed before Diwali.\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/apexrest/shreehari/v1/leads",
+          "host": ["{{instance_url}}"],
+          "path": ["services", "apexrest", "shreehari", "v1", "leads"]
+        }
+      }
+    },
+    {
+      "name": "3. Create Lead — B2B enquiry",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\"         : \"Rakesh\",\n  \"lastName\"          : \"Agarwal\",\n  \"company\"           : \"Agarwal Jewellers Pvt Ltd\",\n  \"title\"             : \"Purchase Head\",\n  \"phone\"             : \"+91-9007712345\",\n  \"email\"             : \"rakesh@agarwaljewellers.example\",\n  \"leadSource\"        : \"India Mart\",\n  \"businessType\"      : \"B2B\",\n  \"industry\"          : \"Retail\",\n  \"city\"              : \"Siliguri\",\n  \"state\"             : \"West Bengal\",\n  \"country\"           : \"India\",\n  \"annualRevenue\"     : 45000000,\n  \"numberOfEmployees\" : 24,\n  \"description\"       : \"Wholesale enquiry for 22K plain gold chains, monthly requirement 2-3 kg.\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/apexrest/shreehari/v1/leads",
+          "host": ["{{instance_url}}"],
+          "path": ["services", "apexrest", "shreehari", "v1", "leads"]
+        }
+      }
+    }
+  ]
+}

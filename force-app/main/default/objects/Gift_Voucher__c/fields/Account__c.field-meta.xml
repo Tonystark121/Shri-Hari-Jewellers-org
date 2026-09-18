@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Account__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Household the voucher was issued to. Left blank for vouchers issued over the counter to a walk-in customer who is not yet a known household.</description>
+    <label>Household Account</label>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Gift Vouchers</relationshipLabel>
+    <relationshipName>Gift_Vouchers</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

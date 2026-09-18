@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Relationship_Manager__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Relationship Manager who owns the relationship with this household. One RM per household.</description>
+    <inlineHelpText>The RM responsible for this household.</inlineHelpText>
+    <label>Relationship Manager</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Managed Households</relationshipLabel>
+    <relationshipName>Managed_Households</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

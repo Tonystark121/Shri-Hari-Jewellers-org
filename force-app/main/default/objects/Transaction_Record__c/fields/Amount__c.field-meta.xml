@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Amount__c</fullName>
-    <label>Amount</label>
     <description>Total bill value. Summed into the CLV roll-up on the household Account and used to calculate loyalty points earned.</description>
-    <type>Currency</type>
+    <label>Amount</label>
     <precision>18</precision>
-    <scale>2</scale>
     <required>true</required>
+    <scale>2</scale>
     <trackTrending>false</trackTrending>
+    <type>Currency</type>
 </CustomField>

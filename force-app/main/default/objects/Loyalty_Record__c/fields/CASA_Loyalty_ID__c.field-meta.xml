@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CASA_Loyalty_ID__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Loyalty member reference carried over from the legacy CASA system. Used to match migrated balances back to their source records.</description>
+    <externalId>true</externalId>
+    <label>CASA Loyalty ID</label>
+    <length>50</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

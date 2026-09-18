@@ -1,0 +1,765 @@
+<title>Shree Hari Lead API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap">
+<style>
+  :root{
+    --ground:#FBF8F5;
+    --paper:#FFFFFF;
+    --surface:#F5EEE7;
+    --surface-2:#EFE5DB;
+    --ink:#2A211C;
+    --ink-soft:#6B5B4E;
+    --ink-faint:#8C7B6E;
+    --rule:#E2D5C8;
+    --rule-strong:#C9B7A6;
+    --brand:#553F33;
+    --brand-deep:#3B2B22;
+    --on-brand:#F6EDE3;
+    --gold:#A07C3F;
+    --gold-soft:#F0E4CF;
+    --rust:#A33B2A;
+    --rust-soft:#F6E3DE;
+    --green:#3D6B4E;
+    --green-soft:#E1EDE4;
+    --code-bg:#241C17;
+    --code-ink:#EDE2D6;
+    --code-key:#D8B778;
+    --code-str:#B9CBA6;
+    --code-com:#9A8678;
+    --code-bar:#181210;
+    --shadow:0 1px 2px rgba(42,33,28,.06);
+    --maxw:960px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#171210;
+      --paper:#1E1815;
+      --surface:#262019;
+      --surface-2:#2F2720;
+      --ink:#F0E7DE;
+      --ink-soft:#C3B2A4;
+      --ink-faint:#9C8A7C;
+      --rule:#3A302A;
+      --rule-strong:#4E4139;
+      --brand:#D9BFA6;
+      --brand-deep:#E8D6C3;
+      --on-brand:#1A1310;
+      --gold:#D9B06B;
+      --gold-soft:#3A2F1E;
+      --rust:#E09480;
+      --rust-soft:#3B2420;
+      --green:#8FC29F;
+      --green-soft:#1F2E24;
+      --code-bg:#120E0C;
+      --code-bar:#0C0908;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#171210;
+    --paper:#1E1815;
+    --surface:#262019;
+    --surface-2:#2F2720;
+    --ink:#F0E7DE;
+    --ink-soft:#C3B2A4;
+    --ink-faint:#9C8A7C;
+    --rule:#3A302A;
+    --rule-strong:#4E4139;
+    --brand:#D9BFA6;
+    --brand-deep:#E8D6C3;
+    --on-brand:#1A1310;
+    --gold:#D9B06B;
+    --gold-soft:#3A2F1E;
+    --rust:#E09480;
+    --rust-soft:#3B2420;
+    --green:#8FC29F;
+    --green-soft:#1F2E24;
+    --code-bg:#120E0C;
+    --code-bar:#0C0908;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+    font-size:14px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  *{box-sizing:border-box}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+
+  /* ---------- running header ---------- */
+  .runner{
+    background:var(--brand);
+    color:var(--on-brand);
+    padding:10px max(16px,calc((100% - var(--maxw))/2));
+    display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;
+    font-size:12px;letter-spacing:.02em;
+  }
+  .runner b{font-weight:600}
+  .runner .r{opacity:.8}
+
+  .wrap{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding-inline:16px;
+    padding-block:40px 64px;
+  }
+
+  /* ---------- masthead ---------- */
+  .eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;margin:0 0 10px;
+  }
+  h1{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:clamp(28px,5vw,42px);
+    line-height:1.12;font-weight:700;letter-spacing:-.01em;
+    margin:0 0 12px;color:var(--brand-deep);text-wrap:balance;
+  }
+  .standfirst{
+    font-size:16px;color:var(--ink-soft);margin:0 0 22px;max-width:62ch;
+  }
+  .hairline{height:3px;background:var(--brand);border:0;margin:0 0 22px;max-width:120px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+  .chip{
+    border:1px solid var(--rule-strong);background:var(--paper);
+    padding:8px 14px;font-size:12px;font-weight:600;color:var(--ink-soft);
+  }
+  .chip span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin-bottom:2px}
+  .chip.gold{border-color:var(--gold);background:var(--gold-soft);color:var(--brand-deep)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:44px}
+  h2{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:22px;font-weight:700;color:var(--brand-deep);
+    margin:0 0 4px;letter-spacing:-.01em;
+  }
+  h2 .num{color:var(--gold);font-family:"IBM Plex Mono",monospace;font-size:16px;margin-right:10px;font-weight:500}
+  h3{font-size:14px;font-weight:600;color:var(--ink);margin:26px 0 10px;letter-spacing:.01em}
+  h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:22px 0 8px}
+  .sect-rule{height:1px;background:var(--rule-strong);border:0;margin:8px 0 18px}
+  p{margin:0 0 14px;max-width:72ch}
+  a{color:var(--brand);text-decoration-thickness:1px;text-underline-offset:2px}
+  code:not(pre code){
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.90em;
+    background:var(--surface);border:1px solid var(--rule);padding:1px 5px;color:var(--brand-deep);
+  }
+  strong{font-weight:600}
+
+  /* ---------- callouts ---------- */
+  .note{
+    border-left:3px solid var(--brand);background:var(--surface);
+    padding:14px 16px;margin:0 0 18px;font-size:13.5px;
+  }
+  .note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+  .note.stop{border-left-color:var(--rust);background:var(--rust-soft)}
+  .note p:last-child{margin-bottom:0}
+  .note .lbl{font-weight:600;color:var(--brand-deep)}
+
+  /* ---------- flow ---------- */
+  .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:18px 0 22px}
+  .flow .box{
+    flex:1 1 150px;min-width:130px;border:1px solid var(--rule-strong);background:var(--paper);
+    padding:14px 12px;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink);
+    display:flex;flex-direction:column;justify-content:center;gap:3px;
+  }
+  .flow .box em{display:block;font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .flow .box.accent{background:var(--surface);border-color:var(--brand);color:var(--brand-deep)}
+  .flow .arw{align-self:center;color:var(--gold);font-size:16px;font-weight:600}
+
+  /* ---------- tables ---------- */
+  .tbl{overflow-x:auto;margin:0 0 18px;border:1px solid var(--rule-strong)}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--paper);min-width:560px}
+  thead th{
+    background:var(--surface-2);color:var(--brand-deep);text-align:left;
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+    padding:10px 12px;border-bottom:1px solid var(--rule-strong);white-space:nowrap;
+  }
+  td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  td.api,code.api{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--brand);word-break:break-word}
+  td.fld{font-weight:600;white-space:nowrap}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.tight{min-width:420px}
+
+  .req,.opt,.cond{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;
+    font-weight:600;padding:2px 6px;white-space:nowrap;display:inline-block;
+  }
+  .req{background:var(--rust-soft);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 35%,transparent)}
+  .opt{background:var(--surface);color:var(--ink-faint);border:1px solid var(--rule-strong)}
+  .cond{background:var(--gold-soft);color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+  .code-200{color:var(--green);font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  .code-4xx{color:var(--rust);font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+
+  /* ---------- endpoint bar ---------- */
+  .endpoint{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    border:1px solid var(--rule-strong);border-left:3px solid var(--brand);
+    background:var(--paper);padding:12px 16px;margin:0 0 6px;
+  }
+  .verb{background:var(--green-soft);color:var(--green);font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;padding:4px 10px;letter-spacing:.06em}
+  .path{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:500;color:var(--brand-deep);word-break:break-all;flex:1 1 260px}
+  .endpoint .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600}
+
+  /* ---------- code ---------- */
+  .codeblock{margin:0 0 18px;border:1px solid var(--code-bar);background:var(--code-bg)}
+  .codeblock .bar{
+    background:var(--code-bar);color:#B9A695;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;letter-spacing:.08em;padding:7px 14px;text-transform:uppercase;
+  }
+  pre{
+    margin:0;padding:14px 16px;overflow-x:auto;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.65;
+    color:var(--code-ink);
+  }
+  pre .k{color:var(--code-key)}
+  pre .s{color:var(--code-str)}
+  pre .c{color:var(--code-com)}
+
+  /* ---------- lists ---------- */
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0 0 18px}
+  ol.steps li{
+    counter-increment:s;position:relative;padding:0 0 14px 34px;font-size:13.5px;max-width:72ch;
+  }
+  ol.steps li::before{
+    content:counter(s);position:absolute;left:0;top:0;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    color:var(--gold);border:1px solid var(--gold);width:22px;height:22px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  ul.plain{margin:0 0 16px;padding-left:18px}
+  ul.plain li{margin-bottom:7px;max-width:72ch}
+
+  .values{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .val{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    background:var(--surface);border:1px solid var(--rule-strong);padding:3px 8px;color:var(--brand-deep);
+  }
+  .val.dflt{border-color:var(--gold);background:var(--gold-soft)}
+
+  footer{
+    margin-top:56px;border-top:1px solid var(--rule-strong);padding-top:18px;
+    font-size:12px;color:var(--ink-faint);
+  }
+
+  @media (max-width:520px){
+    .flow .arw{display:none}
+    .flow .box{flex:1 1 100%}
+  }
+
+  @media print{
+    :root{--ground:#fff;--paper:#fff}
+    body{font-size:10.5pt}
+    .runner{position:static}
+    .wrap{padding-block:18px}
+    section{break-inside:auto}
+    h2{break-after:avoid}
+    .tbl,.codeblock,.note,.endpoint,.flow{break-inside:avoid}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+
+<div class="runner">
+  <div><b>Shree Hari Jewellers &times; Salesforce</b> <span class="r">&mdash; Website Lead REST API</span></div>
+  <div class="r">Draft v1.0 &nbsp;|&nbsp; Sep 2026 &nbsp;|&nbsp; UAT</div>
+</div>
+
+<div class="wrap">
+
+  <p class="eyebrow">Integration Specification</p>
+  <h1>Website &rarr; Salesforce Lead REST API</h1>
+  <hr class="hairline">
+  <p class="standfirst">How the Shree Hari website and digital channels push customer enquiries into Salesforce as Lead records. Prepared by Halsa Global for the Shree Hari Jewellers website team.</p>
+
+  <div class="chips">
+    <div class="chip"><span>Protocol</span>REST / JSON</div>
+    <div class="chip"><span>Auth</span>External Client App &middot; OAuth 2.0</div>
+    <div class="chip"><span>Scope of v1</span>1 endpoint &middot; Lead only</div>
+    <div class="chip gold"><span>Environment</span>UAT Sandbox</div>
+  </div>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section>
+    <h2><span class="num">01</span>Overview</h2>
+    <hr class="sect-rule">
+
+    <div class="note">
+      <p><span class="lbl">Integration pattern:</span> the website is the <strong>calling system</strong>. Salesforce exposes one Apex REST endpoint through the <strong>Shree Hari Website API</strong> External Client App. The website POSTs a single enquiry as JSON; Salesforce creates one Lead and returns its record Id.</p>
+    </div>
+
+    <div class="flow">
+      <div class="box"><em>Source</em>Website / Shopify<br>enquiry form</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Transport</em>HTTPS POST<br>Bearer token</div>
+      <div class="arw">&rarr;</div>
+      <div class="box accent"><em>Salesforce</em>Apex REST<br>/shreehari/v1/leads</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Result</em>Lead record<br>Status = New</div>
+    </div>
+
+    <p>This version covers <strong>Lead capture only</strong>. Accounts, Products and Transactions will be added as separate endpoints under the same base path and the same authentication, so nothing in this section changes when they arrive.</p>
+
+    <h3>Environment</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Item</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Org</td><td>Shree Hari Jewellers &mdash; UAT Sandbox</td></tr>
+          <tr><td class="fld">Instance URL</td><td class="api">https://agility-efficiency-7306--uat.sandbox.my.salesforce.com</td></tr>
+          <tr><td class="fld">Base path</td><td class="api">/services/apexrest/shreehari/v1</td></tr>
+          <tr><td class="fld">Lead endpoint</td><td class="api">POST /services/apexrest/shreehari/v1/leads</td></tr>
+          <tr><td class="fld">Token endpoint</td><td class="api">POST /services/oauth2/token</td></tr>
+          <tr><td class="fld">External Client App</td><td>Shree Hari Website API <span style="color:var(--ink-faint)">(API name <code>Shree_Hari_Website_API</code>)</span></td></tr>
+          <tr><td class="fld">Runs as</td><td class="api">indiateam+shreehari@halsaglobal.io.integration</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <p><span class="lbl">Production cut-over:</span> only the instance URL changes. Every path, field name and payload in this document stays identical &mdash; the website should keep the instance URL, client id and client secret in configuration, never hard-coded.</p>
+    </div>
+  </section>
+
+  <!-- ============ AUTH ============ -->
+  <section>
+    <h2><span class="num">02</span>Authentication</h2>
+    <hr class="sect-rule">
+
+    <p>The website uses the <strong>OAuth 2.0 Client Credentials flow</strong> to obtain a Bearer token before calling the endpoint. There is no user login and no redirect &mdash; two credentials are exchanged for a token directly, which is why this flow suits a server-to-server website integration.</p>
+
+    <div class="codeblock">
+      <div class="bar">Token request</div>
+<pre><span class="k">POST</span> https://agility-efficiency-7306--uat.sandbox.my.salesforce.com/services/oauth2/token
+<span class="k">Content-Type:</span> application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;client_id=<span class="s">{{CONSUMER_KEY}}</span>
+&amp;client_secret=<span class="s">{{CONSUMER_SECRET}}</span></pre>
+    </div>
+
+    <div class="codeblock">
+      <div class="bar">Token response &mdash; 200 OK</div>
+<pre>{
+  <span class="k">"access_token"</span> : <span class="s">"00Dh20000003aVB!AQEAQI..."</span>,
+  <span class="k">"instance_url"</span> : <span class="s">"https://agility-efficiency-7306--uat.sandbox.my.salesforce.com"</span>,
+  <span class="k">"token_type"</span>   : <span class="s">"Bearer"</span>,
+  <span class="k">"issued_at"</span>    : <span class="s">"1758175020000"</span>,
+  <span class="k">"api_instance_url"</span> : <span class="s">"https://api.salesforce.com"</span>
+}</pre>
+    </div>
+
+    <p>Get the <strong>Consumer Key</strong> and <strong>Consumer Secret</strong> from Setup &rarr; External Client App Manager &rarr; Shree Hari Website API &rarr; Settings &rarr; OAuth Settings &rarr; <em>Consumer Key and Secret</em>. They are issued once per environment and must be stored as secrets on the website server.</p>
+
+    <div class="tbl">
+      <table class="tight">
+        <thead><tr><th>Setting</th><th>Value in UAT</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Flow</td><td>Client Credentials &mdash; enabled</td></tr>
+          <tr><td class="fld">OAuth scopes</td><td class="api">api, refresh_token, offline_access</td></tr>
+          <tr><td class="fld">Token lifetime</td><td>Per session settings; re-authenticate on <span class="code-4xx">401</span></td></tr>
+          <tr><td class="fld">IP relaxation</td><td>Enforce IP restrictions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note stop">
+      <p><span class="lbl">Two things that will block the first call.</span></p>
+      <ul class="plain" style="margin-top:8px">
+        <li><strong>IP restrictions are enforced</strong> on this app. The calling server's public IP &mdash; and the IP of the machine running Postman &mdash; must fall inside the Login IP Ranges of the integration user's profile. Otherwise the token call returns <code>invalid_grant</code>. Send us the website server's outbound IP and we will allowlist it.</li>
+        <li><strong>Every call needs the header</strong> <code>Authorization: Bearer {{access_token}}</code>. A missing or expired token returns <span class="code-4xx">401</span> with Salesforce's own body, not the error format in section 06.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ CONVENTIONS ============ -->
+  <section>
+    <h2><span class="num">03</span>Conventions</h2>
+    <hr class="sect-rule">
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Convention</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Content-Type</td><td class="api">application/json</td></tr>
+          <tr><td class="fld">Character set</td><td>UTF-8 &mdash; Indian names, addresses and the &#8377; symbol are all accepted</td></tr>
+          <tr><td class="fld">Payload shape</td><td>One JSON object per request = one Lead. Arrays and batching are not supported in v1</td></tr>
+          <tr><td class="fld">Empty fields</td><td>Omit any field with no value. Do not send <code>null</code> and do not send empty strings</td></tr>
+          <tr><td class="fld">Picklist values</td><td>Case-sensitive and restricted. Send exactly the values listed in section 05</td></tr>
+          <tr><td class="fld">Booleans</td><td>JSON <code>true</code> / <code>false</code>, not <code>"true"</code> / <code>"Y"</code></td></tr>
+          <tr><td class="fld">Numbers</td><td>Unformatted JSON numbers &mdash; <code>350000</code>, never <code>"3,50,000"</code></td></tr>
+          <tr><td class="fld">Retries</td><td>Retry only on <span class="code-4xx">401</span> (after re-authenticating) and <span class="code-4xx">500</span>. A retried <span class="code-200">201</span> creates a second Lead &mdash; see Open point 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ ENDPOINT ============ -->
+  <section>
+    <h2><span class="num">04</span>Create Lead</h2>
+    <hr class="sect-rule">
+
+    <div class="endpoint">
+      <span class="verb">POST</span>
+      <span class="path">/services/apexrest/shreehari/v1/leads</span>
+      <span class="tag">Create Lead</span>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-soft)">Creates one Salesforce Lead from a website or digital-channel enquiry and returns the new record Id.</p>
+
+    <div class="note">
+      <p><span class="lbl">Business rule:</span> every enquiry lands as a Lead with <strong>Status = New</strong> and is routed by the active Lead assignment rule &mdash; to the tele-calling queue for online enquiries, or to the store queue when a <code>storeCode</code> is supplied. The tele-calling agent then qualifies the Lead, fills in Qualification Notes and Business Type, and converts it.</p>
+    </div>
+
+    <h3>Request headers</h3>
+    <div class="tbl">
+      <table class="tight">
+        <thead><tr><th>Header</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Authorization</td><td class="api">Bearer {{access_token}}</td></tr>
+          <tr><td class="fld">Content-Type</td><td class="api">application/json</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Customer identity</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">salutation</td><td class="api">Salutation</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>Mr. &middot; Ms. &middot; Mrs. &middot; Dr. &middot; Prof. &middot; Mx.</td></tr>
+          <tr><td class="fld">firstName</td><td class="api">FirstName</td><td>String(40)</td><td><span class="opt">OPTIONAL</span></td><td></td></tr>
+          <tr><td class="fld">lastName</td><td class="api">LastName</td><td>String(80)</td><td><span class="req">REQUIRED</span></td><td>If the form captures one full name, send the whole name here</td></tr>
+          <tr><td class="fld">company</td><td class="api">Company</td><td>String(255)</td><td><span class="cond">CONDITIONAL</span></td><td>Required when <code>businessType</code> is <code>B2B</code>. For B2C, omit it &mdash; the handler fills it with the customer's own name, which Salesforce requires on every Lead</td></tr>
+          <tr><td class="fld">title</td><td class="api">Title</td><td>String(128)</td><td><span class="opt">OPTIONAL</span></td><td>Job title, B2B enquiries</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Contact details</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">phone</td><td class="api">Phone</td><td>String(40)</td><td><span class="cond">CONDITIONAL</span></td><td>Mobile number of the customer. At least one of <code>phone</code> or <code>email</code> must be present</td></tr>
+          <tr><td class="fld">email</td><td class="api">Email</td><td>Email(80)</td><td><span class="cond">CONDITIONAL</span></td><td>Must be a valid email format or the call is rejected</td></tr>
+          <tr><td class="fld">website</td><td class="api">Website</td><td>URL(255)</td><td><span class="opt">OPTIONAL</span></td><td>Company website, B2B enquiries</td></tr>
+          <tr><td class="fld">optOutEmail</td><td class="api">HasOptedOutOfEmail</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>false</code>. Send <code>true</code> when the customer did not tick the marketing consent box</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Address</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">street</td><td class="api">Street</td><td>Text Area(255)</td><td><span class="opt">OPTIONAL</span></td><td>Line breaks allowed</td></tr>
+          <tr><td class="fld">city</td><td class="api">City</td><td>String(40)</td><td><span class="opt">OPTIONAL</span></td><td></td></tr>
+          <tr><td class="fld">state</td><td class="api">State</td><td>String(80)</td><td><span class="opt">OPTIONAL</span></td><td>State/Country picklists are switched on in this org. Send the full state name exactly &mdash; <code>West Bengal</code>, <code>Maharashtra</code>, <code>Delhi</code></td></tr>
+          <tr><td class="fld">postalCode</td><td class="api">PostalCode</td><td>String(20)</td><td><span class="opt">OPTIONAL</span></td><td></td></tr>
+          <tr><td class="fld">country</td><td class="api">Country</td><td>String(80)</td><td><span class="cond">CONDITIONAL</span></td><td><strong>Required whenever <code>state</code> is sent.</strong> Use <code>India</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Classification &amp; routing</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">leadSource</td><td class="api">LeadSource</td><td>Picklist</td><td><span class="req">REQUIRED</span></td><td>Which channel the enquiry came from. Restricted list &mdash; see section 05</td></tr>
+          <tr><td class="fld">businessType</td><td class="api">Business_Type__c</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>B2C</code> &middot; <code>B2B</code> &middot; <code>Unknown</code>. Defaults to <code>Unknown</code> when omitted</td></tr>
+          <tr><td class="fld">status</td><td class="api">Status</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>Defaults to <code>New</code>. The website should normally leave this out</td></tr>
+          <tr><td class="fld">rating</td><td class="api">Rating</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>Hot</code> &middot; <code>Warm</code> &middot; <code>Cold</code></td></tr>
+          <tr><td class="fld">industry</td><td class="api">Industry</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>B2B enquiries only &mdash; see the appendix for the value list</td></tr>
+          <tr><td class="fld">storeCode</td><td class="api">Store_Association__c</td><td>String(20)</td><td><span class="opt">OPTIONAL</span></td><td>Store Code of the preferred or nearest store. Resolved to the Store Location record; an unknown code is rejected with <span class="code-4xx">400</span></td></tr>
+          <tr><td class="fld">walkInFlag</td><td class="api">Walk_In_Flag__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>false</code>. Leave it out for website enquiries &mdash; it marks in-store capture</td></tr>
+          <tr><td class="fld">campaignId</td><td class="api">Campaign_Attribution__c</td><td>Id(18)</td><td><span class="opt">OPTIONAL</span></td><td>Salesforce Campaign Id when the enquiry came from a tracked campaign. An unknown Id is rejected with <span class="code-4xx">400</span></td></tr>
+          <tr><td class="fld">runAssignmentRules</td><td class="api">&mdash; control flag</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>true</code>. Set <code>false</code> only for data loads that should stay with the integration user</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Enquiry detail</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">description</td><td class="api">Description</td><td>Long Text(32000)</td><td><span class="opt">OPTIONAL</span></td><td>What the customer asked for, in their own words &mdash; product, metal, budget, occasion</td></tr>
+          <tr><td class="fld">qualificationNotes</td><td class="api">Qualification_Notes__c</td><td>Long Text(2000)</td><td><span class="opt">OPTIONAL</span></td><td>Normally filled by the tele-calling agent, not the website</td></tr>
+          <tr><td class="fld">annualRevenue</td><td class="api">AnnualRevenue</td><td>Currency</td><td><span class="opt">OPTIONAL</span></td><td>B2B enquiries, INR</td></tr>
+          <tr><td class="fld">numberOfEmployees</td><td class="api">NumberOfEmployees</td><td>Integer</td><td><span class="opt">OPTIONAL</span></td><td>B2B enquiries</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <p><span class="lbl">Fields deliberately not in this payload:</span> Lead Owner, Mobile Phone and Campaign Id (standard). Ownership is decided by the assignment rule, not by the caller; Mobile Phone and the standard Campaign lookup are not exposed on Lead in this org, so the mobile number goes in <code>phone</code> and campaign attribution goes in <code>campaignId</code>. Any field sent that is not listed above is ignored.</p>
+    </div>
+
+    <h3>Sample request &mdash; B2C website enquiry</h3>
+    <div class="codeblock">
+      <div class="bar">POST /services/apexrest/shreehari/v1/leads</div>
+<pre>{
+  <span class="k">"salutation"</span>   : <span class="s">"Ms."</span>,
+  <span class="k">"firstName"</span>    : <span class="s">"Ananya"</span>,
+  <span class="k">"lastName"</span>     : <span class="s">"Sharma"</span>,
+  <span class="k">"phone"</span>        : <span class="s">"+91-9830012345"</span>,
+  <span class="k">"email"</span>        : <span class="s">"ananya.sharma@example.com"</span>,
+  <span class="k">"leadSource"</span>   : <span class="s">"Shopify"</span>,
+  <span class="k">"businessType"</span> : <span class="s">"B2C"</span>,
+  <span class="k">"street"</span>       : <span class="s">"12/1 Lake View Road"</span>,
+  <span class="k">"city"</span>         : <span class="s">"Kolkata"</span>,
+  <span class="k">"state"</span>        : <span class="s">"West Bengal"</span>,
+  <span class="k">"postalCode"</span>   : <span class="s">"700029"</span>,
+  <span class="k">"country"</span>      : <span class="s">"India"</span>,
+  <span class="k">"storeCode"</span>    : <span class="s">"000001"</span>,
+  <span class="k">"rating"</span>       : <span class="s">"Warm"</span>,
+  <span class="k">"description"</span>  : <span class="s">"Enquiry from the bridal collection page - 22K gold necklace set, budget around 3,50,000 INR, needed before Diwali."</span>
+}</pre>
+    </div>
+
+    <h3>Sample request &mdash; B2B enquiry</h3>
+    <div class="codeblock">
+      <div class="bar">POST /services/apexrest/shreehari/v1/leads</div>
+<pre>{
+  <span class="k">"firstName"</span>         : <span class="s">"Rakesh"</span>,
+  <span class="k">"lastName"</span>          : <span class="s">"Agarwal"</span>,
+  <span class="k">"company"</span>           : <span class="s">"Agarwal Jewellers Pvt Ltd"</span>,
+  <span class="k">"title"</span>             : <span class="s">"Purchase Head"</span>,
+  <span class="k">"phone"</span>             : <span class="s">"+91-9007712345"</span>,
+  <span class="k">"email"</span>             : <span class="s">"rakesh@agarwaljewellers.example"</span>,
+  <span class="k">"leadSource"</span>        : <span class="s">"India Mart"</span>,
+  <span class="k">"businessType"</span>      : <span class="s">"B2B"</span>,
+  <span class="k">"industry"</span>          : <span class="s">"Retail"</span>,
+  <span class="k">"city"</span>              : <span class="s">"Siliguri"</span>,
+  <span class="k">"state"</span>             : <span class="s">"West Bengal"</span>,
+  <span class="k">"country"</span>           : <span class="s">"India"</span>,
+  <span class="k">"annualRevenue"</span>     : 45000000,
+  <span class="k">"numberOfEmployees"</span> : 24,
+  <span class="k">"description"</span>       : <span class="s">"Wholesale enquiry for 22K plain gold chains, monthly requirement 2-3 kg."</span>
+}</pre>
+    </div>
+
+    <h3>Sample response</h3>
+    <div class="codeblock">
+      <div class="bar">201 Created</div>
+<pre>{
+  <span class="k">"success"</span>            : true,
+  <span class="k">"action"</span>             : <span class="s">"CREATED"</span>,
+  <span class="k">"leadId"</span>             : <span class="s">"00Qh200000ABCDEAA1"</span>,
+  <span class="k">"status"</span>             : <span class="s">"New"</span>,
+  <span class="k">"businessType"</span>       : <span class="s">"B2C"</span>,
+  <span class="k">"storeAssociationId"</span> : <span class="s">"a00h200000XYZAbAAN"</span>,
+  <span class="k">"ownerId"</span>            : <span class="s">"00Gh20000000AbCEAU"</span>,
+  <span class="k">"message"</span>            : <span class="s">"Lead created successfully."</span>
+}</pre>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-soft)"><code>ownerId</code> is whoever the assignment rule picked &mdash; a queue Id starts with <code>00G</code>, a user Id with <code>005</code>. <code>storeAssociationId</code> is present only when <code>storeCode</code> was sent.</p>
+
+    <h3>HTTP status codes</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="code-200">201 Created</td><td>Lead created &mdash; <code>leadId</code> returned</td></tr>
+          <tr><td class="code-4xx">400 Bad Request</td><td>Malformed JSON, missing required field, invalid picklist value, or unknown <code>storeCode</code> / <code>campaignId</code></td></tr>
+          <tr><td class="code-4xx">401 Unauthorized</td><td>Missing or expired Bearer token &mdash; re-authenticate and retry once</td></tr>
+          <tr><td class="code-4xx">405 Method Not Allowed</td><td>Any verb other than POST on this resource</td></tr>
+          <tr><td class="code-4xx">409 Conflict</td><td>A Salesforce duplicate rule blocked the insert</td></tr>
+          <tr><td class="code-4xx">500 Server Error</td><td>Salesforce DML or trigger exception &mdash; safe to retry</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ PICKLISTS ============ -->
+  <section>
+    <h2><span class="num">05</span>Allowed picklist values</h2>
+    <hr class="sect-rule">
+    <p>These are restricted picklists in the org as configured today. Any other value is rejected with <span class="code-4xx">400 INVALID_PICKLIST_VALUE</span> &mdash; the values are case-sensitive and must be sent exactly as printed, spaces and hyphens included.</p>
+
+    <h4>leadSource &mdash; required</h4>
+    <div class="values">
+      <span class="val">Facebook</span><span class="val">Instagram DM</span><span class="val">Instagram Comment</span><span class="val">WhatsApp</span><span class="val">Google</span><span class="val">YouTube</span><span class="val">Shopify</span><span class="val">Mobile App B2C</span><span class="val">Mobile App B2B</span><span class="val">Walk-in</span><span class="val">India Mart</span><span class="val">JustDial</span><span class="val">CTI Inbound</span><span class="val">Manual</span>
+    </div>
+
+    <h4>status</h4>
+    <div class="values">
+      <span class="val dflt">New &mdash; default</span><span class="val">Contacted</span><span class="val">Unqualified</span><span class="val">Qualified</span><span class="val">Converted</span>
+    </div>
+
+    <h4>businessType</h4>
+    <div class="values">
+      <span class="val">B2C</span><span class="val">B2B</span><span class="val dflt">Unknown &mdash; default</span>
+    </div>
+
+    <h4>rating</h4>
+    <div class="values">
+      <span class="val">Hot</span><span class="val">Warm</span><span class="val">Cold</span>
+    </div>
+
+    <h4>salutation</h4>
+    <div class="values">
+      <span class="val">Mr.</span><span class="val">Ms.</span><span class="val">Mrs.</span><span class="val">Dr.</span><span class="val">Prof.</span><span class="val">Mx.</span>
+    </div>
+  </section>
+
+  <!-- ============ ERRORS ============ -->
+  <section>
+    <h2><span class="num">06</span>Error responses</h2>
+    <hr class="sect-rule">
+    <p>Every error raised by the handler uses one JSON shape, so the website can branch on <code>errorCode</code> rather than parsing message text.</p>
+
+    <div class="codeblock">
+      <div class="bar">Error response &mdash; JSON</div>
+<pre>{
+  <span class="k">"success"</span>    : false,
+  <span class="k">"errorCode"</span>  : <span class="s">"INVALID_PICKLIST_VALUE"</span>,
+  <span class="k">"message"</span>    : <span class="s">"'Website' is not a valid leadSource. Allowed values: Facebook, Instagram DM, Instagram Comment, WhatsApp, Google, YouTube, Shopify, Mobile App B2C, Mobile App B2B, Walk-in, India Mart, JustDial, CTI Inbound, Manual."</span>,
+  <span class="k">"field"</span>      : <span class="s">"leadSource"</span>,
+  <span class="k">"httpStatus"</span> : 400
+}</pre>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Error code</th><th>HTTP</th><th>When it occurs</th></tr></thead>
+        <tbody>
+          <tr><td class="api">INVALID_JSON</td><td class="code-4xx">400</td><td>The body is not parseable JSON</td></tr>
+          <tr><td class="api">MISSING_REQUIRED_FIELD</td><td class="code-4xx">400</td><td><code>lastName</code> or <code>leadSource</code> absent or blank</td></tr>
+          <tr><td class="api">CONTACT_INFO_REQUIRED</td><td class="code-4xx">400</td><td>Neither <code>phone</code> nor <code>email</code> was supplied</td></tr>
+          <tr><td class="api">COMPANY_REQUIRED</td><td class="code-4xx">400</td><td><code>businessType</code> is <code>B2B</code> but <code>company</code> is missing</td></tr>
+          <tr><td class="api">INVALID_PICKLIST_VALUE</td><td class="code-4xx">400</td><td>A picklist field carries a value outside section 05</td></tr>
+          <tr><td class="api">INVALID_EMAIL_FORMAT</td><td class="code-4xx">400</td><td><code>email</code> is not a valid address</td></tr>
+          <tr><td class="api">VALUE_TOO_LONG</td><td class="code-4xx">400</td><td>A value exceeds the length in section 04</td></tr>
+          <tr><td class="api">STORE_NOT_FOUND</td><td class="code-4xx">400</td><td>No Store Location has that <code>storeCode</code></td></tr>
+          <tr><td class="api">CAMPAIGN_NOT_FOUND</td><td class="code-4xx">400</td><td>No Campaign has that <code>campaignId</code></td></tr>
+          <tr><td class="api">INVALID_ADDRESS</td><td class="code-4xx">400</td><td><code>state</code> or <code>country</code> is not a valid picklist name, or <code>state</code> was sent without <code>country</code></td></tr>
+          <tr><td class="api">DUPLICATE_DETECTED</td><td class="code-4xx">409</td><td>A Salesforce duplicate rule blocked the insert</td></tr>
+          <tr><td class="api">DML_EXCEPTION</td><td class="code-4xx">500</td><td>Validation rule, trigger or platform error on insert</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p><span class="lbl">401 is different.</span> An expired or missing token is rejected by the Salesforce platform before the handler runs, so the body is Salesforce's own, not the shape above:</p>
+    </div>
+    <div class="codeblock">
+      <div class="bar">401 Unauthorized &mdash; platform response</div>
+<pre>[{
+  <span class="k">"message"</span>   : <span class="s">"Session expired or invalid"</span>,
+  <span class="k">"errorCode"</span> : <span class="s">"INVALID_SESSION_ID"</span>
+}]</pre>
+    </div>
+  </section>
+
+  <!-- ============ LIFECYCLE ============ -->
+  <section>
+    <h2><span class="num">07</span>Lead lifecycle</h2>
+    <hr class="sect-rule">
+    <div class="flow">
+      <div class="box"><em>Step 1</em>Website POST<br>enquiry JSON</div>
+      <div class="arw">&rarr;</div>
+      <div class="box accent"><em>Step 2</em>Lead created<br>Status: New</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Step 3</em>Assignment rule<br>routes to queue</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Step 4</em>Agent qualifies<br>&amp; converts</div>
+    </div>
+    <p>The handler sets <code>Status = New</code>, applies <code>Business_Type__c</code> and resolves <code>Store_Association__c</code> from the store code, then inserts with assignment rules switched on so the Lead reaches the right queue immediately. Everything after that &mdash; qualification, notes, conversion to Account and Contact &mdash; happens inside Salesforce and needs nothing further from the website.</p>
+  </section>
+
+  <!-- ============ POSTMAN ============ -->
+  <section>
+    <h2><span class="num">08</span>Testing in Postman</h2>
+    <hr class="sect-rule">
+    <ol class="steps">
+      <li>Create an environment with four variables: <code>instance_url</code>, <code>client_id</code>, <code>client_secret</code> and <code>access_token</code>.</li>
+      <li>Add a <strong>POST</strong> request to <code>{{instance_url}}/services/oauth2/token</code>. Body type <em>x-www-form-urlencoded</em>, with keys <code>grant_type</code> = <code>client_credentials</code>, <code>client_id</code> and <code>client_secret</code>. Send no Authorization header on this call.</li>
+      <li>In that request's <em>Scripts &rarr; Post-response</em> tab, store the token so the next call picks it up automatically:
+        <div class="codeblock" style="margin-top:10px">
+          <div class="bar">Post-response script</div>
+<pre>pm.environment.set(<span class="s">"access_token"</span>, pm.response.json().access_token);</pre>
+        </div>
+      </li>
+      <li>Add a second <strong>POST</strong> request to <code>{{instance_url}}/services/apexrest/shreehari/v1/leads</code> with headers <code>Authorization: Bearer {{access_token}}</code> and <code>Content-Type: application/json</code>, and paste either sample body from section 04.</li>
+      <li>Send. A <span class="code-200">201</span> with a <code>leadId</code> means the Lead is in Salesforce &mdash; open it at <code>{{instance_url}}/lightning/r/Lead/&lt;leadId&gt;/view</code> to confirm the field mapping.</li>
+    </ol>
+    <div class="note warn">
+      <p><span class="lbl">For UAT testing today:</span> the only Store Location loaded in the sandbox is <em>test store</em>, store code <code>000001</code> &mdash; that is the value used in the B2C sample. Any other code will come back as <span class="code-4xx">STORE_NOT_FOUND</span> until the real store list is loaded.</p>
+    </div>
+  </section>
+
+  <!-- ============ OPEN POINTS ============ -->
+  <section>
+    <h2><span class="num">09</span>Open points for review</h2>
+    <hr class="sect-rule">
+    <p>Each of these needs a decision before the endpoint is built. They are listed in the order they affect the website team.</p>
+
+    <div class="tbl">
+      <table>
+        <thead><tr><th>#</th><th>Point</th><th>Impact &amp; recommendation</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td class="fld">Endpoint not yet deployed</td>
+            <td>The token call in section 02 works against UAT today. The <code>/leads</code> resource goes live once the Apex REST handler is deployed to the sandbox. Everything else in this document is already in place.</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td class="fld">No idempotency key</td>
+            <td>Lead carries no External Id field today, so a retried or double-submitted POST creates a second Lead. <strong>Recommended:</strong> add <code>Website_Lead_ID__c</code> (Text 64, External Id, Unique) and switch this endpoint to an upsert on it. The website would then send its own enquiry reference and retries would become safe.</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td class="fld">Mobile Phone not available</td>
+            <td>Lead in this org exposes <code>Phone</code> but not <code>MobilePhone</code>, <code>Fax</code> or <code>DoNotCall</code>. The mobile number goes in <code>phone</code>. Confirm whether a separate Mobile Phone field is wanted before build.</td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td class="fld">Store list</td>
+            <td>Store Location currently holds one test record. Store codes must be loaded and shared with the website team so the store dropdown matches Salesforce exactly.</td>
+          </tr>
+          <tr>
+            <td class="num">5</td>
+            <td class="fld">Assignment rule</td>
+            <td>The routing in section 07 assumes an active Lead assignment rule covering the tele-calling queue and the store queues. Confirm the rule and queue names.</td>
+          </tr>
+          <tr>
+            <td class="num">6</td>
+            <td class="fld">IP allowlisting</td>
+            <td>The External Client App enforces IP restrictions. Share the website server's outbound IP &mdash; and the testers' IPs &mdash; so they can be added to the integration user's profile.</td>
+          </tr>
+          <tr>
+            <td class="num">7</td>
+            <td class="fld">Which source value</td>
+            <td>Confirm which <code>leadSource</code> the website should send. <code>Shopify</code> is assumed in the samples; the value drives channel reporting, so it should be agreed before go-live.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ APPENDIX ============ -->
+  <section>
+    <h2><span class="num">10</span>Appendix &mdash; Industry values</h2>
+    <hr class="sect-rule">
+    <p>Used only on B2B enquiries. Standard Salesforce list as configured in this org:</p>
+    <div class="values">
+      <span class="val">Agriculture</span><span class="val">Apparel</span><span class="val">Banking</span><span class="val">Biotechnology</span><span class="val">Chemicals</span><span class="val">Communications</span><span class="val">Construction</span><span class="val">Consulting</span><span class="val">Education</span><span class="val">Electronics</span><span class="val">Energy</span><span class="val">Engineering</span><span class="val">Entertainment</span><span class="val">Environmental</span><span class="val">Finance</span><span class="val">Food &amp; Beverage</span><span class="val">Government</span><span class="val">Healthcare</span><span class="val">Hospitality</span><span class="val">Insurance</span><span class="val">Machinery</span><span class="val">Manufacturing</span><span class="val">Media</span><span class="val">Not For Profit</span><span class="val">Other</span><span class="val">Recreation</span><span class="val">Retail</span><span class="val">Shipping</span><span class="val">Technology</span><span class="val">Telecommunications</span><span class="val">Transportation</span><span class="val">Utilities</span>
+    </div>
+  </section>
+
+  <footer>
+    Prepared by Halsa Global for Shree Hari Jewellers &mdash; Draft v1.0, September 2026.<br>
+    Field names, lengths and picklist values in this document were read from the Shree Hari UAT sandbox on 18 September 2026. To be reviewed with the website team before development begins.
+  </footer>
+</div>

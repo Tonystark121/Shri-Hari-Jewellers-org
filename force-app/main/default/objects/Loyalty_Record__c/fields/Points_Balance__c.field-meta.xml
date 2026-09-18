@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Points_Balance__c</fullName>
+    <description>Points available to the customer right now. Total Points Earned minus Total Points Redeemed, maintained by the points engine.</description>
+    <externalId>false</externalId>
+    <label>Points Balance</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

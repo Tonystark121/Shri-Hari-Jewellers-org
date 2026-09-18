@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExternalClientApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>indiateam+shreehari@halsaglobal.io</contactEmail>
+    <distributionState>Local</distributionState>
+    <isProtected>false</isProtected>
+    <label>Shree Hari Website API</label>
+    <orgScopedExternalApp>00Dh20000003aVB:Shree_Hari_Website_API</orgScopedExternalApp>
+</ExternalClientApplication>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Primary_Store__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Home store for this household. Drives store-scoped sharing rules, so Store Managers see the households that belong to their store.</description>
+    <inlineHelpText>The store this household normally shops at.</inlineHelpText>
+    <label>Primary Store</label>
+    <referenceTo>Store_Location__c</referenceTo>
+    <relationshipLabel>Households</relationshipLabel>
+    <relationshipName>Households</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

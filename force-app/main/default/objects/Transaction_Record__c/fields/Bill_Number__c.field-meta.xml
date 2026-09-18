@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Bill_Number__c</fullName>
-    <label>Bill Number</label>
-    <description>POS bill number. Unique across all transactions and used to reject duplicate pushes from the POS system.</description>
-    <inlineHelpText>The bill number printed on the customer invoice.</inlineHelpText>
-    <type>Text</type>
-    <length>50</length>
-    <externalId>true</externalId>
-    <unique>true</unique>
     <caseSensitive>false</caseSensitive>
+    <description>POS bill number. Unique across all transactions and used to reject duplicate pushes from the POS system.</description>
+    <externalId>true</externalId>
+    <inlineHelpText>The bill number printed on the customer invoice.</inlineHelpText>
+    <label>Bill Number</label>
+    <length>50</length>
     <required>true</required>
     <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>true</unique>
 </CustomField>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>WA_Opt_In__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>WhatsApp consent. Must be true before any WhatsApp message is sent to this household - WABAService checks this field and sends nothing when it is false.</description>
+    <inlineHelpText>Tick only when the customer has given consent to be contacted on WhatsApp.</inlineHelpText>
+    <label>WA Opt In</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>
