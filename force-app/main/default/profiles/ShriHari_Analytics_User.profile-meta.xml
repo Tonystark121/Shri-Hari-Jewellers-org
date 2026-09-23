@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Profile xmlns="http://soap.sforce.com/2006/04/metadata">
+    <custom>true</custom>
+    <description>Analytics/Tableau Next users. Intended access: read-only on Reports, Dashboards and Tableau datasets - no write access and no PII export. Object, field and record-type permissions are assigned separately.</description>
+    <userLicense>Salesforce</userLicense>
+</Profile>

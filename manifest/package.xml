@@ -32,5 +32,14 @@
         <members>*</members>
         <name>StaticResource</name>
     </types>
+    <types>
+        <members>ShriHari_Analytics_User</members>
+        <members>ShriHari_Integration_User</members>
+        <members>ShriHari_Loyalty_Admin</members>
+        <members>ShriHari_Service_Agent</members>
+        <members>ShriHari_Store_Manager</members>
+        <members>ShriHari_Tele_Calling_Agent</members>
+        <name>Profile</name>
+    </types>
     <version>67.0</version>
 </Package>
