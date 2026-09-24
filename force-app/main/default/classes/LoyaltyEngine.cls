@@ -24,14 +24,11 @@ public with sharing class LoyaltyEngine {
      *
      * Called from TransactionTriggerHandler.afterInsert().
      */
-    public static void processEarn(
-        List<Transaction_Record__c> newTransactions
-    ) {
+    public static void processEarn( List<Transaction_Record__c> newTransactions ) {
 
         if (newTransactions == null || newTransactions.isEmpty()) {
             return;
         }
-
 
         // ---------------------------------------------------------
         // 1. Collect Account IDs
@@ -56,11 +53,7 @@ public with sharing class LoyaltyEngine {
         // ---------------------------------------------------------
 
         Map<Id, Account> accountsById = new Map<Id, Account>([
-            SELECT
-                Id,
-                Customer_Tier__c
-            FROM Account
-            WHERE Id IN :accountIds
+            SELECT Id, Customer_Tier__c FROM Account WHERE Id IN :accountIds
         ]);
 
 
@@ -86,8 +79,7 @@ public with sharing class LoyaltyEngine {
         // 5. Process each transaction
         // ---------------------------------------------------------
 
-        for (Transaction_Record__c transactionRecord :
-             newTransactions) {
+        for (Transaction_Record__c transactionRecord : newTransactions) {
 
             if (transactionRecord.Account__c == null) {
                 continue;
@@ -133,13 +125,11 @@ public with sharing class LoyaltyEngine {
                 pointsRedeemed = pointsToApply( currentBalance, transactionRecord.Amount__c );
             }
 
-
             // -----------------------------------------------------
             // Net bill after redemption
             // -----------------------------------------------------
 
-            Decimal netAmount = netAmountOf( transactionRecord.Amount__c, pointsRedeemed );
-
+            Decimal netAmount = netAmountOf( transactionRecord.Amount__c, pointsRedeemed);
 
             // -----------------------------------------------------
             // Tier used for THIS purchase
@@ -159,9 +149,7 @@ public with sharing class LoyaltyEngine {
 
             String tier = String.isBlank(accountRecord.Customer_Tier__c) ? DEFAULT_TIER :  accountRecord.Customer_Tier__c;
 
-
             Decimal earningRate = ratesByTier.get(tier);
-
 
             // -----------------------------------------------------
             // Calculate points earned
@@ -180,13 +168,8 @@ public with sharing class LoyaltyEngine {
             // -----------------------------------------------------
 
             loyalty.Points_Balance__c = currentBalance + pointsEarned - pointsRedeemed;
-
-
             loyalty.Total_Points_Earned__c = whole(loyalty.Total_Points_Earned__c) + pointsEarned;
-
-
             loyalty.Total_Points_Redeemed__c = whole(loyalty.Total_Points_Redeemed__c) + pointsRedeemed;
-
 
             // -----------------------------------------------------
             // Transaction Date
@@ -196,13 +179,9 @@ public with sharing class LoyaltyEngine {
             // .date() converts DateTime -> Date.
             // -----------------------------------------------------
 
-            Date transactionDate = transactionRecord.Transaction_Date__c == null ? Date.today()
-                    : transactionRecord.Transaction_Date__c.date();
+            Date transactionDate = transactionRecord.Transaction_Date__c == null ? Date.today() : transactionRecord.Transaction_Date__c.date();
 
-
-            if (
-                loyalty.Last_Transaction_Date__c == null || loyalty.Last_Transaction_Date__c < transactionDate
-            ) {
+            if (loyalty.Last_Transaction_Date__c == null || loyalty.Last_Transaction_Date__c < transactionDate) {
                 loyalty.Last_Transaction_Date__c = transactionDate;
             }
         }
@@ -213,7 +192,6 @@ public with sharing class LoyaltyEngine {
         // ---------------------------------------------------------
 
         if (!loyaltyByAccount.isEmpty()) {
-
             upsert loyaltyByAccount.values();
         }
 
@@ -276,13 +254,9 @@ public with sharing class LoyaltyEngine {
         }
 
         Decimal completeHundreds = netAmount.divide(EARNING_BLOCK,0,System.RoundingMode.DOWN);
-
-
         Decimal points = completeHundreds * tierPercentage;
 
-
-        return Integer.valueOf( points.setScale(0, System.RoundingMode.DOWN)
-        );
+        return Integer.valueOf( points.setScale(0, System.RoundingMode.DOWN));
     }
 
     /**
@@ -291,14 +265,8 @@ public with sharing class LoyaltyEngine {
     private static Decimal netAmountOf(Decimal grossAmount,Integer pointsRedeemed) {
 
         Decimal gross = grossAmount == null? 0 : grossAmount;
-
-
         Decimal redeemed = pointsRedeemed == null ? 0 : pointsRedeemed;
-
-
         Decimal net = gross - redeemed;
-
-
         return net < 0 ? 0 : net;
     }
 
@@ -319,12 +287,8 @@ public with sharing class LoyaltyEngine {
     private static Map<String, Decimal> earningRates() {
 
         Map<String, Decimal> rates = new Map<String, Decimal>();
-        Loyalty_Setting__mdt records = [
-                SELECT
-                    Tier__c,
-                    Earning_Rate__c
-                FROM Loyalty_Setting__mdt
-                WHERE Tier__c != null
+        List<Loyalty_Setting__mdt> records = [
+                SELECT Tier__c, Earning_Rate__c FROM Loyalty_Setting__mdt WHERE Tier__c != null
             ];
 
         for ( Loyalty_Setting__mdt setting :records ) {
@@ -336,10 +300,8 @@ public with sharing class LoyaltyEngine {
             try {
 
                 String rawRate = setting.Earning_Rate__c;
-
                 Decimal rate = Decimal.valueOf(rawRate);
-
-
+                
                 rates.put( setting.Tier__c, rate );
 
             } catch (Exception e) {
@@ -366,7 +328,7 @@ public with sharing class LoyaltyEngine {
 
         Map<Id, Loyalty_Record__c> byAccount = new Map<Id, Loyalty_Record__c>();
         
-        Loyalty_Record__c loyaltyList = [
+        List<Loyalty_Record__c> loyaltyList = [
                 SELECT
                     Id,
                     Account__c,
