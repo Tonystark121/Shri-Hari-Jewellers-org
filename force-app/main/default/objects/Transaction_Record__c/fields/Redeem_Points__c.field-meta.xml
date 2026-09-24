@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Redeem_Points__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Ticked by the POS when the customer chooses to spend their loyalty points against this bill. The loyalty engine then applies as much of the balance as the bill can absorb, provided the balance is at least 100 points, and records the figure it used in Points_Redeemed__c. Left unticked, the bill is paid in full and simply earns points.</description>
+    <label>Redeem Points</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

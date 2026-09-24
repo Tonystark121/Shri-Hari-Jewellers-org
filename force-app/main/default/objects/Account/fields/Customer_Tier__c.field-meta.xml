@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Customer_Tier__c</fullName>
+    <description>Loyalty programme tier, derived from the household&apos;s billed amount over the last 365 days (Last 12 Month Spend). Slabs: Silver 0-7,500 (2%), Gold 7,501-25,000 (4%), Platinum 25,001-100,000 (7%), Diamond 100,001 and above (10%). Because the source field is a rolling 12-month window, the tier moves up or down on its own as old transactions age out.</description>
+    <formula>IF(
+  Last_12M_Spend__c &gt; 100000, &quot;Diamond&quot;,
+  IF(
+    Last_12M_Spend__c &gt; 25000, &quot;Platinum&quot;,
+    IF(
+      Last_12M_Spend__c &gt; 7500, &quot;Gold&quot;,
+      &quot;Silver&quot;
+    )
+  )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Tier earned from the last 12 months of billing. Silver up to 7,500; Gold to 25,000; Platinum to 100,000; Diamond above that.</inlineHelpText>
+    <label>Customer Tier</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

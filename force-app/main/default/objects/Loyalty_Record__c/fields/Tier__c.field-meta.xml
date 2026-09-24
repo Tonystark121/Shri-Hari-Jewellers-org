@@ -25,6 +25,16 @@
                 <default>false</default>
                 <label>Gold</label>
             </value>
+            <value>
+                <fullName>Platinum</fullName>
+                <default>false</default>
+                <label>Platinum</label>
+            </value>
+            <value>
+                <fullName>Diamond</fullName>
+                <default>false</default>
+                <label>Diamond</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
