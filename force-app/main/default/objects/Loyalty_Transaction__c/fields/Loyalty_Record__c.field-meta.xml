@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Loyalty_Record__c</fullName>
+    <description>Household loyalty record this transaction posts against.</description>
+    <label>Loyalty Record</label>
+    <referenceTo>Loyalty_Record__c</referenceTo>
+    <relationshipLabel>Loyalty Transactions</relationshipLabel>
+    <relationshipName>Loyalty_Transactions</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>

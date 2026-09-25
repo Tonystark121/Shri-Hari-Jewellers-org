@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Transaction_Record__c</fullName>
+    <description>Sales transaction that generated this loyalty event, if any.</description>
+    <label>Transaction Record</label>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <referenceTo>Transaction_Record__c</referenceTo>
+    <relationshipLabel>Loyalty Transactions</relationshipLabel>
+    <relationshipName>Loyalty_Transactions</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+</CustomField>

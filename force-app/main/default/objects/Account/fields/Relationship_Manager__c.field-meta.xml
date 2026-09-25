@@ -9,6 +9,7 @@
     <relationshipLabel>Managed Households</relationshipLabel>
     <relationshipName>Managed_Households</relationshipName>
     <required>false</required>
-    <trackTrending>false</trackTrending>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
     <type>Lookup</type>
 </CustomField>

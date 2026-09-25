@@ -5,6 +5,7 @@
     <description>WhatsApp consent. Must be true before any WhatsApp message is sent to this household - WABAService checks this field and sends nothing when it is false.</description>
     <inlineHelpText>Tick only when the customer has given consent to be contacted on WhatsApp.</inlineHelpText>
     <label>WA Opt In</label>
-    <trackTrending>false</trackTrending>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
     <type>Checkbox</type>
 </CustomField>

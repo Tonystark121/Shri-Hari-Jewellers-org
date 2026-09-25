@@ -2,11 +2,10 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>CLV__c</fullName>
     <description>Customer Lifetime Value - total spend of this household, summed from every Transaction Record. Recalculated by the platform after each POS or Shopify push; never edited by hand.</description>
-    <inlineHelpText>Total household spend to date, across all stores and channels.</inlineHelpText>
     <label>CLV</label>
     <summarizedField>Transaction_Record__c.Amount__c</summarizedField>
     <summaryForeignKey>Transaction_Record__c.Account__c</summaryForeignKey>
     <summaryOperation>sum</summaryOperation>
-    <trackTrending>false</trackTrending>
+    <trackHistory>false</trackHistory>
     <type>Summary</type>
 </CustomField>
