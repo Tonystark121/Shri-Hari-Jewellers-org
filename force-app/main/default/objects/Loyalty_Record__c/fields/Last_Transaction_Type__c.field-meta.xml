@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Transaction_Type__c</fullName>
+    <description>Type of the most recent transaction: Redemption when points were redeemed, Earning when points were earned without redemption. Blank when the transaction neither earned nor redeemed points. Set by LoyaltyEngine.</description>
+    <label>Last Transaction Type</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Redemption</fullName>
+                <default>false</default>
+                <label>Redemption</label>
+            </value>
+            <value>
+                <fullName>Earning</fullName>
+                <default>false</default>
+                <label>Earning</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

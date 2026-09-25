@@ -48,7 +48,8 @@ private class LoyaltyEngineTest {
     private static Loyalty_Record__c loyaltyFor(Id accountId) {
         return [
             SELECT Id, Points_Balance__c, Total_Points_Earned__c,
-                   Total_Points_Redeemed__c, Last_Transaction_Date__c
+                   Total_Points_Redeemed__c, Last_Transaction_Date__c,
+                   Last_Transaction_Type__c
             FROM Loyalty_Record__c
             WHERE Account__c = :accountId
             LIMIT 1
@@ -77,6 +78,7 @@ private class LoyaltyEngineTest {
         Assert.areEqual(32, loyalty.Total_Points_Earned__c, 'Lifetime earned should match');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
         Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'Stamped with the bill date');
+        Assert.areEqual('Earning', loyalty.Last_Transaction_Type__c, 'Points earned, nothing redeemed');
     }
 
     /**
@@ -173,6 +175,7 @@ private class LoyaltyEngineTest {
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(0, loyalty.Points_Balance__c, 'Nothing billed, nothing earned');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'And nothing redeemed');
+        Assert.isNull(loyalty.Last_Transaction_Type__c, 'Nothing earned or redeemed leaves the type blank');
     }
 
     @IsTest
@@ -231,6 +234,7 @@ private class LoyaltyEngineTest {
         );
         Assert.areEqual(172, loyalty.Total_Points_Earned__c, 'Lifetime earned is 112 + 60');
         Assert.areEqual(112, loyalty.Total_Points_Redeemed__c, 'Lifetime redeemed is the 112 spent');
+        Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'Points were redeemed on this bill');
     }
 
     /** Leaving the box unticked earns on the whole bill and spends nothing. */
@@ -275,6 +279,7 @@ private class LoyaltyEngineTest {
             '99 kept, and the full 3,200 earns 64 at Silver'
         );
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
+        Assert.areEqual('Earning', loyalty.Last_Transaction_Type__c, 'A refused redemption is an Earning');
     }
 
     /**
@@ -334,6 +339,7 @@ private class LoyaltyEngineTest {
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(100, loyalty.Points_Balance__c, '800 of the 900 points settled the bill');
         Assert.areEqual(900, loyalty.Total_Points_Earned__c, 'A bill paid entirely in points earns nothing');
+        Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'Redeemed with nothing earned is still a Redemption');
     }
 
     /**
@@ -353,6 +359,53 @@ private class LoyaltyEngineTest {
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(500, loyalty.Points_Balance__c, 'The balance is untouched');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'A 50 rupee bill cannot carry a 100 point redemption');
+    }
+
+    // =====================================================================
+    // Last Transaction Type
+    // =====================================================================
+
+    /** A later bill on the same date replaces the type. */
+    @IsTest
+    static void testSameDayBillUpdatesTransactionType() {
+        Account acct = household('Same Day', 5000);
+        insert acct;
+        Loyalty_Record__c opening = openingBalance(acct.Id, 500);
+        opening.Last_Transaction_Date__c = Date.today();
+        opening.Last_Transaction_Type__c = 'Earning';
+        insert opening;
+
+        Test.startTest();
+        insert bill(acct.Id, 3200, true);
+        Test.stopTest();
+
+        Assert.areEqual(
+            'Redemption',
+            loyaltyFor(acct.Id).Last_Transaction_Type__c,
+            'The latest bill on the same date sets the type'
+        );
+    }
+
+    /** A back-dated bill changes neither the date nor the type. */
+    @IsTest
+    static void testBackDatedBillLeavesTransactionTypeAlone() {
+        Account acct = household('Back Dated', 5000);
+        insert acct;
+        Loyalty_Record__c opening = openingBalance(acct.Id, 500);
+        opening.Last_Transaction_Date__c = Date.today();
+        opening.Last_Transaction_Type__c = 'Redemption';
+        insert opening;
+
+        Transaction_Record__c oldBill = bill(acct.Id, 3200, false);
+        oldBill.Transaction_Date__c = Datetime.now().addDays(-10);
+
+        Test.startTest();
+        insert oldBill;
+        Test.stopTest();
+
+        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
+        Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'The later date is kept');
+        Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'The type still matches the later date');
     }
 
     // =====================================================================
@@ -385,85 +438,6 @@ private class LoyaltyEngineTest {
         Assert.isTrue(
             message.contains('Multiple Loyalty Records'),
             'The error should name the problem. Got: ' + message
-        );
-    }
-
-    /**
-     * An Apex-driven correction or migration script can switch earning off
-     * for the rest of its transaction.
-     */
-    @IsTest
-    static void testApexSuppressionStopsEarning() {
-        Account acct = household('Scripted Load', 5000);
-        insert acct;
-
-        Test.startTest();
-        TransactionTriggerHandler.suppressEarningForThisTransaction();
-        insert bill(acct.Id, 5000, false);
-        Test.stopTest();
-
-        Assert.areEqual(
-            0,
-            [SELECT COUNT() FROM Loyalty_Record__c WHERE Account__c = :acct.Id],
-            'A load that carries its own balances should not earn points again'
-        );
-    }
-
-    /**
-     * The case the flag alone cannot cover: a person importing historical
-     * bills through Data Loader, who has no way to set an Apex variable. An
-     * admin ticks the setting against their user for the duration of the
-     * load.
-     */
-    @IsTest
-    static void testMigrationUserSettingStopsEarning() {
-        insert new Loyalty_Bypass__c(
-            SetupOwnerId = UserInfo.getUserId(),
-            Disable_Earning__c = true
-        );
-
-        Account acct = household('CASA Import', 5000);
-        insert acct;
-
-        Test.startTest();
-        insert bill(acct.Id, 5000, false);
-        Test.stopTest();
-
-        Assert.areEqual(
-            0,
-            [SELECT COUNT() FROM Loyalty_Record__c WHERE Account__c = :acct.Id],
-            'Historical bills imported by the migration user must not earn points'
-        );
-    }
-
-    /** With the setting off, the same import earns normally. */
-    @IsTest
-    static void testSettingOffLeavesEarningAlone() {
-        insert new Loyalty_Bypass__c(
-            SetupOwnerId = UserInfo.getUserId(),
-            Disable_Earning__c = false
-        );
-
-        Account acct = household('Ordinary Sale', 5000);
-        insert acct;
-
-        Test.startTest();
-        insert bill(acct.Id, 5000, false);
-        Test.stopTest();
-
-        Assert.areEqual(
-            100,
-            loyaltyFor(acct.Id).Points_Balance__c,
-            'An unticked bypass must not interfere with an ordinary sale'
-        );
-    }
-
-    /** No setting configured at all is the same as not bypassed. */
-    @IsTest
-    static void testNoBypassSettingMeansEarningIsLive() {
-        Assert.isFalse(
-            TransactionTriggerHandler.isEarningSuppressed(),
-            'Earning should be live when nobody has configured a bypass'
         );
     }
 

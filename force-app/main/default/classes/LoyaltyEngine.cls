@@ -18,11 +18,16 @@ public with sharing class LoyaltyEngine {
     @TestVisible
     private static final String DEFAULT_TIER = 'Silver';
 
+    @TestVisible
+    private static final String TRANSACTION_TYPE_REDEMPTION = 'Redemption';
+
+    @TestVisible
+    private static final String TRANSACTION_TYPE_EARNING = 'Earning';
+
 
     /**
      * Main loyalty processing method.
      *
-     * Called from TransactionTriggerHandler.afterInsert().
      */
     public static void processEarn( List<Transaction_Record__c> newTransactions ) {
 
@@ -181,8 +186,22 @@ public with sharing class LoyaltyEngine {
 
             Date transactionDate = transactionRecord.Transaction_Date__c == null ? Date.today() : transactionRecord.Transaction_Date__c.date();
 
-            if (loyalty.Last_Transaction_Date__c == null || loyalty.Last_Transaction_Date__c < transactionDate) {
+            // -----------------------------------------------------
+            // Last Transaction Type
+            //
+            // Updated together with Last_Transaction_Date__c so both
+            // describe the same transaction. A back-dated
+            // transaction changes neither. On the same date, the
+            // last transaction processed wins.
+            //
+            // Redemption -> points were redeemed
+            // Earning    -> points earned, nothing redeemed
+            // blank      -> nothing earned and nothing redeemed
+            // -----------------------------------------------------
+
+            if (loyalty.Last_Transaction_Date__c == null || loyalty.Last_Transaction_Date__c <= transactionDate) {
                 loyalty.Last_Transaction_Date__c = transactionDate;
+                loyalty.Last_Transaction_Type__c = transactionTypeOf( pointsEarned, pointsRedeemed );
             }
         }
 
@@ -257,6 +276,27 @@ public with sharing class LoyaltyEngine {
         Decimal points = completeHundreds * tierPercentage;
 
         return Integer.valueOf( points.setScale(0, System.RoundingMode.DOWN));
+    }
+
+    /**
+     * Value for Loyalty_Record__c.Last_Transaction_Type__c.
+     *
+     * Redemption wins whenever points were redeemed, even if the
+     * same bill also earned points. Returns null (picklist None)
+     * when the transaction neither earned nor redeemed points.
+     */
+    @TestVisible
+    private static String transactionTypeOf( Integer pointsEarned, Integer pointsRedeemed ) {
+
+        if (pointsRedeemed > 0) {
+            return TRANSACTION_TYPE_REDEMPTION;
+        }
+
+        if (pointsEarned > 0) {
+            return TRANSACTION_TYPE_EARNING;
+        }
+
+        return null;
     }
 
     /**
@@ -336,7 +376,8 @@ public with sharing class LoyaltyEngine {
                     Points_Balance__c,
                     Total_Points_Earned__c,
                     Total_Points_Redeemed__c,
-                    Last_Transaction_Date__c
+                    Last_Transaction_Date__c,
+                    Last_Transaction_Type__c
                 FROM Loyalty_Record__c
                 WHERE Account__c IN :accountIds
                 FOR UPDATE
