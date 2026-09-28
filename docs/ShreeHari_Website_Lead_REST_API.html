@@ -270,7 +270,7 @@
 
 <div class="runner">
   <div><b>Shree Hari Jewellers &times; Salesforce</b> <span class="r">&mdash; Website Lead REST API</span></div>
-  <div class="r">Draft v1.0 &nbsp;|&nbsp; Sep 2026 &nbsp;|&nbsp; UAT</div>
+  <div class="r">Draft v1.1 &nbsp;|&nbsp; Sep 2026 &nbsp;|&nbsp; UAT</div>
 </div>
 
 <div class="wrap">
@@ -394,6 +394,7 @@ grant_type=client_credentials
           <tr><td class="fld">Empty fields</td><td>Omit any field with no value. Do not send <code>null</code> and do not send empty strings</td></tr>
           <tr><td class="fld">Picklist values</td><td>Case-sensitive and restricted. Send exactly the values listed in section 05</td></tr>
           <tr><td class="fld">Booleans</td><td>JSON <code>true</code> / <code>false</code>, not <code>"true"</code> / <code>"Y"</code></td></tr>
+          <tr><td class="fld">Dates</td><td>ISO format <code>YYYY-MM-DD</code> as a JSON string &mdash; <code>"1992-08-25"</code>, never <code>"25/08/1992"</code></td></tr>
           <tr><td class="fld">Numbers</td><td>Unformatted JSON numbers &mdash; <code>350000</code>, never <code>"3,50,000"</code></td></tr>
           <tr><td class="fld">Retries</td><td>Retry only on <span class="code-4xx">401</span> (after re-authenticating) and <span class="code-4xx">500</span>. A retried <span class="code-200">201</span> creates a second Lead &mdash; see Open point 2</td></tr>
         </tbody>
@@ -436,8 +437,19 @@ grant_type=client_credentials
           <tr><td class="fld">salutation</td><td class="api">Salutation</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>Mr. &middot; Ms. &middot; Mrs. &middot; Dr. &middot; Prof. &middot; Mx.</td></tr>
           <tr><td class="fld">firstName</td><td class="api">FirstName</td><td>String(40)</td><td><span class="opt">OPTIONAL</span></td><td></td></tr>
           <tr><td class="fld">lastName</td><td class="api">LastName</td><td>String(80)</td><td><span class="req">REQUIRED</span></td><td>If the form captures one full name, send the whole name here</td></tr>
-          <tr><td class="fld">company</td><td class="api">Company</td><td>String(255)</td><td><span class="cond">CONDITIONAL</span></td><td>Required when <code>businessType</code> is <code>B2B</code>. For B2C, omit it &mdash; the handler fills it with the customer's own name, which Salesforce requires on every Lead</td></tr>
-          <tr><td class="fld">title</td><td class="api">Title</td><td>String(128)</td><td><span class="opt">OPTIONAL</span></td><td>Job title, B2B enquiries</td></tr>
+          <tr><td class="fld">company</td><td class="api">Company</td><td>String(255)</td><td><span class="opt">OPTIONAL</span></td><td>Defaults to <code>Halsa Global</code> when omitted. Send it only when the customer gives a firm name</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Personal details <span style="color:var(--gold);letter-spacing:.06em">&mdash; new in v1.1</span></h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">dateOfBirth</td><td class="api">Date_of_Birth__c</td><td>Date</td><td><span class="opt">OPTIONAL</span></td><td>Customer&rsquo;s date of birth as <code>YYYY-MM-DD</code>. Must be a real calendar date and not in the future</td></tr>
+          <tr><td class="fld">maritalStatus</td><td class="api">Marital_Status__c</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>Married</code> &middot; <code>Unmarried</code></td></tr>
+          <tr><td class="fld">anniversaryDate</td><td class="api">Anniversary_Date__c</td><td>Date</td><td><span class="cond">CONDITIONAL</span></td><td>Wedding anniversary as <code>YYYY-MM-DD</code>. Not in the future, and after <code>dateOfBirth</code> when both are sent. Rejected when <code>maritalStatus</code> is <code>Unmarried</code>; accepted when it is <code>Married</code> or omitted</td></tr>
         </tbody>
       </table>
     </div>
@@ -449,8 +461,7 @@ grant_type=client_credentials
         <tbody>
           <tr><td class="fld">phone</td><td class="api">Phone</td><td>String(40)</td><td><span class="cond">CONDITIONAL</span></td><td>Mobile number of the customer. At least one of <code>phone</code> or <code>email</code> must be present</td></tr>
           <tr><td class="fld">email</td><td class="api">Email</td><td>Email(80)</td><td><span class="cond">CONDITIONAL</span></td><td>Must be a valid email format or the call is rejected</td></tr>
-          <tr><td class="fld">website</td><td class="api">Website</td><td>URL(255)</td><td><span class="opt">OPTIONAL</span></td><td>Company website, B2B enquiries</td></tr>
-          <tr><td class="fld">optOutEmail</td><td class="api">HasOptedOutOfEmail</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>false</code>. Send <code>true</code> when the customer did not tick the marketing consent box</td></tr>
+          <tr><td class="fld">website</td><td class="api">Website</td><td>URL(255)</td><td><span class="opt">OPTIONAL</span></td><td>Company website, when the customer gives one</td></tr>
         </tbody>
       </table>
     </div>
@@ -475,14 +486,13 @@ grant_type=client_credentials
         <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
         <tbody>
           <tr><td class="fld">leadSource</td><td class="api">LeadSource</td><td>Picklist</td><td><span class="req">REQUIRED</span></td><td>Which channel the enquiry came from. Restricted list &mdash; see section 05</td></tr>
-          <tr><td class="fld">businessType</td><td class="api">Business_Type__c</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>B2C</code> &middot; <code>B2B</code> &middot; <code>Unknown</code>. Defaults to <code>Unknown</code> when omitted</td></tr>
           <tr><td class="fld">status</td><td class="api">Status</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>Defaults to <code>New</code>. The website should normally leave this out</td></tr>
+          <tr><td class="fld">businessType</td><td class="api">Business_Type__c</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>B2C</code> &middot; <code>B2B</code> &middot; <code>Unknown</code>. Defaults to <code>Unknown</code> when omitted</td></tr>
           <tr><td class="fld">rating</td><td class="api">Rating</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>Hot</code> &middot; <code>Warm</code> &middot; <code>Cold</code></td></tr>
-          <tr><td class="fld">industry</td><td class="api">Industry</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>B2B enquiries only &mdash; see the appendix for the value list</td></tr>
+          <tr><td class="fld">industry</td><td class="api">Industry</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>See section 05 for the value list</td></tr>
           <tr><td class="fld">storeCode</td><td class="api">Store_Association__c</td><td>String(20)</td><td><span class="opt">OPTIONAL</span></td><td>Store Code of the preferred or nearest store. Resolved to the Store Location record; an unknown code is rejected with <span class="code-4xx">400</span></td></tr>
           <tr><td class="fld">walkInFlag</td><td class="api">Walk_In_Flag__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>false</code>. Leave it out for website enquiries &mdash; it marks in-store capture</td></tr>
           <tr><td class="fld">campaignId</td><td class="api">Campaign_Attribution__c</td><td>Id(18)</td><td><span class="opt">OPTIONAL</span></td><td>Salesforce Campaign Id when the enquiry came from a tracked campaign. An unknown Id is rejected with <span class="code-4xx">400</span></td></tr>
-          <tr><td class="fld">runAssignmentRules</td><td class="api">&mdash; control flag</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>true</code>. Set <code>false</code> only for data loads that should stay with the integration user</td></tr>
         </tbody>
       </table>
     </div>
@@ -494,8 +504,8 @@ grant_type=client_credentials
         <tbody>
           <tr><td class="fld">description</td><td class="api">Description</td><td>Long Text(32000)</td><td><span class="opt">OPTIONAL</span></td><td>What the customer asked for, in their own words &mdash; product, metal, budget, occasion</td></tr>
           <tr><td class="fld">qualificationNotes</td><td class="api">Qualification_Notes__c</td><td>Long Text(2000)</td><td><span class="opt">OPTIONAL</span></td><td>Normally filled by the tele-calling agent, not the website</td></tr>
-          <tr><td class="fld">annualRevenue</td><td class="api">AnnualRevenue</td><td>Currency</td><td><span class="opt">OPTIONAL</span></td><td>B2B enquiries, INR</td></tr>
-          <tr><td class="fld">numberOfEmployees</td><td class="api">NumberOfEmployees</td><td>Integer</td><td><span class="opt">OPTIONAL</span></td><td>B2B enquiries</td></tr>
+          <tr><td class="fld">annualRevenue</td><td class="api">AnnualRevenue</td><td>Currency</td><td><span class="opt">OPTIONAL</span></td><td>INR, when the customer gives a firm&rsquo;s turnover</td></tr>
+          <tr><td class="fld">numberOfEmployees</td><td class="api">NumberOfEmployees</td><td>Integer</td><td><span class="opt">OPTIONAL</span></td><td>When the customer gives a firm&rsquo;s size</td></tr>
         </tbody>
       </table>
     </div>
@@ -504,40 +514,44 @@ grant_type=client_credentials
       <p><span class="lbl">Fields deliberately not in this payload:</span> Lead Owner, Mobile Phone and Campaign Id (standard). Ownership is decided by the assignment rule, not by the caller; Mobile Phone and the standard Campaign lookup are not exposed on Lead in this org, so the mobile number goes in <code>phone</code> and campaign attribution goes in <code>campaignId</code>. Any field sent that is not listed above is ignored.</p>
     </div>
 
-    <h3>Sample request &mdash; B2C website enquiry</h3>
+    <h3>Sample request &mdash; website enquiry</h3>
     <div class="codeblock">
       <div class="bar">POST /services/apexrest/shreehari/v1/leads</div>
 <pre>{
-  <span class="k">"salutation"</span>   : <span class="s">"Ms."</span>,
-  <span class="k">"firstName"</span>    : <span class="s">"Ananya"</span>,
-  <span class="k">"lastName"</span>     : <span class="s">"Sharma"</span>,
-  <span class="k">"phone"</span>        : <span class="s">"+91-9830012345"</span>,
-  <span class="k">"email"</span>        : <span class="s">"ananya.sharma@example.com"</span>,
-  <span class="k">"leadSource"</span>   : <span class="s">"Shopify"</span>,
-  <span class="k">"businessType"</span> : <span class="s">"B2C"</span>,
-  <span class="k">"street"</span>       : <span class="s">"12/1 Lake View Road"</span>,
-  <span class="k">"city"</span>         : <span class="s">"Kolkata"</span>,
-  <span class="k">"state"</span>        : <span class="s">"West Bengal"</span>,
-  <span class="k">"postalCode"</span>   : <span class="s">"700029"</span>,
-  <span class="k">"country"</span>      : <span class="s">"India"</span>,
-  <span class="k">"storeCode"</span>    : <span class="s">"000001"</span>,
-  <span class="k">"rating"</span>       : <span class="s">"Warm"</span>,
-  <span class="k">"description"</span>  : <span class="s">"Enquiry from the bridal collection page - 22K gold necklace set, budget around 3,50,000 INR, needed before Diwali."</span>
+  <span class="k">"salutation"</span>      : <span class="s">"Ms."</span>,
+  <span class="k">"firstName"</span>       : <span class="s">"Ananya"</span>,
+  <span class="k">"lastName"</span>        : <span class="s">"Sharma"</span>,
+  <span class="k">"dateOfBirth"</span>     : <span class="s">"1992-08-25"</span>,
+  <span class="k">"maritalStatus"</span>   : <span class="s">"Married"</span>,
+  <span class="k">"anniversaryDate"</span> : <span class="s">"2018-02-14"</span>,
+  <span class="k">"phone"</span>           : <span class="s">"+91-9830012345"</span>,
+  <span class="k">"email"</span>           : <span class="s">"ananya.sharma@example.com"</span>,
+  <span class="k">"leadSource"</span>      : <span class="s">"Shopify"</span>,
+  <span class="k">"businessType"</span>    : <span class="s">"B2C"</span>,
+  <span class="k">"industry"</span>        : <span class="s">"Retail"</span>,
+  <span class="k">"walkInFlag"</span>      : false,
+  <span class="k">"campaignId"</span>      : <span class="s">"701h2000000LeDlAAK"</span>,
+  <span class="k">"street"</span>          : <span class="s">"12/1 Lake View Road"</span>,
+  <span class="k">"city"</span>            : <span class="s">"Kolkata"</span>,
+  <span class="k">"state"</span>           : <span class="s">"West Bengal"</span>,
+  <span class="k">"postalCode"</span>      : <span class="s">"700029"</span>,
+  <span class="k">"country"</span>         : <span class="s">"India"</span>,
+  <span class="k">"storeCode"</span>       : <span class="s">"000001"</span>,
+  <span class="k">"rating"</span>          : <span class="s">"Warm"</span>,
+  <span class="k">"description"</span>     : <span class="s">"Enquiry from the bridal collection page - 22K gold necklace set, budget around 3,50,000 INR, needed before Diwali."</span>
 }</pre>
     </div>
 
-    <h3>Sample request &mdash; B2B enquiry</h3>
+    <h3>Sample request &mdash; enquiry with company details</h3>
     <div class="codeblock">
       <div class="bar">POST /services/apexrest/shreehari/v1/leads</div>
 <pre>{
   <span class="k">"firstName"</span>         : <span class="s">"Rakesh"</span>,
   <span class="k">"lastName"</span>          : <span class="s">"Agarwal"</span>,
   <span class="k">"company"</span>           : <span class="s">"Agarwal Jewellers Pvt Ltd"</span>,
-  <span class="k">"title"</span>             : <span class="s">"Purchase Head"</span>,
   <span class="k">"phone"</span>             : <span class="s">"+91-9007712345"</span>,
   <span class="k">"email"</span>             : <span class="s">"rakesh@agarwaljewellers.example"</span>,
   <span class="k">"leadSource"</span>        : <span class="s">"India Mart"</span>,
-  <span class="k">"businessType"</span>      : <span class="s">"B2B"</span>,
   <span class="k">"industry"</span>          : <span class="s">"Retail"</span>,
   <span class="k">"city"</span>              : <span class="s">"Siliguri"</span>,
   <span class="k">"state"</span>             : <span class="s">"West Bengal"</span>,
@@ -556,7 +570,7 @@ grant_type=client_credentials
   <span class="k">"action"</span>             : <span class="s">"CREATED"</span>,
   <span class="k">"leadId"</span>             : <span class="s">"00Qh200000ABCDEAA1"</span>,
   <span class="k">"status"</span>             : <span class="s">"New"</span>,
-  <span class="k">"businessType"</span>       : <span class="s">"B2C"</span>,
+  <span class="k">"company"</span>            : <span class="s">"Halsa Global"</span>,
   <span class="k">"storeAssociationId"</span> : <span class="s">"a00h200000XYZAbAAN"</span>,
   <span class="k">"ownerId"</span>            : <span class="s">"00Gh20000000AbCEAU"</span>,
   <span class="k">"message"</span>            : <span class="s">"Lead created successfully."</span>
@@ -570,7 +584,7 @@ grant_type=client_credentials
         <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
         <tbody>
           <tr><td class="code-200">201 Created</td><td>Lead created &mdash; <code>leadId</code> returned</td></tr>
-          <tr><td class="code-4xx">400 Bad Request</td><td>Malformed JSON, missing required field, invalid picklist value, or unknown <code>storeCode</code> / <code>campaignId</code></td></tr>
+          <tr><td class="code-4xx">400 Bad Request</td><td>Malformed JSON, missing required field, invalid picklist value or date, or unknown <code>storeCode</code> / <code>campaignId</code></td></tr>
           <tr><td class="code-4xx">401 Unauthorized</td><td>Missing or expired Bearer token &mdash; re-authenticate and retry once</td></tr>
           <tr><td class="code-4xx">405 Method Not Allowed</td><td>Any verb other than POST on this resource</td></tr>
           <tr><td class="code-4xx">409 Conflict</td><td>A Salesforce duplicate rule blocked the insert</td></tr>
@@ -584,7 +598,7 @@ grant_type=client_credentials
   <section>
     <h2><span class="num">05</span>Allowed picklist values</h2>
     <hr class="sect-rule">
-    <p>These are restricted picklists in the org as configured today. Any other value is rejected with <span class="code-4xx">400 INVALID_PICKLIST_VALUE</span> &mdash; the values are case-sensitive and must be sent exactly as printed, spaces and hyphens included.</p>
+    <p>These are the only values the API accepts, read from the org as configured today. Any other value is rejected with <span class="code-4xx">400 INVALID_PICKLIST_VALUE</span> &mdash; the values are case-sensitive and must be sent exactly as printed, spaces, hyphens and full stops included. All picklists except <code>leadSource</code> are optional.</p>
 
     <h4>leadSource &mdash; required</h4>
     <div class="values">
@@ -601,6 +615,11 @@ grant_type=client_credentials
       <span class="val">B2C</span><span class="val">B2B</span><span class="val dflt">Unknown &mdash; default</span>
     </div>
 
+    <h4>maritalStatus &mdash; new in v1.1</h4>
+    <div class="values">
+      <span class="val">Married</span><span class="val">Unmarried</span>
+    </div>
+
     <h4>rating</h4>
     <div class="values">
       <span class="val">Hot</span><span class="val">Warm</span><span class="val">Cold</span>
@@ -609,6 +628,11 @@ grant_type=client_credentials
     <h4>salutation</h4>
     <div class="values">
       <span class="val">Mr.</span><span class="val">Ms.</span><span class="val">Mrs.</span><span class="val">Dr.</span><span class="val">Prof.</span><span class="val">Mx.</span>
+    </div>
+
+    <h4>industry</h4>
+    <div class="values">
+      <span class="val">Agriculture</span><span class="val">Apparel</span><span class="val">Banking</span><span class="val">Biotechnology</span><span class="val">Chemicals</span><span class="val">Communications</span><span class="val">Construction</span><span class="val">Consulting</span><span class="val">Education</span><span class="val">Electronics</span><span class="val">Energy</span><span class="val">Engineering</span><span class="val">Entertainment</span><span class="val">Environmental</span><span class="val">Finance</span><span class="val">Food &amp; Beverage</span><span class="val">Government</span><span class="val">Healthcare</span><span class="val">Hospitality</span><span class="val">Insurance</span><span class="val">Machinery</span><span class="val">Manufacturing</span><span class="val">Media</span><span class="val">Not For Profit</span><span class="val">Other</span><span class="val">Recreation</span><span class="val">Retail</span><span class="val">Shipping</span><span class="val">Technology</span><span class="val">Telecommunications</span><span class="val">Transportation</span><span class="val">Utilities</span>
     </div>
   </section>
 
@@ -636,9 +660,10 @@ grant_type=client_credentials
           <tr><td class="api">INVALID_JSON</td><td class="code-4xx">400</td><td>The body is not parseable JSON</td></tr>
           <tr><td class="api">MISSING_REQUIRED_FIELD</td><td class="code-4xx">400</td><td><code>lastName</code> or <code>leadSource</code> absent or blank</td></tr>
           <tr><td class="api">CONTACT_INFO_REQUIRED</td><td class="code-4xx">400</td><td>Neither <code>phone</code> nor <code>email</code> was supplied</td></tr>
-          <tr><td class="api">COMPANY_REQUIRED</td><td class="code-4xx">400</td><td><code>businessType</code> is <code>B2B</code> but <code>company</code> is missing</td></tr>
           <tr><td class="api">INVALID_PICKLIST_VALUE</td><td class="code-4xx">400</td><td>A picklist field carries a value outside section 05</td></tr>
           <tr><td class="api">INVALID_EMAIL_FORMAT</td><td class="code-4xx">400</td><td><code>email</code> is not a valid address</td></tr>
+          <tr><td class="api">INVALID_DATE</td><td class="code-4xx">400</td><td><code>dateOfBirth</code> or <code>anniversaryDate</code> is not a real <code>YYYY-MM-DD</code> date, is in the future, or the anniversary is not after the date of birth</td></tr>
+          <tr><td class="api">ANNIVERSARY_NOT_ALLOWED</td><td class="code-4xx">400</td><td><code>anniversaryDate</code> was sent with <code>maritalStatus</code> = <code>Unmarried</code></td></tr>
           <tr><td class="api">VALUE_TOO_LONG</td><td class="code-4xx">400</td><td>A value exceeds the length in section 04</td></tr>
           <tr><td class="api">STORE_NOT_FOUND</td><td class="code-4xx">400</td><td>No Store Location has that <code>storeCode</code></td></tr>
           <tr><td class="api">CAMPAIGN_NOT_FOUND</td><td class="code-4xx">400</td><td>No Campaign has that <code>campaignId</code></td></tr>
@@ -674,7 +699,7 @@ grant_type=client_credentials
       <div class="arw">&rarr;</div>
       <div class="box"><em>Step 4</em>Agent qualifies<br>&amp; converts</div>
     </div>
-    <p>The handler sets <code>Status = New</code>, applies <code>Business_Type__c</code> and resolves <code>Store_Association__c</code> from the store code, then inserts with assignment rules switched on so the Lead reaches the right queue immediately. Everything after that &mdash; qualification, notes, conversion to Account and Contact &mdash; happens inside Salesforce and needs nothing further from the website.</p>
+    <p>The handler sets <code>Status = New</code>, defaults <code>Company</code> to <code>Halsa Global</code> when none is sent, and resolves <code>Store_Association__c</code> from the store code, then inserts with assignment rules switched on so the Lead reaches the right queue immediately. Everything after that &mdash; qualification, notes, conversion to Account and Contact &mdash; happens inside Salesforce and needs nothing further from the website.</p>
   </section>
 
   <!-- ============ POSTMAN ============ -->
@@ -694,72 +719,12 @@ grant_type=client_credentials
       <li>Send. A <span class="code-200">201</span> with a <code>leadId</code> means the Lead is in Salesforce &mdash; open it at <code>{{instance_url}}/lightning/r/Lead/&lt;leadId&gt;/view</code> to confirm the field mapping.</li>
     </ol>
     <div class="note warn">
-      <p><span class="lbl">For UAT testing today:</span> the only Store Location loaded in the sandbox is <em>test store</em>, store code <code>000001</code> &mdash; that is the value used in the B2C sample. Any other code will come back as <span class="code-4xx">STORE_NOT_FOUND</span> until the real store list is loaded.</p>
-    </div>
-  </section>
-
-  <!-- ============ OPEN POINTS ============ -->
-  <section>
-    <h2><span class="num">09</span>Open points for review</h2>
-    <hr class="sect-rule">
-    <p>Each of these needs a decision before the endpoint is built. They are listed in the order they affect the website team.</p>
-
-    <div class="tbl">
-      <table>
-        <thead><tr><th>#</th><th>Point</th><th>Impact &amp; recommendation</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="num">1</td>
-            <td class="fld">Endpoint not yet deployed</td>
-            <td>The token call in section 02 works against UAT today. The <code>/leads</code> resource goes live once the Apex REST handler is deployed to the sandbox. Everything else in this document is already in place.</td>
-          </tr>
-          <tr>
-            <td class="num">2</td>
-            <td class="fld">No idempotency key</td>
-            <td>Lead carries no External Id field today, so a retried or double-submitted POST creates a second Lead. <strong>Recommended:</strong> add <code>Website_Lead_ID__c</code> (Text 64, External Id, Unique) and switch this endpoint to an upsert on it. The website would then send its own enquiry reference and retries would become safe.</td>
-          </tr>
-          <tr>
-            <td class="num">3</td>
-            <td class="fld">Mobile Phone not available</td>
-            <td>Lead in this org exposes <code>Phone</code> but not <code>MobilePhone</code>, <code>Fax</code> or <code>DoNotCall</code>. The mobile number goes in <code>phone</code>. Confirm whether a separate Mobile Phone field is wanted before build.</td>
-          </tr>
-          <tr>
-            <td class="num">4</td>
-            <td class="fld">Store list</td>
-            <td>Store Location currently holds one test record. Store codes must be loaded and shared with the website team so the store dropdown matches Salesforce exactly.</td>
-          </tr>
-          <tr>
-            <td class="num">5</td>
-            <td class="fld">Assignment rule</td>
-            <td>The routing in section 07 assumes an active Lead assignment rule covering the tele-calling queue and the store queues. Confirm the rule and queue names.</td>
-          </tr>
-          <tr>
-            <td class="num">6</td>
-            <td class="fld">IP allowlisting</td>
-            <td>The External Client App enforces IP restrictions. Share the website server's outbound IP &mdash; and the testers' IPs &mdash; so they can be added to the integration user's profile.</td>
-          </tr>
-          <tr>
-            <td class="num">7</td>
-            <td class="fld">Which source value</td>
-            <td>Confirm which <code>leadSource</code> the website should send. <code>Shopify</code> is assumed in the samples; the value drives channel reporting, so it should be agreed before go-live.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- ============ APPENDIX ============ -->
-  <section>
-    <h2><span class="num">10</span>Appendix &mdash; Industry values</h2>
-    <hr class="sect-rule">
-    <p>Used only on B2B enquiries. Standard Salesforce list as configured in this org:</p>
-    <div class="values">
-      <span class="val">Agriculture</span><span class="val">Apparel</span><span class="val">Banking</span><span class="val">Biotechnology</span><span class="val">Chemicals</span><span class="val">Communications</span><span class="val">Construction</span><span class="val">Consulting</span><span class="val">Education</span><span class="val">Electronics</span><span class="val">Energy</span><span class="val">Engineering</span><span class="val">Entertainment</span><span class="val">Environmental</span><span class="val">Finance</span><span class="val">Food &amp; Beverage</span><span class="val">Government</span><span class="val">Healthcare</span><span class="val">Hospitality</span><span class="val">Insurance</span><span class="val">Machinery</span><span class="val">Manufacturing</span><span class="val">Media</span><span class="val">Not For Profit</span><span class="val">Other</span><span class="val">Recreation</span><span class="val">Retail</span><span class="val">Shipping</span><span class="val">Technology</span><span class="val">Telecommunications</span><span class="val">Transportation</span><span class="val">Utilities</span>
+      <p><span class="lbl">For UAT testing today:</span> the only Store Location loaded in the sandbox is <em>test store</em>, store code <code>000001</code> &mdash; that is the value used in the first sample. Any other code will come back as <span class="code-4xx">STORE_NOT_FOUND</span> until the real store list is loaded. Likewise the only Campaign is <em>test campaign</em>, Id <code>701h2000000LeDlAAK</code>; any other <code>campaignId</code> returns <span class="code-4xx">CAMPAIGN_NOT_FOUND</span>.</p>
     </div>
   </section>
 
   <footer>
-    Prepared by Halsa Global for Shree Hari Jewellers &mdash; Draft v1.0, September 2026.<br>
-    Field names, lengths and picklist values in this document were read from the Shree Hari UAT sandbox on 18 September 2026. To be reviewed with the website team before development begins.
+    Prepared by Halsa Global for Shree Hari Jewellers &mdash; Draft v1.1, September 2026 (v1.0: 18 September 2026; v1.1: 28 September 2026, personal-detail fields added, B2B/B2C split removed).<br>
+    Field names, lengths and picklist values in this document were read from the Shree Hari UAT sandbox on 28 September 2026. To be reviewed with the website team before development begins.
   </footer>
 </div>

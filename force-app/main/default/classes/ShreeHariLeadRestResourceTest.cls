@@ -51,7 +51,7 @@ private class ShreeHariLeadRestResourceTest {
     // =====================================================================
 
     @IsTest
-    static void createsB2CLeadFromWebsiteEnquiry() {
+    static void createsLeadFromWebsiteEnquiry() {
         String body =
             '{' +
             '"salutation":"Ms.",' +
@@ -60,7 +60,6 @@ private class ShreeHariLeadRestResourceTest {
             '"phone":"+91-9830012345",' +
             '"email":"ananya.sharma@example.com",' +
             '"leadSource":"Shopify",' +
-            '"businessType":"B2C",' +
             '"street":"12/1 Lake View Road",' +
             '"city":"Kolkata",' +
             '"state":"West Bengal",' +
@@ -79,35 +78,33 @@ private class ShreeHariLeadRestResourceTest {
         Assert.isNotNull(response.get('leadId'), 'leadId should be returned');
         Assert.areEqual('New', response.get('status'), 'Status should default to New');
         Assert.isNotNull(response.get('storeAssociationId'), 'Store should be resolved');
+        Assert.areEqual('Halsa Global', response.get('company'), 'Company should default to Halsa Global');
 
         Lead saved = [
             SELECT FirstName, LastName, Company, Email, Phone, LeadSource, Status,
-                   Business_Type__c, Rating, Walk_In_Flag__c, HasOptedOutOfEmail,
+                   Rating, Walk_In_Flag__c, Business_Type__c,
                    City, Store_Association__c
             FROM Lead
             LIMIT 1
         ];
-        Assert.areEqual('Ananya Sharma', saved.Company, 'Company should default to the customer name for B2C');
+        Assert.areEqual('Halsa Global', saved.Company, 'Company should default to Halsa Global');
         Assert.areEqual('Shopify', saved.LeadSource, 'Lead Source should be mapped');
-        Assert.areEqual('B2C', saved.Business_Type__c, 'Business Type should be mapped');
         Assert.areEqual('Kolkata', saved.City, 'City should be mapped');
         Assert.areEqual(false, saved.Walk_In_Flag__c, 'Walk-In Flag should default to false');
-        Assert.areEqual(false, saved.HasOptedOutOfEmail, 'Opt out should default to false');
+        Assert.areEqual('Unknown', saved.Business_Type__c, 'Business Type should default to Unknown');
         Assert.isNotNull(saved.Store_Association__c, 'Store Association should be set');
     }
 
     @IsTest
-    static void createsB2BLeadWithCompanyDetails() {
+    static void keepsCompanyAndFirmDetailsWhenSent() {
         String body =
             '{' +
             '"firstName":"Rakesh",' +
             '"lastName":"Agarwal",' +
             '"company":"Agarwal Jewellers Pvt Ltd",' +
-            '"title":"Purchase Head",' +
             '"phone":"+91-9007712345",' +
             '"email":"rakesh@agarwaljewellers.example",' +
             '"leadSource":"India Mart",' +
-            '"businessType":"B2B",' +
             '"industry":"Retail",' +
             '"annualRevenue":45000000,' +
             '"numberOfEmployees":24' +
@@ -115,10 +112,10 @@ private class ShreeHariLeadRestResourceTest {
 
         Map<String, Object> response = post(body);
 
-        Assert.areEqual(201, statusOf(response), 'A valid B2B enquiry should be created');
+        Assert.areEqual(201, statusOf(response), 'A valid enquiry with company details should be created');
 
         Lead saved = [
-            SELECT Company, Title, Industry, AnnualRevenue, NumberOfEmployees, Business_Type__c
+            SELECT Company, Industry, AnnualRevenue, NumberOfEmployees
             FROM Lead
             LIMIT 1
         ];
@@ -126,6 +123,70 @@ private class ShreeHariLeadRestResourceTest {
         Assert.areEqual('Retail', saved.Industry, 'Industry should be mapped');
         Assert.areEqual(45000000, saved.AnnualRevenue.intValue(), 'Annual Revenue should be mapped');
         Assert.areEqual(24, saved.NumberOfEmployees, 'Employee count should be mapped');
+    }
+
+    @IsTest
+    static void mapsBusinessTypeWalkInAndCampaign() {
+        Campaign campaign = new Campaign(Name = 'Diwali 2026', IsActive = true);
+        insert campaign;
+
+        String body =
+            '{' +
+            '"lastName":"Sharma",' +
+            '"phone":"+91-9830012345",' +
+            '"leadSource":"Walk-in",' +
+            '"businessType":"B2C",' +
+            '"industry":"Retail",' +
+            '"walkInFlag":true,' +
+            '"campaignId":"' + campaign.Id + '"' +
+            '}';
+
+        Map<String, Object> response = post(body);
+
+        Assert.areEqual(201, statusOf(response), 'A valid enquiry should be created');
+
+        Lead saved = [
+            SELECT Business_Type__c, Industry, Walk_In_Flag__c, Campaign_Attribution__c
+            FROM Lead
+            LIMIT 1
+        ];
+        Assert.areEqual('B2C', saved.Business_Type__c, 'Business Type should be mapped');
+        Assert.areEqual('Retail', saved.Industry, 'Industry should be mapped');
+        Assert.areEqual(true, saved.Walk_In_Flag__c, 'Walk-In Flag should be mapped');
+        Assert.areEqual(campaign.Id, saved.Campaign_Attribution__c, 'Campaign should be mapped');
+    }
+
+    @IsTest
+    static void rejectsUnknownBusinessType() {
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","businessType":"Retail"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), 'An unlisted business type should be rejected');
+        Assert.areEqual('INVALID_PICKLIST_VALUE', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('businessType', response.get('field'), 'The offending field should be reported');
+    }
+
+    @IsTest
+    static void mapsPersonalDetails() {
+        String body =
+            '{' +
+            '"lastName":"Sharma",' +
+            '"phone":"+91-9830012345",' +
+            '"leadSource":"Shopify",' +
+            '"dateOfBirth":"1992-08-25",' +
+            '"maritalStatus":"Married",' +
+            '"anniversaryDate":"2018-02-14"' +
+            '}';
+
+        Map<String, Object> response = post(body);
+
+        Assert.areEqual(201, statusOf(response), 'Valid personal details should be accepted');
+
+        Lead saved = [SELECT Date_of_Birth__c, Marital_Status__c, Anniversary_Date__c FROM Lead LIMIT 1];
+        Assert.areEqual(Date.newInstance(1992, 8, 25), saved.Date_of_Birth__c, 'Date of Birth should be mapped');
+        Assert.areEqual('Married', saved.Marital_Status__c, 'Marital Status should be mapped');
+        Assert.areEqual(Date.newInstance(2018, 2, 14), saved.Anniversary_Date__c, 'Anniversary Date should be mapped');
     }
 
     @IsTest
@@ -142,12 +203,10 @@ private class ShreeHariLeadRestResourceTest {
         Map<String, Object> response = post(body);
 
         Assert.areEqual(201, statusOf(response), 'Unknown keys should be ignored, not rejected');
-        Assert.areEqual('Unknown', response.get('businessType'), 'Business Type should default to Unknown');
 
-        Lead saved = [SELECT Company, Status, Business_Type__c FROM Lead LIMIT 1];
-        Assert.areEqual('Bose', saved.Company, 'Company should fall back to the single name supplied');
+        Lead saved = [SELECT Company, Status FROM Lead LIMIT 1];
+        Assert.areEqual('Halsa Global', saved.Company, 'Company should default to Halsa Global');
         Assert.areEqual('New', saved.Status, 'Status should default to New');
-        Assert.areEqual('Unknown', saved.Business_Type__c, 'Business Type should default to Unknown');
     }
 
     // =====================================================================
@@ -179,17 +238,6 @@ private class ShreeHariLeadRestResourceTest {
 
         Assert.areEqual(400, statusOf(response), 'An unreachable customer should be rejected');
         Assert.areEqual('CONTACT_INFO_REQUIRED', response.get('errorCode'), 'Error code should name the cause');
-    }
-
-    @IsTest
-    static void rejectsB2BWithoutCompany() {
-        Map<String, Object> response = post(
-            '{"lastName":"Agarwal","leadSource":"India Mart","phone":"+91-9800011111","businessType":"B2B"}'
-        );
-
-        Assert.areEqual(400, statusOf(response), 'B2B without a firm name should be rejected');
-        Assert.areEqual('COMPANY_REQUIRED', response.get('errorCode'), 'Error code should name the cause');
-        Assert.areEqual('company', response.get('field'), 'The offending field should be reported');
     }
 
     @IsTest
@@ -268,6 +316,74 @@ private class ShreeHariLeadRestResourceTest {
         Assert.areEqual(400, statusOf(response), 'A state without a country should be rejected');
         Assert.areEqual('INVALID_ADDRESS', response.get('errorCode'), 'Error code should name the cause');
         Assert.areEqual('country', response.get('field'), 'The offending field should be reported');
+    }
+
+    @IsTest
+    static void rejectsUnknownMaritalStatus() {
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","maritalStatus":"Single"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), 'An unlisted marital status should be rejected');
+        Assert.areEqual('INVALID_PICKLIST_VALUE', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('maritalStatus', response.get('field'), 'The offending field should be reported');
+    }
+
+    @IsTest
+    static void rejectsWronglyFormattedDate() {
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","dateOfBirth":"25/08/1992"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), 'A DD/MM/YYYY date should be rejected');
+        Assert.areEqual('INVALID_DATE', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('dateOfBirth', response.get('field'), 'The offending field should be reported');
+    }
+
+    @IsTest
+    static void rejectsImpossibleDate() {
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","anniversaryDate":"2019-02-30"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), '30 February should be rejected, not rolled into March');
+        Assert.areEqual('INVALID_DATE', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('anniversaryDate', response.get('field'), 'The offending field should be reported');
+    }
+
+    @IsTest
+    static void rejectsFutureDate() {
+        String tomorrow = String.valueOf(Date.today().addDays(1));
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","dateOfBirth":"' + tomorrow + '"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), 'A birth date in the future should be rejected');
+        Assert.areEqual('INVALID_DATE', response.get('errorCode'), 'Error code should name the cause');
+    }
+
+    @IsTest
+    static void rejectsAnniversaryForUnmarriedCustomer() {
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111",' +
+            '"maritalStatus":"Unmarried","anniversaryDate":"2018-02-14"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), 'An unmarried customer cannot have an anniversary date');
+        Assert.areEqual('ANNIVERSARY_NOT_ALLOWED', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('anniversaryDate', response.get('field'), 'The offending field should be reported');
+    }
+
+    @IsTest
+    static void rejectsAnniversaryBeforeDateOfBirth() {
+        Map<String, Object> response = post(
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111",' +
+            '"dateOfBirth":"1992-08-25","anniversaryDate":"1990-02-14"}'
+        );
+
+        Assert.areEqual(400, statusOf(response), 'An anniversary before birth should be rejected');
+        Assert.areEqual('INVALID_DATE', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('anniversaryDate', response.get('field'), 'The offending field should be reported');
     }
 
     @IsTest

@@ -3,7 +3,7 @@
  *
  *   POST /services/apexrest/shreehari/v1/leads
  *
- * Contract: "Website -> Salesforce Lead REST API", Draft v1.0, September 2026.
+ * Contract: "Website -> Salesforce Lead REST API", Draft v1.1, September 2026.
  * Authentication is handled by the platform through the Shree Hari Website API
  * External Client App (OAuth 2.0 client credentials), so an expired or missing
  * token never reaches this class. Any verb other than POST is rejected by the
@@ -14,7 +14,7 @@
  *   1. HTTP entry point       createLead()
  *   2. Parsing                parse()
  *   3. Validation             validate() and its helpers
- *   4. Mapping                buildLead(), resolveCompany/Store/Campaign()
+ *   4. Mapping                buildLead(), resolveStore/Campaign()
  *   5. Persistence            insertWithAssignment(), translate()
  *   6. Response rendering     buildResponse(), writeError()
  *   7. Inner types            LeadRequest, LeadResponse, ApiException
@@ -33,11 +33,17 @@ global with sharing class ShreeHariLeadRestResource {
     private static final String CONTENT_TYPE = 'application/json; charset=UTF-8';
     @TestVisible
     private static final String DEFAULT_STATUS = 'New';
+    /** Company is required on Lead; every enquiry without one is filed under this. */
+    @TestVisible
+    private static final String DEFAULT_COMPANY = 'Halsa Global';
     @TestVisible
     private static final String DEFAULT_BUSINESS_TYPE = 'Unknown';
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         '^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$'
     );
+    private static final Pattern DATE_PATTERN = Pattern.compile('^\\d{4}-\\d{2}-\\d{2}$');
+    @TestVisible
+    private static final String MARITAL_STATUS_UNMARRIED = 'Unmarried';
 
     // =====================================================================
     // 1. HTTP entry point
@@ -69,7 +75,7 @@ global with sharing class ShreeHariLeadRestResource {
             validate(payload);
 
             Lead record = buildLead(payload);
-            insertWithAssignment(record, payload.runAssignmentRules != false);
+            insertWithAssignment(record);
 
             response.statusCode = 201;
             response.responseBody = Blob.valueOf(
@@ -159,20 +165,12 @@ global with sharing class ShreeHariLeadRestResource {
 
         // Picklists --------------------------------------------------------
         validatePicklist(Lead.LeadSource, 'leadSource', p.leadSource);
-        validatePicklist(Lead.Business_Type__c, 'businessType', p.businessType);
         validatePicklist(Lead.Status, 'status', p.status);
         validatePicklist(Lead.Rating, 'rating', p.rating);
         validatePicklist(Lead.Industry, 'industry', p.industry);
         validatePicklist(Lead.Salutation, 'salutation', p.salutation);
-
-        // Company is mandatory for B2B, defaulted for everyone else --------
-        if ('B2B'.equals(p.businessType) && String.isBlank(p.company)) {
-            throw badRequest(
-                'COMPANY_REQUIRED',
-                'company',
-                'company is required when businessType is B2B. Send the firm name as it should appear in Salesforce.'
-            );
-        }
+        validatePicklist(Lead.Marital_Status__c, 'maritalStatus', p.maritalStatus);
+        validatePicklist(Lead.Business_Type__c, 'businessType', p.businessType);
 
         // Email format -----------------------------------------------------
         if (String.isNotBlank(p.email) && !EMAIL_PATTERN.matcher(p.email).matches()) {
@@ -192,11 +190,29 @@ global with sharing class ShreeHariLeadRestResource {
             );
         }
 
+        // Personal dates ---------------------------------------------------
+        Date dateOfBirth = parseDate('dateOfBirth', p.dateOfBirth);
+        Date anniversaryDate = parseDate('anniversaryDate', p.anniversaryDate);
+
+        if (anniversaryDate != null && MARITAL_STATUS_UNMARRIED.equals(p.maritalStatus)) {
+            throw badRequest(
+                'ANNIVERSARY_NOT_ALLOWED',
+                'anniversaryDate',
+                'anniversaryDate can only be sent when maritalStatus is Married or omitted.'
+            );
+        }
+        if (anniversaryDate != null && dateOfBirth != null && anniversaryDate <= dateOfBirth) {
+            throw badRequest(
+                'INVALID_DATE',
+                'anniversaryDate',
+                'anniversaryDate must be after dateOfBirth.'
+            );
+        }
+
         // Lengths ----------------------------------------------------------
         checkLength(Lead.LastName, 'lastName', p.lastName);
         checkLength(Lead.FirstName, 'firstName', p.firstName);
         checkLength(Lead.Company, 'company', p.company);
-        checkLength(Lead.Title, 'title', p.title);
         checkLength(Lead.Phone, 'phone', p.phone);
         checkLength(Lead.Email, 'email', p.email);
         checkLength(Lead.Website, 'website', p.website);
@@ -250,6 +266,41 @@ global with sharing class ShreeHariLeadRestResource {
         }
     }
 
+    /**
+     * Parses a YYYY-MM-DD date. Null and blank pass. The value must be a real
+     * calendar date (Date.valueOf would silently roll 2026-02-30 into March)
+     * and must not be in the future.
+     */
+    @TestVisible
+    private static Date parseDate(String jsonName, String value) {
+        if (String.isBlank(value)) {
+            return null;
+        }
+        Date parsed;
+        if (DATE_PATTERN.matcher(value).matches()) {
+            try {
+                parsed = Date.valueOf(value);
+            } catch (Exception e) {
+                parsed = null;
+            }
+        }
+        if (parsed == null || String.valueOf(parsed) != value) {
+            throw badRequest(
+                'INVALID_DATE',
+                jsonName,
+                '\'' + value + '\' is not a valid ' + jsonName + '. Send a real date as YYYY-MM-DD, e.g. 1990-08-25.'
+            );
+        }
+        if (parsed > Date.today()) {
+            throw badRequest(
+                'INVALID_DATE',
+                jsonName,
+                jsonName + ' cannot be in the future.'
+            );
+        }
+        return parsed;
+    }
+
     private static Set<String> activeValues(Schema.SObjectField field) {
         Set<String> values = new Set<String>();
         for (Schema.PicklistEntry entry : field.getDescribe().getPicklistValues()) {
@@ -280,13 +331,15 @@ global with sharing class ShreeHariLeadRestResource {
         record.Salutation = p.salutation;
         record.FirstName = p.firstName;
         record.LastName = p.lastName;
-        record.Company = resolveCompany(p);
-        record.Title = p.title;
+        record.Company = String.isBlank(p.company) ? DEFAULT_COMPANY : p.company;
+
+        record.Date_of_Birth__c = parseDate('dateOfBirth', p.dateOfBirth);
+        record.Marital_Status__c = p.maritalStatus;
+        record.Anniversary_Date__c = parseDate('anniversaryDate', p.anniversaryDate);
 
         record.Phone = p.phone;
         record.Email = p.email;
         record.Website = p.website;
-        record.HasOptedOutOfEmail = (p.optOutEmail == true);
 
         record.Street = p.street;
         record.City = p.city;
@@ -296,9 +349,7 @@ global with sharing class ShreeHariLeadRestResource {
 
         record.LeadSource = p.leadSource;
         record.Status = String.isBlank(p.status) ? DEFAULT_STATUS : p.status;
-        record.Business_Type__c = String.isBlank(p.businessType)
-            ? DEFAULT_BUSINESS_TYPE
-            : p.businessType;
+        record.Business_Type__c = String.isBlank(p.businessType) ? DEFAULT_BUSINESS_TYPE : p.businessType;
         record.Rating = p.rating;
         record.Industry = p.industry;
         record.Walk_In_Flag__c = (p.walkInFlag == true);
@@ -311,22 +362,6 @@ global with sharing class ShreeHariLeadRestResource {
         record.NumberOfEmployees = p.numberOfEmployees;
 
         return record;
-    }
-
-    /**
-     * Company is not nillable on Lead, but a retail customer has no company.
-     * For B2C and unclassified enquiries the customer's own name is used, which
-     * is what the sales team sees today for walk-ins.
-     */
-    private static String resolveCompany(LeadRequest p) {
-        if (String.isNotBlank(p.company)) {
-            return p.company;
-        }
-        String fullName = String.isBlank(p.firstName)
-            ? p.lastName
-            : p.firstName + ' ' + p.lastName;
-        Integer maxLength = Lead.Company.getDescribe().getLength();
-        return fullName.length() > maxLength ? fullName.left(maxLength) : fullName;
     }
 
     /** Resolves a store code to its Store Location, or rejects it. */
@@ -386,8 +421,8 @@ global with sharing class ShreeHariLeadRestResource {
      * is pointless work, and it keeps behaviour predictable in a sandbox where
      * routing has not been configured yet.
      */
-    private static void insertWithAssignment(Lead record, Boolean runAssignmentRules) {
-        if (runAssignmentRules && hasActiveLeadAssignmentRule()) {
+    private static void insertWithAssignment(Lead record) {
+        if (hasActiveLeadAssignmentRule()) {
             Database.DMLOptions options = new Database.DMLOptions();
             options.assignmentRuleHeader.useDefaultRule = true;
             record.setOptions(options);
@@ -458,7 +493,7 @@ global with sharing class ShreeHariLeadRestResource {
      */
     private static LeadResponse buildResponse(Id leadId) {
         Lead saved = [
-            SELECT Id, Status, Business_Type__c, Store_Association__c, OwnerId
+            SELECT Id, Status, Company, Store_Association__c, OwnerId
             FROM Lead
             WHERE Id = :leadId
             LIMIT 1
@@ -469,7 +504,7 @@ global with sharing class ShreeHariLeadRestResource {
         result.action = 'CREATED';
         result.leadId = saved.Id;
         result.status = saved.Status;
-        result.businessType = saved.Business_Type__c;
+        result.company = saved.Company;
         result.storeAssociationId = saved.Store_Association__c;
         result.ownerId = saved.OwnerId;
         result.message = 'Lead created successfully.';
@@ -540,12 +575,14 @@ global with sharing class ShreeHariLeadRestResource {
         public String firstName;
         public String lastName;
         public String company;
-        public String title;
+        // Personal details
+        public String dateOfBirth;
+        public String maritalStatus;
+        public String anniversaryDate;
         // Contact details
         public String phone;
         public String email;
         public String website;
-        public Boolean optOutEmail;
         // Address
         public String street;
         public String city;
@@ -554,14 +591,13 @@ global with sharing class ShreeHariLeadRestResource {
         public String country;
         // Classification and routing
         public String leadSource;
-        public String businessType;
         public String status;
+        public String businessType;
         public String rating;
         public String industry;
         public String storeCode;
         public Boolean walkInFlag;
         public String campaignId;
-        public Boolean runAssignmentRules;
         // Enquiry detail
         public String description;
         public String qualificationNotes;
@@ -577,7 +613,9 @@ global with sharing class ShreeHariLeadRestResource {
             firstName = clean(firstName);
             lastName = clean(lastName);
             company = clean(company);
-            title = clean(title);
+            dateOfBirth = clean(dateOfBirth);
+            maritalStatus = clean(maritalStatus);
+            anniversaryDate = clean(anniversaryDate);
             phone = clean(phone);
             email = clean(email);
             website = clean(website);
@@ -587,8 +625,8 @@ global with sharing class ShreeHariLeadRestResource {
             postalCode = clean(postalCode);
             country = clean(country);
             leadSource = clean(leadSource);
-            businessType = clean(businessType);
             status = clean(status);
+            businessType = clean(businessType);
             rating = clean(rating);
             industry = clean(industry);
             storeCode = clean(storeCode);
@@ -608,7 +646,7 @@ global with sharing class ShreeHariLeadRestResource {
         public String action;
         public String leadId;
         public String status;
-        public String businessType;
+        public String company;
         public String storeAssociationId;
         public String ownerId;
         public String message;

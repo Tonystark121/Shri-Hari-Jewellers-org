@@ -5,10 +5,22 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "instance_url", "value": "https://agility-efficiency-7306--uat.sandbox.my.salesforce.com" },
-    { "key": "client_id", "value": "" },
-    { "key": "client_secret", "value": "" },
-    { "key": "access_token", "value": "" }
+    {
+      "key": "instance_url",
+      "value": "https://agility-efficiency-7306--uat.sandbox.my.salesforce.com"
+    },
+    {
+      "key": "client_id",
+      "value": ""
+    },
+    {
+      "key": "client_secret",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
   ],
   "item": [
     {
@@ -32,60 +44,114 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
         ],
         "body": {
           "mode": "urlencoded",
           "urlencoded": [
-            { "key": "grant_type", "value": "client_credentials" },
-            { "key": "client_id", "value": "{{client_id}}" },
-            { "key": "client_secret", "value": "{{client_secret}}" }
+            {
+              "key": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}"
+            }
           ]
         },
         "url": {
           "raw": "{{instance_url}}/services/oauth2/token",
-          "host": ["{{instance_url}}"],
-          "path": ["services", "oauth2", "token"]
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "oauth2",
+            "token"
+          ]
         }
       }
     },
     {
-      "name": "2. Create Lead — B2C website enquiry",
+      "name": "2. Create Lead — website enquiry",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Authorization", "value": "Bearer {{access_token}}" },
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"salutation\"   : \"Ms.\",\n  \"firstName\"    : \"Ananya\",\n  \"lastName\"     : \"Sharma\",\n  \"phone\"        : \"+91-9830012345\",\n  \"email\"        : \"ananya.sharma@example.com\",\n  \"leadSource\"   : \"Shopify\",\n  \"businessType\" : \"B2C\",\n  \"street\"       : \"12/1 Lake View Road\",\n  \"city\"         : \"Kolkata\",\n  \"state\"        : \"West Bengal\",\n  \"postalCode\"   : \"700029\",\n  \"country\"      : \"India\",\n  \"storeCode\"    : \"000001\",\n  \"rating\"       : \"Warm\",\n  \"description\"  : \"Enquiry from the bridal collection page - 22K gold necklace set, budget around 3,50,000 INR, needed before Diwali.\"\n}",
-          "options": { "raw": { "language": "json" } }
+          "raw": "{\n  \"salutation\"      : \"Ms.\",\n  \"firstName\"       : \"Ananya\",\n  \"lastName\"        : \"Sharma\",\n  \"dateOfBirth\"     : \"1992-08-25\",\n  \"maritalStatus\"   : \"Married\",\n  \"anniversaryDate\" : \"2018-02-14\",\n  \"phone\"           : \"+91-9830012345\",\n  \"email\"           : \"ananya.sharma@example.com\",\n  \"leadSource\"      : \"Shopify\",\n  \"businessType\"    : \"B2C\",\n  \"industry\"        : \"Retail\",\n  \"walkInFlag\"      : false,\n  \"campaignId\"      : \"701h2000000LeDlAAK\",\n  \"street\"          : \"12/1 Lake View Road\",\n  \"city\"            : \"Kolkata\",\n  \"state\"           : \"West Bengal\",\n  \"postalCode\"      : \"700029\",\n  \"country\"         : \"India\",\n  \"storeCode\"       : \"000001\",\n  \"rating\"          : \"Warm\",\n  \"description\"     : \"Enquiry from the bridal collection page - 22K gold necklace set, budget around 3,50,000 INR, needed before Diwali.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{instance_url}}/services/apexrest/shreehari/v1/leads",
-          "host": ["{{instance_url}}"],
-          "path": ["services", "apexrest", "shreehari", "v1", "leads"]
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "apexrest",
+            "shreehari",
+            "v1",
+            "leads"
+          ]
         }
       }
     },
     {
-      "name": "3. Create Lead — B2B enquiry",
+      "name": "3. Create Lead — enquiry with company details",
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Authorization", "value": "Bearer {{access_token}}" },
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"firstName\"         : \"Rakesh\",\n  \"lastName\"          : \"Agarwal\",\n  \"company\"           : \"Agarwal Jewellers Pvt Ltd\",\n  \"title\"             : \"Purchase Head\",\n  \"phone\"             : \"+91-9007712345\",\n  \"email\"             : \"rakesh@agarwaljewellers.example\",\n  \"leadSource\"        : \"India Mart\",\n  \"businessType\"      : \"B2B\",\n  \"industry\"          : \"Retail\",\n  \"city\"              : \"Siliguri\",\n  \"state\"             : \"West Bengal\",\n  \"country\"           : \"India\",\n  \"annualRevenue\"     : 45000000,\n  \"numberOfEmployees\" : 24,\n  \"description\"       : \"Wholesale enquiry for 22K plain gold chains, monthly requirement 2-3 kg.\"\n}",
-          "options": { "raw": { "language": "json" } }
+          "raw": "{\n  \"firstName\"         : \"Rakesh\",\n  \"lastName\"          : \"Agarwal\",\n  \"company\"           : \"Agarwal Jewellers Pvt Ltd\",\n  \"phone\"             : \"+91-9007712345\",\n  \"email\"             : \"rakesh@agarwaljewellers.example\",\n  \"leadSource\"        : \"India Mart\",\n  \"industry\"          : \"Retail\",\n  \"city\"              : \"Siliguri\",\n  \"state\"             : \"West Bengal\",\n  \"country\"           : \"India\",\n  \"annualRevenue\"     : 45000000,\n  \"numberOfEmployees\" : 24,\n  \"description\"       : \"Wholesale enquiry for 22K plain gold chains, monthly requirement 2-3 kg.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{instance_url}}/services/apexrest/shreehari/v1/leads",
-          "host": ["{{instance_url}}"],
-          "path": ["services", "apexrest", "shreehari", "v1", "leads"]
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "apexrest",
+            "shreehari",
+            "v1",
+            "leads"
+          ]
         }
       }
     }
