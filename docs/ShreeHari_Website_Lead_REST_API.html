@@ -345,7 +345,6 @@ grant_type=client_credentials
 &amp;client_id=<span class="s">{{CONSUMER_KEY}}</span>
 &amp;client_secret=<span class="s">{{CONSUMER_SECRET}}</span></pre>
     </div>
-
     <div class="codeblock">
       <div class="bar">Token response &mdash; 200 OK</div>
 <pre>{
@@ -490,9 +489,9 @@ grant_type=client_credentials
           <tr><td class="fld">businessType</td><td class="api">Business_Type__c</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>B2C</code> &middot; <code>B2B</code> &middot; <code>Unknown</code>. Defaults to <code>Unknown</code> when omitted</td></tr>
           <tr><td class="fld">rating</td><td class="api">Rating</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td><code>Hot</code> &middot; <code>Warm</code> &middot; <code>Cold</code></td></tr>
           <tr><td class="fld">industry</td><td class="api">Industry</td><td>Picklist</td><td><span class="opt">OPTIONAL</span></td><td>See section 05 for the value list</td></tr>
-          <tr><td class="fld">storeCode</td><td class="api">Store_Association__c</td><td>String(20)</td><td><span class="opt">OPTIONAL</span></td><td>Store Code of the preferred or nearest store. Resolved to the Store Location record; an unknown code is rejected with <span class="code-4xx">400</span></td></tr>
+          <tr><td class="fld">storeCode</td><td class="api">Store_Association__c</td><td>String(20)</td><td><span class="opt">OPTIONAL</span></td><td>Store Code of the preferred or nearest store. Resolved to the Store Location record; an unknown code is rejected with <span class="code-4xx">400</span>. <strong>For now send <code>000001</code></strong> &mdash; the only store in the org today. The real stores will be created in Salesforce once you share the list</td></tr>
           <tr><td class="fld">walkInFlag</td><td class="api">Walk_In_Flag__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Default <code>false</code>. Leave it out for website enquiries &mdash; it marks in-store capture</td></tr>
-          <tr><td class="fld">campaignId</td><td class="api">Campaign_Attribution__c</td><td>Id(18)</td><td><span class="opt">OPTIONAL</span></td><td>Salesforce Campaign Id when the enquiry came from a tracked campaign. An unknown Id is rejected with <span class="code-4xx">400</span></td></tr>
+          <tr><td class="fld">campaignName</td><td class="api">Campaign_Attribution__c</td><td>String(80)</td><td><span class="opt">OPTIONAL</span></td><td>Name of the Salesforce Campaign the enquiry came from, spelled exactly as in Salesforce (case does not matter). Salesforce looks it up and links the Lead to it; an unknown name is rejected with <span class="code-4xx">400</span>. <strong>For now send <code>test campaign</code></strong> &mdash; the only Campaign in the org today. The real campaigns will be created in Salesforce once you share the list</td></tr>
         </tbody>
       </table>
     </div>
@@ -511,7 +510,7 @@ grant_type=client_credentials
     </div>
 
     <div class="note warn">
-      <p><span class="lbl">Fields deliberately not in this payload:</span> Lead Owner, Mobile Phone and Campaign Id (standard). Ownership is decided by the assignment rule, not by the caller; Mobile Phone and the standard Campaign lookup are not exposed on Lead in this org, so the mobile number goes in <code>phone</code> and campaign attribution goes in <code>campaignId</code>. Any field sent that is not listed above is ignored.</p>
+      <p><span class="lbl">Fields deliberately not in this payload:</span> Lead Owner, Mobile Phone and Campaign Id (standard). Ownership is decided by the assignment rule, not by the caller; Mobile Phone and the standard Campaign lookup are not exposed on Lead in this org, so the mobile number goes in <code>phone</code> and campaign attribution goes in <code>campaignName</code>. Any field sent that is not listed above is ignored.</p>
     </div>
 
     <h3>Sample request &mdash; website enquiry</h3>
@@ -530,7 +529,7 @@ grant_type=client_credentials
   <span class="k">"businessType"</span>    : <span class="s">"B2C"</span>,
   <span class="k">"industry"</span>        : <span class="s">"Retail"</span>,
   <span class="k">"walkInFlag"</span>      : false,
-  <span class="k">"campaignId"</span>      : <span class="s">"701h2000000LeDlAAK"</span>,
+  <span class="k">"campaignName"</span>    : <span class="s">"test campaign"</span>,
   <span class="k">"street"</span>          : <span class="s">"12/1 Lake View Road"</span>,
   <span class="k">"city"</span>            : <span class="s">"Kolkata"</span>,
   <span class="k">"state"</span>           : <span class="s">"West Bengal"</span>,
@@ -584,7 +583,7 @@ grant_type=client_credentials
         <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
         <tbody>
           <tr><td class="code-200">201 Created</td><td>Lead created &mdash; <code>leadId</code> returned</td></tr>
-          <tr><td class="code-4xx">400 Bad Request</td><td>Malformed JSON, missing required field, invalid picklist value or date, or unknown <code>storeCode</code> / <code>campaignId</code></td></tr>
+          <tr><td class="code-4xx">400 Bad Request</td><td>Malformed JSON, missing required field, invalid picklist value or date, or unknown <code>storeCode</code> / <code>campaignName</code></td></tr>
           <tr><td class="code-4xx">401 Unauthorized</td><td>Missing or expired Bearer token &mdash; re-authenticate and retry once</td></tr>
           <tr><td class="code-4xx">405 Method Not Allowed</td><td>Any verb other than POST on this resource</td></tr>
           <tr><td class="code-4xx">409 Conflict</td><td>A Salesforce duplicate rule blocked the insert</td></tr>
@@ -666,7 +665,7 @@ grant_type=client_credentials
           <tr><td class="api">ANNIVERSARY_NOT_ALLOWED</td><td class="code-4xx">400</td><td><code>anniversaryDate</code> was sent with <code>maritalStatus</code> = <code>Unmarried</code></td></tr>
           <tr><td class="api">VALUE_TOO_LONG</td><td class="code-4xx">400</td><td>A value exceeds the length in section 04</td></tr>
           <tr><td class="api">STORE_NOT_FOUND</td><td class="code-4xx">400</td><td>No Store Location has that <code>storeCode</code></td></tr>
-          <tr><td class="api">CAMPAIGN_NOT_FOUND</td><td class="code-4xx">400</td><td>No Campaign has that <code>campaignId</code></td></tr>
+          <tr><td class="api">CAMPAIGN_NOT_FOUND</td><td class="code-4xx">400</td><td>No Campaign has that <code>campaignName</code></td></tr>
           <tr><td class="api">INVALID_ADDRESS</td><td class="code-4xx">400</td><td><code>state</code> or <code>country</code> is not a valid picklist name, or <code>state</code> was sent without <code>country</code></td></tr>
           <tr><td class="api">DUPLICATE_DETECTED</td><td class="code-4xx">409</td><td>A Salesforce duplicate rule blocked the insert</td></tr>
           <tr><td class="api">DML_EXCEPTION</td><td class="code-4xx">500</td><td>Validation rule, trigger or platform error on insert</td></tr>
@@ -719,7 +718,7 @@ grant_type=client_credentials
       <li>Send. A <span class="code-200">201</span> with a <code>leadId</code> means the Lead is in Salesforce &mdash; open it at <code>{{instance_url}}/lightning/r/Lead/&lt;leadId&gt;/view</code> to confirm the field mapping.</li>
     </ol>
     <div class="note warn">
-      <p><span class="lbl">For UAT testing today:</span> the only Store Location loaded in the sandbox is <em>test store</em>, store code <code>000001</code> &mdash; that is the value used in the first sample. Any other code will come back as <span class="code-4xx">STORE_NOT_FOUND</span> until the real store list is loaded. Likewise the only Campaign is <em>test campaign</em>, Id <code>701h2000000LeDlAAK</code>; any other <code>campaignId</code> returns <span class="code-4xx">CAMPAIGN_NOT_FOUND</span>.</p>
+      <p><span class="lbl">For UAT testing today:</span> the only Store Location loaded in the sandbox is <em>test store</em>, store code <code>000001</code> &mdash; that is the value used in the first sample. Any other code will come back as <span class="code-4xx">STORE_NOT_FOUND</span> until the real store list is loaded. Likewise the only Campaign is <em>test campaign</em>, so send <code>"campaignName": "test campaign"</code>; any other name returns <span class="code-4xx">CAMPAIGN_NOT_FOUND</span>. The real stores and campaigns will be created once their lists are shared, and this note updated.</p>
     </div>
   </section>
 

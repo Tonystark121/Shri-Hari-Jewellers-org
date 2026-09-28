@@ -138,7 +138,7 @@ private class ShreeHariLeadRestResourceTest {
             '"businessType":"B2C",' +
             '"industry":"Retail",' +
             '"walkInFlag":true,' +
-            '"campaignId":"' + campaign.Id + '"' +
+            '"campaignName":"diwali 2026"' +
             '}';
 
         Map<String, Object> response = post(body);
@@ -153,7 +153,7 @@ private class ShreeHariLeadRestResourceTest {
         Assert.areEqual('B2C', saved.Business_Type__c, 'Business Type should be mapped');
         Assert.areEqual('Retail', saved.Industry, 'Industry should be mapped');
         Assert.areEqual(true, saved.Walk_In_Flag__c, 'Walk-In Flag should be mapped');
-        Assert.areEqual(campaign.Id, saved.Campaign_Attribution__c, 'Campaign should be mapped');
+        Assert.areEqual(campaign.Id, saved.Campaign_Attribution__c, 'Campaign should be found by name, ignoring case');
     }
 
     @IsTest
@@ -288,23 +288,32 @@ private class ShreeHariLeadRestResourceTest {
     }
 
     @IsTest
-    static void rejectsUnknownCampaign() {
+    static void rejectsUnknownCampaignName() {
         Map<String, Object> response = post(
-            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","campaignId":"701000000000000"}'
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","campaignName":"No Such Campaign"}'
         );
 
         Assert.areEqual(400, statusOf(response), 'An unknown campaign should be rejected');
         Assert.areEqual('CAMPAIGN_NOT_FOUND', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual('campaignName', response.get('field'), 'The offending field should be reported');
     }
 
     @IsTest
-    static void rejectsMalformedCampaignId() {
+    static void prefersActiveCampaignWhenNamesClash() {
+        Campaign inactive = new Campaign(Name = 'Akshaya Tritiya', IsActive = false);
+        Campaign active = new Campaign(Name = 'Akshaya Tritiya', IsActive = true);
+        insert new List<Campaign>{ inactive, active };
+
         Map<String, Object> response = post(
-            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","campaignId":"NOT-AN-ID"}'
+            '{"lastName":"Sharma","leadSource":"Shopify","phone":"+91-9800011111","campaignName":"Akshaya Tritiya"}'
         );
 
-        Assert.areEqual(400, statusOf(response), 'A malformed Id should be rejected');
-        Assert.areEqual('CAMPAIGN_NOT_FOUND', response.get('errorCode'), 'Error code should name the cause');
+        Assert.areEqual(201, statusOf(response), 'A known campaign name should be accepted');
+        Assert.areEqual(
+            active.Id,
+            [SELECT Campaign_Attribution__c FROM Lead LIMIT 1].Campaign_Attribution__c,
+            'The active campaign should win'
+        );
     }
 
     @IsTest

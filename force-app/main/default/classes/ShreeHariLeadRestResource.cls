@@ -223,6 +223,7 @@ global with sharing class ShreeHariLeadRestResource {
         checkLength(Lead.Country, 'country', p.country);
         checkLength(Lead.Description, 'description', p.description);
         checkLength(Lead.Qualification_Notes__c, 'qualificationNotes', p.qualificationNotes);
+        checkLength(Campaign.Name, 'campaignName', p.campaignName);
     }
 
     /**
@@ -354,7 +355,7 @@ global with sharing class ShreeHariLeadRestResource {
         record.Industry = p.industry;
         record.Walk_In_Flag__c = (p.walkInFlag == true);
         record.Store_Association__c = resolveStore(p.storeCode);
-        record.Campaign_Attribution__c = resolveCampaign(p.campaignId);
+        record.Campaign_Attribution__c = resolveCampaign(p.campaignName);
 
         record.Description = p.description;
         record.Qualification_Notes__c = p.qualificationNotes;
@@ -385,30 +386,30 @@ global with sharing class ShreeHariLeadRestResource {
         return stores[0].Id;
     }
 
-    /** Verifies a campaign Id before it is written to the lookup. */
-    private static Id resolveCampaign(String campaignId) {
-        if (String.isBlank(campaignId)) {
+    /**
+     * Resolves a campaign name to its Campaign, or rejects it. The match is
+     * case-insensitive. Should two campaigns share a name, the active one is
+     * preferred, then the most recently created.
+     */
+    private static Id resolveCampaign(String campaignName) {
+        if (String.isBlank(campaignName)) {
             return null;
         }
-        Id recordId;
-        try {
-            recordId = Id.valueOf(campaignId);
-        } catch (Exception e) {
+        List<Campaign> campaigns = [
+            SELECT Id
+            FROM Campaign
+            WHERE Name = :campaignName
+            ORDER BY IsActive DESC, CreatedDate DESC
+            LIMIT 1
+        ];
+        if (campaigns.isEmpty()) {
             throw badRequest(
                 'CAMPAIGN_NOT_FOUND',
-                'campaignId',
-                '\'' + campaignId + '\' is not a valid Salesforce Id.'
+                'campaignName',
+                'No Campaign is named \'' + campaignName + '\'.'
             );
         }
-        if (recordId.getSObjectType() != Campaign.SObjectType
-            || [SELECT COUNT() FROM Campaign WHERE Id = :recordId] == 0) {
-            throw badRequest(
-                'CAMPAIGN_NOT_FOUND',
-                'campaignId',
-                'No Campaign found with Id \'' + campaignId + '\'.'
-            );
-        }
-        return recordId;
+        return campaigns[0].Id;
     }
 
     // =====================================================================
@@ -597,7 +598,7 @@ global with sharing class ShreeHariLeadRestResource {
         public String industry;
         public String storeCode;
         public Boolean walkInFlag;
-        public String campaignId;
+        public String campaignName;
         // Enquiry detail
         public String description;
         public String qualificationNotes;
@@ -630,7 +631,7 @@ global with sharing class ShreeHariLeadRestResource {
             rating = clean(rating);
             industry = clean(industry);
             storeCode = clean(storeCode);
-            campaignId = clean(campaignId);
+            campaignName = clean(campaignName);
             description = clean(description);
             qualificationNotes = clean(qualificationNotes);
         }
