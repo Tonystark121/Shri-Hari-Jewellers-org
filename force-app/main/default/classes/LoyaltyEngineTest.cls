@@ -10,6 +10,10 @@
  * that the nightly batch maintains, so the tests set Last_12M_Spend__c directly
  * to put a household in a known tier — which is what the batch would have done
  * overnight.
+ *
+ * Only points held in earning lots (Earn rows on Loyalty_Transaction__c) can
+ * be redeemed, so a household that is to redeem is given its points through
+ * withPoints(), which backs the balance with a lot.
  */
 @IsTest
 private class LoyaltyEngineTest {
@@ -45,6 +49,28 @@ private class LoyaltyEngineTest {
         );
     }
 
+    /** An open earning lot of `points`, credited on `creditDate`. */
+    private static Loyalty_Transaction__c earnedLot(Id loyaltyId, Integer points, Date creditDate) {
+        return new Loyalty_Transaction__c(
+            Loyalty_Record__c = loyaltyId,
+            Transaction_Type__c = 'Earn',
+            Status__c = 'Active',
+            Points_Earned__c = points,
+            Remaining_Points__c = points,
+            Credit_Date__c = creditDate,
+            Earning_Tier__c = 'Silver',
+            Earning_Rate__c = 2
+        );
+    }
+
+    /** A household holding `points`, all in one lot earned 30 days ago. */
+    private static Loyalty_Record__c withPoints(Id accountId, Integer points) {
+        Loyalty_Record__c loyalty = openingBalance(accountId, points);
+        insert loyalty;
+        insert earnedLot(loyalty.Id, points, Date.today().addDays(-30));
+        return loyalty;
+    }
+
     private static Loyalty_Record__c loyaltyFor(Id accountId) {
         return [
             SELECT Id, Points_Balance__c, Total_Points_Earned__c,
@@ -53,6 +79,34 @@ private class LoyaltyEngineTest {
             FROM Loyalty_Record__c
             WHERE Account__c = :accountId
             LIMIT 1
+        ];
+    }
+
+    /** Ledger rows for a household, oldest credit first. */
+    private static List<Loyalty_Transaction__c> ledgerFor(Id accountId) {
+        return [
+            SELECT Id, Transaction_Type__c, Status__c, Points_Earned__c,
+                   Remaining_Points__c, Credit_Date__c, Expiry_Date__c,
+                   Earning_Tier__c, Earning_Rate__c, Net_Loyalty_Amount__c,
+                   Redemption_Value__c, Transaction_Record__c, Processed_Date__c
+            FROM Loyalty_Transaction__c
+            WHERE Loyalty_Record__r.Account__c = :accountId
+            WITH SYSTEM_MODE
+            ORDER BY Credit_Date__c ASC NULLS LAST, CreatedDate ASC, Id ASC
+        ];
+    }
+
+    private static Loyalty_Transaction__c ledgerRow(Id accountId, String transactionType) {
+        return [
+            SELECT Id, Transaction_Type__c, Status__c, Points_Earned__c,
+                   Remaining_Points__c, Credit_Date__c, Expiry_Date__c,
+                   Earning_Tier__c, Earning_Rate__c, Net_Loyalty_Amount__c,
+                   Redemption_Value__c, Transaction_Record__c, Processed_Date__c
+            FROM Loyalty_Transaction__c
+            WHERE Loyalty_Record__r.Account__c = :accountId
+            AND Transaction_Type__c = :transactionType
+            AND Transaction_Record__c != null
+            WITH SYSTEM_MODE
         ];
     }
 
@@ -176,6 +230,7 @@ private class LoyaltyEngineTest {
         Assert.areEqual(0, loyalty.Points_Balance__c, 'Nothing billed, nothing earned');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'And nothing redeemed');
         Assert.isNull(loyalty.Last_Transaction_Type__c, 'Nothing earned or redeemed leaves the type blank');
+        Assert.areEqual(0, ledgerFor(acct.Id).size(), 'No zero-point ledger events');
     }
 
     @IsTest
@@ -220,7 +275,7 @@ private class LoyaltyEngineTest {
     static void testRedeemTickedSpendsTheBalanceAndEarnsOnTheNetAmount() {
         Account acct = household('Method Two', 5600);
         insert acct;
-        insert openingBalance(acct.Id, 112);
+        withPoints(acct.Id, 112);
 
         Test.startTest();
         insert bill(acct.Id, 3200, true);
@@ -235,6 +290,51 @@ private class LoyaltyEngineTest {
         Assert.areEqual(172, loyalty.Total_Points_Earned__c, 'Lifetime earned is 112 + 60');
         Assert.areEqual(112, loyalty.Total_Points_Redeemed__c, 'Lifetime redeemed is the 112 spent');
         Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'Points were redeemed on this bill');
+        Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'The bill earned points, so it is stamped');
+    }
+
+    /**
+     * The same "Method 2" bill, read from the ledger: one Redeemed event for
+     * the 112 spent, one Earn event (the new lot) for the 60 earned on
+     * 3,088, and the lot that held the 112 emptied and marked Redeemed.
+     */
+    @IsTest
+    static void testRedemptionAndEarningAreBothWrittenToTheLedger() {
+        Account acct = household('Method Two Ledger', 5600);
+        insert acct;
+        withPoints(acct.Id, 112);
+        Transaction_Record__c purchase = bill(acct.Id, 3200, true);
+
+        Test.startTest();
+        insert purchase;
+        Test.stopTest();
+
+        List<Loyalty_Transaction__c> ledger = ledgerFor(acct.Id);
+        Assert.areEqual(3, ledger.size(), 'Opening lot + Redeemed event + new Earn lot');
+
+        Loyalty_Transaction__c openingLot = ledger[0];
+        Assert.areEqual(0, openingLot.Remaining_Points__c, 'All 112 were spent');
+        Assert.areEqual('Redeemed', openingLot.Status__c, 'An emptied lot is Redeemed');
+        Assert.areEqual(112, openingLot.Points_Earned__c, 'The original points are kept for history');
+
+        Loyalty_Transaction__c redeemed = ledgerRow(acct.Id, 'Redeemed');
+        Assert.areEqual('Redeemed', redeemed.Status__c, 'Redeemed event status');
+        Assert.areEqual(112, redeemed.Points_Earned__c, 'Points spent');
+        Assert.areEqual(0, redeemed.Remaining_Points__c, 'A redemption is not a lot');
+        Assert.areEqual(112, redeemed.Redemption_Value__c, 'Rs 1 per point');
+        Assert.areEqual(purchase.Id, redeemed.Transaction_Record__c, 'Linked to the bill');
+        Assert.isNotNull(redeemed.Processed_Date__c, 'Processed date is stamped');
+
+        Loyalty_Transaction__c earned = ledgerRow(acct.Id, 'Earn');
+        Assert.areEqual('Active', earned.Status__c, 'A new lot is Active');
+        Assert.areEqual(60, earned.Points_Earned__c, '3,088 at Silver 2% earns 60');
+        Assert.areEqual(60, earned.Remaining_Points__c, 'Nothing spent from the new lot');
+        Assert.areEqual(Date.today(), earned.Credit_Date__c, 'Credited on the bill date');
+        Assert.areEqual(Date.today().addDays(365), earned.Expiry_Date__c, 'Valid for 365 days from credit');
+        Assert.areEqual('Silver', earned.Earning_Tier__c, 'Tier snapshot');
+        Assert.areEqual(2, earned.Earning_Rate__c, 'Rate snapshot');
+        Assert.areEqual(3088, earned.Net_Loyalty_Amount__c, 'Earned on the bill less the points spent');
+        Assert.areEqual(purchase.Id, earned.Transaction_Record__c, 'Linked to the bill');
     }
 
     /** Leaving the box unticked earns on the whole bill and spends nothing. */
@@ -255,6 +355,11 @@ private class LoyaltyEngineTest {
             'The 500 is untouched and the full 3,200 earns 64 at Silver'
         );
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
+        Assert.areEqual(
+            0,
+            [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__r.Account__c = :acct.Id AND Transaction_Type__c = 'Redeemed'],
+            'No Redeemed event when the box is unticked'
+        );
     }
 
     /**
@@ -266,7 +371,7 @@ private class LoyaltyEngineTest {
     static void testRedeemTickedBelowMinimumProceedsWithoutRedeeming() {
         Account acct = household('Just Short', 5000);
         insert acct;
-        insert openingBalance(acct.Id, 99);
+        withPoints(acct.Id, 99);
 
         Test.startTest();
         insert bill(acct.Id, 3200, true);
@@ -290,7 +395,7 @@ private class LoyaltyEngineTest {
     static void testBalanceOfOneHundredAndTwoIsSpentInFull() {
         Account acct = household('Exactly Over', 5000);
         insert acct;
-        insert openingBalance(acct.Id, 102);
+        withPoints(acct.Id, 102);
 
         Test.startTest();
         insert bill(acct.Id, 3200, true);
@@ -310,7 +415,7 @@ private class LoyaltyEngineTest {
     static void testRedemptionIsCappedAtTheBillAmount() {
         Account acct = household('Points Rich', 5000);
         insert acct;
-        insert openingBalance(acct.Id, 5000);
+        withPoints(acct.Id, 5000);
 
         Test.startTest();
         insert bill(acct.Id, 3200, true);
@@ -330,7 +435,7 @@ private class LoyaltyEngineTest {
     static void testBillSettledEntirelyInPointsEarnsNothing() {
         Account acct = household('All Points', 5000);
         insert acct;
-        insert openingBalance(acct.Id, 900);
+        withPoints(acct.Id, 900);
 
         Test.startTest();
         insert bill(acct.Id, 800, true);
@@ -339,7 +444,13 @@ private class LoyaltyEngineTest {
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(100, loyalty.Points_Balance__c, '800 of the 900 points settled the bill');
         Assert.areEqual(900, loyalty.Total_Points_Earned__c, 'A bill paid entirely in points earns nothing');
-        Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'Redeemed with nothing earned is still a Redemption');
+        Assert.isNull(loyalty.Last_Transaction_Date__c, 'A redemption that earned nothing does not move the last earning date');
+        Assert.isNull(loyalty.Last_Transaction_Type__c, 'Nor the type that goes with it');
+        Assert.areEqual(
+            0,
+            [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__r.Account__c = :acct.Id AND Transaction_Type__c = 'Earn' AND Transaction_Record__c != null],
+            'No zero-point Earn event'
+        );
     }
 
     /**
@@ -350,7 +461,7 @@ private class LoyaltyEngineTest {
     static void testBillSmallerThanTheMinimumCannotBeRedeemedAgainst() {
         Account acct = household('Tiny Bill', 5000);
         insert acct;
-        insert openingBalance(acct.Id, 500);
+        withPoints(acct.Id, 500);
 
         Test.startTest();
         insert bill(acct.Id, 50, true);
@@ -374,6 +485,7 @@ private class LoyaltyEngineTest {
         opening.Last_Transaction_Date__c = Date.today();
         opening.Last_Transaction_Type__c = 'Earning';
         insert opening;
+        insert earnedLot(opening.Id, 500, Date.today().addDays(-30));
 
         Test.startTest();
         insert bill(acct.Id, 3200, true);
@@ -406,6 +518,208 @@ private class LoyaltyEngineTest {
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'The later date is kept');
         Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'The type still matches the later date');
+    }
+
+    // =====================================================================
+    // FIFO redemption
+    // =====================================================================
+
+    /**
+     * Lots of 100 (oldest), 200 and 300; a 150 redemption empties the oldest,
+     * takes 50 from the next and leaves the newest alone. The part-used lot
+     * stays the lot - no new Earn row stands in for its remainder.
+     */
+    @IsTest
+    static void testRedemptionConsumesTheOldestLotFirst() {
+        Account acct = household('Three Lots', 5000);
+        insert acct;
+        Loyalty_Record__c loyalty = openingBalance(acct.Id, 600);
+        insert loyalty;
+
+        Loyalty_Transaction__c lt001 = earnedLot(loyalty.Id, 100, Date.today().addDays(-30));
+        Loyalty_Transaction__c lt002 = earnedLot(loyalty.Id, 200, Date.today().addDays(-20));
+        Loyalty_Transaction__c lt003 = earnedLot(loyalty.Id, 300, Date.today().addDays(-10));
+        insert new List<Loyalty_Transaction__c>{ lt003, lt001, lt002 };
+
+        Test.startTest();
+        insert bill(acct.Id, 150, true);
+        Test.stopTest();
+
+        Map<Id, Loyalty_Transaction__c> lots = new Map<Id, Loyalty_Transaction__c>([
+            SELECT Id, Status__c, Remaining_Points__c, SystemModstamp, CreatedDate
+            FROM Loyalty_Transaction__c
+            WHERE Id IN :new List<Id>{ lt001.Id, lt002.Id, lt003.Id }
+        ]);
+
+        Assert.areEqual(0, lots.get(lt001.Id).Remaining_Points__c, 'Oldest lot emptied');
+        Assert.areEqual('Redeemed', lots.get(lt001.Id).Status__c, 'Emptied lot is Redeemed');
+        Assert.areEqual(150, lots.get(lt002.Id).Remaining_Points__c, '50 taken from the second lot');
+        Assert.areEqual('Active', lots.get(lt002.Id).Status__c, 'Part-used lot stays Active');
+        Assert.areEqual(300, lots.get(lt003.Id).Remaining_Points__c, 'Newest lot untouched');
+        Assert.areEqual('Active', lots.get(lt003.Id).Status__c, 'Newest lot still Active');
+
+        Loyalty_Transaction__c redeemed = ledgerRow(acct.Id, 'Redeemed');
+        Assert.areEqual(150, redeemed.Points_Earned__c, 'One Redeemed event for the whole 150');
+        Assert.areEqual(0, redeemed.Remaining_Points__c, 'A redemption is not a lot');
+
+        Assert.areEqual(
+            4,
+            [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__c = :loyalty.Id],
+            'Three lots + one Redeemed event; the 150 bill settled in points earns nothing'
+        );
+        Assert.areEqual(450, loyaltyFor(acct.Id).Points_Balance__c, '600 - 150');
+    }
+
+    /** Only the lots a redemption draws on are saved again. */
+    @IsTest
+    static void testUntouchedLotsAreNotUpdated() {
+        Account acct = household('Leave Me Be', 5000);
+        insert acct;
+        Loyalty_Record__c loyalty = openingBalance(acct.Id, 400);
+        insert loyalty;
+
+        Loyalty_Transaction__c oldest = earnedLot(loyalty.Id, 200, Date.today().addDays(-20));
+        Loyalty_Transaction__c newest = earnedLot(loyalty.Id, 200, Date.today().addDays(-10));
+        insert new List<Loyalty_Transaction__c>{ oldest, newest };
+
+        Datetime newestStampBefore = [SELECT SystemModstamp FROM Loyalty_Transaction__c WHERE Id = :newest.Id].SystemModstamp;
+
+        Test.startTest();
+        insert bill(acct.Id, 150, true);
+        Test.stopTest();
+
+        Loyalty_Transaction__c newestAfter = [SELECT Remaining_Points__c, SystemModstamp FROM Loyalty_Transaction__c WHERE Id = :newest.Id];
+        Assert.areEqual(200, newestAfter.Remaining_Points__c, 'Newest lot keeps its points');
+        Assert.areEqual(newestStampBefore, newestAfter.SystemModstamp, 'Newest lot was not saved again');
+    }
+
+    /** Expired lots are never redeemed, even when still marked Active. */
+    @IsTest
+    static void testExpiredLotIsNeverRedeemed() {
+        Account acct = household('Stale Points', 5000);
+        insert acct;
+        Loyalty_Record__c loyalty = openingBalance(acct.Id, 650);
+        insert loyalty;
+
+        Loyalty_Transaction__c expired = earnedLot(loyalty.Id, 500, Date.today().addDays(-400));
+        Loyalty_Transaction__c fresh = earnedLot(loyalty.Id, 150, Date.today().addDays(-10));
+        insert new List<Loyalty_Transaction__c>{ expired, fresh };
+
+        Test.startTest();
+        insert bill(acct.Id, 1000, true);
+        Test.stopTest();
+
+        Assert.areEqual(
+            500,
+            [SELECT Remaining_Points__c FROM Loyalty_Transaction__c WHERE Id = :expired.Id].Remaining_Points__c,
+            'The expired lot is not drawn on'
+        );
+        Assert.areEqual(
+            0,
+            [SELECT Remaining_Points__c FROM Loyalty_Transaction__c WHERE Id = :fresh.Id].Remaining_Points__c,
+            'Only the unexpired lot is spent'
+        );
+        Assert.areEqual(150, loyaltyFor(acct.Id).Total_Points_Redeemed__c, 'Redemption capped at the usable lots');
+    }
+
+    /** Expiry_Date__c is the last day a lot can be used. */
+    @IsTest
+    static void testLotIsUsableOnItsExpiryDate() {
+        Account lastDay = household('Last Day', 5000);
+        Account dayAfter = household('Day After', 5000);
+        insert new List<Account>{ lastDay, dayAfter };
+
+        Loyalty_Record__c lastDayLoyalty = openingBalance(lastDay.Id, 200);
+        Loyalty_Record__c dayAfterLoyalty = openingBalance(dayAfter.Id, 200);
+        insert new List<Loyalty_Record__c>{ lastDayLoyalty, dayAfterLoyalty };
+
+        insert new List<Loyalty_Transaction__c>{
+            earnedLot(lastDayLoyalty.Id, 200, Date.today().addDays(-365)),  // expires today
+            earnedLot(dayAfterLoyalty.Id, 200, Date.today().addDays(-366))  // expired yesterday
+        };
+
+        Test.startTest();
+        insert new List<Transaction_Record__c>{
+            bill(lastDay.Id, 1000, true),
+            bill(dayAfter.Id, 1000, true)
+        };
+        Test.stopTest();
+
+        Assert.areEqual(200, loyaltyFor(lastDay.Id).Total_Points_Redeemed__c, 'Usable on the expiry date itself');
+        Assert.areEqual(0, loyaltyFor(dayAfter.Id).Total_Points_Redeemed__c, 'Not usable the day after');
+    }
+
+    // =====================================================================
+    // Ordering
+    // =====================================================================
+
+    /** Points earned on a bill are not available to that same bill. */
+    @IsTest
+    static void testPointsEarnedOnABillCannotBeSpentOnIt() {
+        Account acct = household('First Visit Redeemer', 5000);
+        insert acct;
+
+        Test.startTest();
+        insert bill(acct.Id, 10000, true);
+        Test.stopTest();
+
+        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
+        Assert.areEqual(200, loyalty.Points_Balance__c, 'The 200 earned stay on the balance');
+        Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was available to redeem');
+    }
+
+    /**
+     * Bills saved together are processed by Transaction_Date__c, not by
+     * their order in Trigger.new: the 10:00 bill earns 100, so the 15:00
+     * bill can redeem them, even though it is listed first.
+     */
+    @IsTest
+    static void testBillsInOneSaveAreProcessedInDateOrder() {
+        Account acct = household('Morning And Afternoon', 5000);
+        insert acct;
+
+        Transaction_Record__c morning = bill(acct.Id, 5000, false);
+        morning.Transaction_Date__c = Datetime.newInstance(Date.today(), Time.newInstance(10, 0, 0, 0));
+
+        Transaction_Record__c afternoon = bill(acct.Id, 1000, true);
+        afternoon.Transaction_Date__c = Datetime.newInstance(Date.today(), Time.newInstance(15, 0, 0, 0));
+
+        Test.startTest();
+        insert new List<Transaction_Record__c>{ afternoon, morning };
+        Test.stopTest();
+
+        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
+        Assert.areEqual(100, loyalty.Total_Points_Redeemed__c, 'The afternoon bill spent the morning points');
+        Assert.areEqual(118, loyalty.Total_Points_Earned__c, '100 in the morning + 900 net x 2% = 18');
+        Assert.areEqual(18, loyalty.Points_Balance__c, '100 - 100 + 18');
+
+        Loyalty_Transaction__c morningLot = [
+            SELECT Remaining_Points__c, Status__c
+            FROM Loyalty_Transaction__c
+            WHERE Transaction_Record__c = :morning.Id AND Transaction_Type__c = 'Earn'
+        ];
+        Assert.areEqual(0, morningLot.Remaining_Points__c, 'The morning lot was saved already spent');
+        Assert.areEqual('Redeemed', morningLot.Status__c, 'And marked Redeemed');
+    }
+
+    // =====================================================================
+    // Historical snapshot
+    // =====================================================================
+
+    /** The Earn row records the tier and rate the points were earned under. */
+    @IsTest
+    static void testEarnRowSnapshotsTierAndRate() {
+        Account acct = household('Gold Snapshot', 10000);
+        insert acct;
+
+        Test.startTest();
+        insert bill(acct.Id, 5000, false);
+        Test.stopTest();
+
+        Loyalty_Transaction__c earned = ledgerRow(acct.Id, 'Earn');
+        Assert.areEqual('Gold', earned.Earning_Tier__c, 'Tier held before the bill');
+        Assert.areEqual(4, earned.Earning_Rate__c, 'Gold rate');
+        Assert.areEqual(200, earned.Points_Earned__c, '5000 x 4%');
     }
 
     // =====================================================================

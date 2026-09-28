@@ -35,8 +35,9 @@ public without sharing class TransactionTriggerHandler {
      * for the nightly ShreeHariTrailingSpendBatch.
      *
      * Uses the same rule as the batch: total of Amount__c for bills dated
-     * from (today - 365 days) 00:00:00 to today 23:59:59.999, rounded to
-     * 2 decimals, written only when the figure has changed.
+     * from (today - 364 days) 00:00:00 up to, but not including, tomorrow
+     * 00:00:00 - a rolling 365 days that includes all of today's trading -
+     * rounded to 2 decimals, written only when the figure has changed.
      *
      * The Accounts are locked with FOR UPDATE so two bills for the same
      * household saved at the same moment cannot each total the window
@@ -66,15 +67,8 @@ public without sharing class TransactionTriggerHandler {
         // 2. Window - same bounds as ShreeHariTrailingSpendBatch
         // ---------------------------------------------------------
 
-        Date today = Date.today();
-
-        Datetime windowEnd = Datetime.newInstance(
-            today, Time.newInstance(23,59,59,99)
-        );
-
-        Datetime windowStart = Datetime.newInstance(
-            today.addDays(-365), Time.newInstance(0, 0, 0, 0)
-        );
+        Datetime windowStart = ShreeHariTrailingSpendBatch.windowStartFor(Date.today());
+        Datetime windowEndExclusive = ShreeHariTrailingSpendBatch.windowEndExclusiveFor(Date.today());
 
         // ---------------------------------------------------------
         // 3. Lock the Accounts, then total their windowed billing
@@ -95,7 +89,7 @@ public without sharing class TransactionTriggerHandler {
                 FROM Transaction_Record__c
                 WHERE Account__c IN :accountIds
                 AND Transaction_Date__c >= :windowStart
-                AND Transaction_Date__c <= :windowEnd
+                AND Transaction_Date__c < :windowEndExclusive
                 GROUP BY Account__c
             ];
 

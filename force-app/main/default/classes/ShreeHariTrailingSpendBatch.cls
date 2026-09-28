@@ -5,25 +5,42 @@ public without sharing class ShreeHariTrailingSpendBatch
 
     /**
      * Transaction_Date__c is a DateTime, so both bounds are DateTimes too.
-     * A Date bound here would be coerced to midnight, and `<= today 00:00:00`
-     * would drop every bill raised during today's trading.
+     *
+     * The window is a rolling 365 days ending with today:
+     *
+     *   Transaction_Date__c >= (today - 364 days) 00:00:00
+     *   Transaction_Date__c <  tomorrow 00:00:00
+     *
+     * The exclusive upper bound takes in all of today's trading. A bound of
+     * `<= today 00:00:00` would drop every bill raised later today.
      */
     private final Datetime windowStart;
-    private final Datetime windowEnd;
+    private final Datetime windowEndExclusive;
 
     
     public ShreeHariTrailingSpendBatch() {
 
         Date today = Date.today();
 
-        this.windowEnd = Datetime.newInstance(
-            today,
-            Time.newInstance(23, 59, 59, 999)
-        );
+        this.windowStart = windowStartFor(today);
+        this.windowEndExclusive = windowEndExclusiveFor(today);
+    }
 
-        this.windowStart = Datetime.newInstance(
-            today.addDays(-WINDOW_DAYS),
+    /** First instant inside the window: (today - 364 days) 00:00:00. */
+    public static Datetime windowStartFor(Date today) {
+
+        return Datetime.newInstance(
+            today.addDays(-(WINDOW_DAYS - 1)),
             Time.newInstance(0, 0, 0, 0)
+        );
+    }
+
+    /** First instant after the window: tomorrow 00:00:00. */
+    public static Datetime windowEndExclusiveFor(Date today) {
+
+        return Datetime.newInstance(
+            today.addDays(1),
+            Time.newInstance(23, 59, 59, 59)
         );
     }
 
@@ -51,10 +68,7 @@ public without sharing class ShreeHariTrailingSpendBatch
         ]);
     }
 
-    public void execute(
-        Database.BatchableContext context,
-        List<Account> scope
-    ) {
+    public void execute( Database.BatchableContext context, List<Account> scope ) {
 
         if (scope.isEmpty()) {
             return;
@@ -71,7 +85,7 @@ public without sharing class ShreeHariTrailingSpendBatch
             FROM Transaction_Record__c
             WHERE Account__c IN :accountIds
               AND Transaction_Date__c >= :windowStart
-              AND Transaction_Date__c <= :windowEnd
+              AND Transaction_Date__c < :windowEndExclusive
             GROUP BY Account__c
         ];
 
@@ -81,39 +95,23 @@ public without sharing class ShreeHariTrailingSpendBatch
 
             Decimal totalAmount = (Decimal) result.get('totalAmount');
 
-            transactionTotals.put(
-                accountId,
-                totalAmount == null ? 0 : totalAmount
-            );
+            transactionTotals.put( accountId, totalAmount == null ? 0 : totalAmount );
         }
 
         List<Account> accountsToUpdate = new List<Account>();
 
         for (Account accountRecord : scope) {
 
-            Decimal currentValue =
-                accountRecord.Last_12M_Spend__c == null
-                    ? 0
-                    : accountRecord.Last_12M_Spend__c;
+            Decimal currentValue = accountRecord.Last_12M_Spend__c == null ? 0 : accountRecord.Last_12M_Spend__c;
 
-            Decimal calculatedValue =
-                transactionTotals.containsKey(accountRecord.Id)
-                    ? transactionTotals.get(accountRecord.Id)
-                    : 0;
+            Decimal calculatedValue = transactionTotals.containsKey(accountRecord.Id) ? transactionTotals.get(accountRecord.Id) : 0;
 
-            calculatedValue =
-                calculatedValue.setScale(
-                    2,
-                    System.RoundingMode.HALF_UP
-                );
+            calculatedValue = calculatedValue.setScale( 2, System.RoundingMode.HALF_UP );
 
             if (currentValue != calculatedValue) {
 
                 accountsToUpdate.add(
-                    new Account(
-                        Id = accountRecord.Id,
-                        Last_12M_Spend__c = calculatedValue
-                    )
+                    new Account( Id = accountRecord.Id, Last_12M_Spend__c = calculatedValue )
                 );
             }
         }
@@ -137,8 +135,8 @@ public without sharing class ShreeHariTrailingSpendBatch
             'ShreeHariTrailingSpendBatch completed. ' +
             'Window: ' +
             String.valueOf(windowStart) +
-            ' through ' +
-            String.valueOf(windowEnd)
+            ' up to (excluding) ' +
+            String.valueOf(windowEndExclusive)
         );
     }
 }
