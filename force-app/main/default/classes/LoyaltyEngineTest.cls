@@ -49,7 +49,10 @@ private class LoyaltyEngineTest {
         );
     }
 
-    /** An open earning lot of `points`, credited on `creditDate`. */
+    /**
+     * An open earning lot of `points`, credited on `creditDate` and valid
+     * for the standard 365 days, as the engine would have saved it.
+     */
     private static Loyalty_Transaction__c earnedLot(Id loyaltyId, Integer points, Date creditDate) {
         return new Loyalty_Transaction__c(
             Loyalty_Record__c = loyaltyId,
@@ -58,6 +61,7 @@ private class LoyaltyEngineTest {
             Points_Earned__c = points,
             Remaining_Points__c = points,
             Credit_Date__c = creditDate,
+            Expiry_Date__c = creditDate.addDays(365),
             Earning_Tier__c = 'Silver',
             Earning_Rate__c = 2
         );
@@ -74,8 +78,7 @@ private class LoyaltyEngineTest {
     private static Loyalty_Record__c loyaltyFor(Id accountId) {
         return [
             SELECT Id, Points_Balance__c, Total_Points_Earned__c,
-                   Total_Points_Redeemed__c, Last_Transaction_Date__c,
-                   Last_Transaction_Type__c
+                   Total_Points_Redeemed__c, Last_Transaction_Date__c
             FROM Loyalty_Record__c
             WHERE Account__c = :accountId
             LIMIT 1
@@ -132,7 +135,6 @@ private class LoyaltyEngineTest {
         Assert.areEqual(32, loyalty.Total_Points_Earned__c, 'Lifetime earned should match');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
         Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'Stamped with the bill date');
-        Assert.areEqual('Earning', loyalty.Last_Transaction_Type__c, 'Points earned, nothing redeemed');
     }
 
     /**
@@ -229,7 +231,6 @@ private class LoyaltyEngineTest {
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(0, loyalty.Points_Balance__c, 'Nothing billed, nothing earned');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'And nothing redeemed');
-        Assert.isNull(loyalty.Last_Transaction_Type__c, 'Nothing earned or redeemed leaves the type blank');
         Assert.areEqual(0, ledgerFor(acct.Id).size(), 'No zero-point ledger events');
     }
 
@@ -289,7 +290,6 @@ private class LoyaltyEngineTest {
         );
         Assert.areEqual(172, loyalty.Total_Points_Earned__c, 'Lifetime earned is 112 + 60');
         Assert.areEqual(112, loyalty.Total_Points_Redeemed__c, 'Lifetime redeemed is the 112 spent');
-        Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'Points were redeemed on this bill');
         Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'The bill earned points, so it is stamped');
     }
 
@@ -384,7 +384,6 @@ private class LoyaltyEngineTest {
             '99 kept, and the full 3,200 earns 64 at Silver'
         );
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
-        Assert.areEqual('Earning', loyalty.Last_Transaction_Type__c, 'A refused redemption is an Earning');
     }
 
     /**
@@ -445,7 +444,6 @@ private class LoyaltyEngineTest {
         Assert.areEqual(100, loyalty.Points_Balance__c, '800 of the 900 points settled the bill');
         Assert.areEqual(900, loyalty.Total_Points_Earned__c, 'A bill paid entirely in points earns nothing');
         Assert.isNull(loyalty.Last_Transaction_Date__c, 'A redemption that earned nothing does not move the last earning date');
-        Assert.isNull(loyalty.Last_Transaction_Type__c, 'Nor the type that goes with it');
         Assert.areEqual(
             0,
             [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__r.Account__c = :acct.Id AND Transaction_Type__c = 'Earn' AND Transaction_Record__c != null],
@@ -473,39 +471,16 @@ private class LoyaltyEngineTest {
     }
 
     // =====================================================================
-    // Last Transaction Type
+    // Last Transaction Date
     // =====================================================================
 
-    /** A later bill on the same date replaces the type. */
+    /** A back-dated bill does not move the last transaction date back. */
     @IsTest
-    static void testSameDayBillUpdatesTransactionType() {
-        Account acct = household('Same Day', 5000);
-        insert acct;
-        Loyalty_Record__c opening = openingBalance(acct.Id, 500);
-        opening.Last_Transaction_Date__c = Date.today();
-        opening.Last_Transaction_Type__c = 'Earning';
-        insert opening;
-        insert earnedLot(opening.Id, 500, Date.today().addDays(-30));
-
-        Test.startTest();
-        insert bill(acct.Id, 3200, true);
-        Test.stopTest();
-
-        Assert.areEqual(
-            'Redemption',
-            loyaltyFor(acct.Id).Last_Transaction_Type__c,
-            'The latest bill on the same date sets the type'
-        );
-    }
-
-    /** A back-dated bill changes neither the date nor the type. */
-    @IsTest
-    static void testBackDatedBillLeavesTransactionTypeAlone() {
+    static void testBackDatedBillLeavesLastTransactionDateAlone() {
         Account acct = household('Back Dated', 5000);
         insert acct;
         Loyalty_Record__c opening = openingBalance(acct.Id, 500);
         opening.Last_Transaction_Date__c = Date.today();
-        opening.Last_Transaction_Type__c = 'Redemption';
         insert opening;
 
         Transaction_Record__c oldBill = bill(acct.Id, 3200, false);
@@ -517,7 +492,6 @@ private class LoyaltyEngineTest {
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'The later date is kept');
-        Assert.areEqual('Redemption', loyalty.Last_Transaction_Type__c, 'The type still matches the later date');
     }
 
     // =====================================================================
@@ -647,6 +621,41 @@ private class LoyaltyEngineTest {
 
         Assert.areEqual(200, loyaltyFor(lastDay.Id).Total_Points_Redeemed__c, 'Usable on the expiry date itself');
         Assert.areEqual(0, loyaltyFor(dayAfter.Id).Total_Points_Redeemed__c, 'Not usable the day after');
+    }
+
+    /**
+     * A lot with its own Expiry_Date__c (e.g. a gift voucher coupon) is
+     * governed by that date, not by Credit Date + 365.
+     */
+    @IsTest
+    static void testCustomExpiryDateIsRespected() {
+        Account extended = household('Extended Validity', 5000);
+        Account shortened = household('Short Validity', 5000);
+        insert new List<Account>{ extended, shortened };
+
+        Loyalty_Record__c extendedLoyalty = openingBalance(extended.Id, 200);
+        Loyalty_Record__c shortenedLoyalty = openingBalance(shortened.Id, 200);
+        insert new List<Loyalty_Record__c>{ extendedLoyalty, shortenedLoyalty };
+
+        // Credited 400 days ago but still valid for another 30 days.
+        Loyalty_Transaction__c extendedLot = earnedLot(extendedLoyalty.Id, 200, Date.today().addDays(-400));
+        extendedLot.Expiry_Date__c = Date.today().addDays(30);
+
+        // Credited 10 days ago but already expired yesterday.
+        Loyalty_Transaction__c shortenedLot = earnedLot(shortenedLoyalty.Id, 200, Date.today().addDays(-10));
+        shortenedLot.Expiry_Date__c = Date.today().addDays(-1);
+
+        insert new List<Loyalty_Transaction__c>{ extendedLot, shortenedLot };
+
+        Test.startTest();
+        insert new List<Transaction_Record__c>{
+            bill(extended.Id, 1000, true),
+            bill(shortened.Id, 1000, true)
+        };
+        Test.stopTest();
+
+        Assert.areEqual(200, loyaltyFor(extended.Id).Total_Points_Redeemed__c, 'Usable until its own expiry date');
+        Assert.areEqual(0, loyaltyFor(shortened.Id).Total_Points_Redeemed__c, 'Not usable after its own expiry date');
     }
 
     // =====================================================================

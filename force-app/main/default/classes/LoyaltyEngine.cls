@@ -12,8 +12,9 @@
  *
  * Every Earn event is also an earning lot. Remaining_Points__c says how much
  * of the lot is still unspent, and redemptions consume lots oldest first
- * (FIFO). Expiry is not handled here: Expiry_Date__c is a formula
- * (Credit Date + 365) and a separate scheduled job marks lots Expired.
+ * (FIFO). A lot earned on a bill gets Expiry_Date__c = Credit Date + 365
+ * days; lots created elsewhere (e.g. gift voucher coupons) carry their own
+ * Expiry_Date__c. A separate scheduled job marks lots Expired.
  *
  * The ledger and the balance are system-maintained: the user saving the bill
  * (usually the POS integration user) needs no access to them. Queries and DML
@@ -41,12 +42,10 @@ public with sharing class LoyaltyEngine {
     @TestVisible
     private static final String DEFAULT_TIER = 'Silver';
 
-    // Loyalty_Record__c.Last_Transaction_Type__c values
+    // Points earned on a bill can be used for this many days after the
+    // credit date (inclusive).
     @TestVisible
-    private static final String TRANSACTION_TYPE_REDEMPTION = 'Redemption';
-
-    @TestVisible
-    private static final String TRANSACTION_TYPE_EARNING = 'Earning';
+    private static final Integer EARNED_POINTS_VALIDITY_DAYS = 365;
 
     // Loyalty_Transaction__c.Transaction_Type__c values
     @TestVisible
@@ -281,23 +280,16 @@ public with sharing class LoyaltyEngine {
             loyalty.Total_Points_Redeemed__c = whole(loyalty.Total_Points_Redeemed__c) + pointsRedeemed;
 
             // -----------------------------------------------------
-            // Last Transaction Date / Type
+            // Last Transaction Date
             //
             // Last_Transaction_Date__c is the latest bill that
             // EARNED points, so a bill that earned nothing (for
-            // example one settled entirely in points) changes
-            // neither field. The type is set together with the date
-            // so both describe the same bill. A back-dated bill
-            // changes neither. On the same date, the last bill
-            // processed wins.
-            //
-            // Redemption -> points were redeemed as well as earned
-            // Earning    -> points earned, nothing redeemed
+            // example one settled entirely in points) leaves it
+            // alone, as does a back-dated bill.
             // -----------------------------------------------------
 
             if (pointsEarned > 0 && (loyalty.Last_Transaction_Date__c == null || loyalty.Last_Transaction_Date__c <= transactionDate)) {
                 loyalty.Last_Transaction_Date__c = transactionDate;
-                loyalty.Last_Transaction_Type__c = transactionTypeOf( pointsEarned, pointsRedeemed );
             }
         }
 
@@ -382,27 +374,6 @@ public with sharing class LoyaltyEngine {
         Decimal points = completeHundreds * tierPercentage;
 
         return Integer.valueOf( points.setScale(0, System.RoundingMode.DOWN));
-    }
-
-    /**
-     * Value for Loyalty_Record__c.Last_Transaction_Type__c.
-     *
-     * Redemption wins whenever points were redeemed, even if the
-     * same bill also earned points. Returns null (picklist None)
-     * when the transaction neither earned nor redeemed points.
-     */
-    @TestVisible
-    private static String transactionTypeOf( Integer pointsEarned, Integer pointsRedeemed ) {
-
-        if (pointsRedeemed > 0) {
-            return TRANSACTION_TYPE_REDEMPTION;
-        }
-
-        if (pointsEarned > 0) {
-            return TRANSACTION_TYPE_EARNING;
-        }
-
-        return null;
     }
 
     /**
@@ -531,12 +502,11 @@ public with sharing class LoyaltyEngine {
      *
      * Earning_Tier__c and Earning_Rate__c are a snapshot of the terms the
      * points were earned under and are never rewritten when the tier moves.
-     * Expiry_Date__c is filled in here only so a later bill in the same
-     * batch can test it; the saved value comes from the formula.
+     * Expiry_Date__c is the last usable day: credit date + 365 days.
      */
     private static Loyalty_Transaction__c earningLot( Loyalty_Record__c loyalty, Transaction_Record__c transactionRecord, Date creditDate, Integer pointsEarned, String tier, Decimal earningRate, Decimal netAmount, Datetime processedAt ) {
 
-        Loyalty_Transaction__c lot = new Loyalty_Transaction__c(
+        return new Loyalty_Transaction__c(
             Loyalty_Record__c = loyalty.Id,
             Transaction_Record__c = transactionRecord.Id,
             Transaction_Type__c = LEDGER_TYPE_EARN,
@@ -544,15 +514,12 @@ public with sharing class LoyaltyEngine {
             Points_Earned__c = pointsEarned,
             Remaining_Points__c = pointsEarned,
             Credit_Date__c = creditDate,
+            Expiry_Date__c = creditDate.addDays(EARNED_POINTS_VALIDITY_DAYS),
             Earning_Tier__c = tier,
             Earning_Rate__c = earningRate,
             Net_Loyalty_Amount__c = netAmount,
             Processed_Date__c = processedAt
         );
-
-        Formula.recalculateFormulas(new List<Loyalty_Transaction__c>{ lot });
-
-        return lot;
     }
 
     /**
@@ -614,12 +581,11 @@ public with sharing class LoyaltyEngine {
                 SELECT
                     Id,
                     Account__c,
-                    Tier__c,
+            		Tier__c,
                     Points_Balance__c,
                     Total_Points_Earned__c,
                     Total_Points_Redeemed__c,
-                    Last_Transaction_Date__c,
-                    Last_Transaction_Type__c
+                    Last_Transaction_Date__c
                 FROM Loyalty_Record__c
                 WHERE Account__c IN :accountIds
                 WITH SYSTEM_MODE

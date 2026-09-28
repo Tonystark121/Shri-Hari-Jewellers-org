@@ -2,7 +2,8 @@
  * Daily loyalty points expiry.
  *
  * An earning lot (Loyalty_Transaction__c, Transaction_Type__c = Earn) can be
- * spent up to and including its Expiry_Date__c (Credit Date + 365) - see
+ * spent up to and including its Expiry_Date__c (Credit Date + 365 for
+ * points earned on a bill, or a custom date e.g. for gift vouchers) - see
  * LoyaltyEngine.eligibleLots(). From the next day on, whatever is still
  * unspent on the lot is lost:
  *
