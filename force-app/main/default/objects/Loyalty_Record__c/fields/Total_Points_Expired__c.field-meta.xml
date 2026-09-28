@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Total_Points_Expired__c</fullName>
-    <description>Cumulative points the household has lost to expiry since joining. Counts only points still unredeemed when their earning lot expired. Never decreases.</description>
+    <description>Cumulative points the household has lost to expiry since joining. Sum of Remaining Points on the Expired loyalty transactions, i.e. the points still unredeemed when their earning lot expired. Set by LoyaltyPointsExpiryBatch.</description>
     <externalId>false</externalId>
     <label>Total Points Expired</label>
-    <precision>18</precision>
-    <required>false</required>
-    <scale>0</scale>
-    <trackHistory>true</trackHistory>
+    <summarizedField>Loyalty_Transaction__c.Remaining_Points__c</summarizedField>
+    <summaryFilterItems>
+        <field>Loyalty_Transaction__c.Status__c</field>
+        <operation>equals</operation>
+        <value>Expired</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Loyalty_Transaction__c.Loyalty_Record__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
-    <type>Number</type>
-    <unique>false</unique>
+    <type>Summary</type>
 </CustomField>
