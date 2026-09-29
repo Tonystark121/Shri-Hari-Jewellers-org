@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Gift_Voucher__c</fullName>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <description>The gift voucher redeemed on this bill. Set by the system when the bill is saved with a valid Voucher Code.</description>
+    <label>Gift Voucher</label>
+    <referenceTo>Gift_Voucher__c</referenceTo>
+    <relationshipLabel>Transaction Records</relationshipLabel>
+    <relationshipName>Transaction_Records</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

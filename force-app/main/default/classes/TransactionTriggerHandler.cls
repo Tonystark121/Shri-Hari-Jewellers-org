@@ -10,6 +10,21 @@
  */
 public without sharing class TransactionTriggerHandler {
 
+    /**
+     * Checks any gift voucher on the bills before they are saved and stamps
+     * Gift Voucher, Voucher Discount and Net Amount. Bills with an invalid
+     * voucher, or with both Redeem Points and Redeem Gift Voucher ticked, are
+     * rejected.
+     */
+    public static void beforeInsert(List<Transaction_Record__c> newTransactions) {
+
+        if (newTransactions == null || newTransactions.isEmpty()) {
+            return;
+        }
+
+        GiftVoucherRedemption.beforeInsert(newTransactions);
+    }
+
     public static void afterInsert(List<Transaction_Record__c> newTransactions) {
 
         if (newTransactions == null || newTransactions.isEmpty()) {
@@ -17,13 +32,19 @@ public without sharing class TransactionTriggerHandler {
         }
 
         // ---------------------------------------------------------
-        // 1. Earn / redeem loyalty points
+        // 1. Mark redeemed gift vouchers
+        // ---------------------------------------------------------
+
+        GiftVoucherRedemption.afterInsert(newTransactions);
+
+        // ---------------------------------------------------------
+        // 2. Earn / redeem loyalty points
         // ---------------------------------------------------------
 
         LoyaltyEngine.processEarn(newTransactions);
 
         // ---------------------------------------------------------
-        // 2. Recalculate Last 12 Month Spend
+        // 3. Recalculate Last 12 Month Spend
         // ---------------------------------------------------------
 
         recalculateLast12MonthSpend(newTransactions);

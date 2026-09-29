@@ -294,6 +294,38 @@ private class LoyaltyEngineTest {
     }
 
     /**
+     * The "Method 2" bill carries its own figures: 112 points redeemed and a
+     * net amount of 3,088. A bill with no redemption keeps Net Amount equal
+     * to Amount.
+     */
+    @IsTest
+    static void testBillShowsPointsRedeemedAndNetAmount() {
+        Account acct = household('Method Two Bill', 5600);
+        insert acct;
+        withPoints(acct.Id, 112);
+
+        Transaction_Record__c redeeming = bill(acct.Id, 3200, true);
+        Transaction_Record__c plain = bill(acct.Id, 1500, false);
+        plain.Transaction_Date__c = Datetime.now().addMinutes(1);
+
+        Test.startTest();
+        insert new List<Transaction_Record__c>{ redeeming, plain };
+        Test.stopTest();
+
+        Map<Id, Transaction_Record__c> saved = new Map<Id, Transaction_Record__c>([
+            SELECT Id, Points_Redeemed__c, Net_Amount__c, Voucher_Discount__c
+            FROM Transaction_Record__c
+            WHERE Account__c = :acct.Id
+            WITH SYSTEM_MODE
+        ]);
+        Assert.areEqual(112, saved.get(redeeming.Id).Points_Redeemed__c, 'All 112 points were spent on the bill');
+        Assert.areEqual(3088, saved.get(redeeming.Id).Net_Amount__c, '3,200 - 112');
+        Assert.areEqual(0, saved.get(redeeming.Id).Voucher_Discount__c, 'No voucher on this bill');
+        Assert.areEqual(0, saved.get(plain.Id).Points_Redeemed__c, 'Nothing redeemed');
+        Assert.areEqual(1500, saved.get(plain.Id).Net_Amount__c, 'Net Amount equals Amount without a redemption');
+    }
+
+    /**
      * The same "Method 2" bill, read from the ledger: one Redeemed event for
      * the 112 spent, one Earn event (the new lot) for the 60 earned on
      * 3,088, and the lot that held the 112 emptied and marked Redeemed.

@@ -78,8 +78,8 @@
               formatter="currency"
               step="0.01"
               label="Min Amount (in INR)"
-              field-level-help="Lowest bill amount the offer applies to. Leave blank for no minimum (0)."
-              placeholder="0"
+              field-level-help="Lowest bill amount the offer applies to. Leave blank to apply the offer to bills of Max Amount or more."
+              placeholder="Optional"
               value={state.minAmount}
               onchange={handleOfferInput}>
             </lightning-input>
@@ -92,7 +92,7 @@
               formatter="currency"
               step="0.01"
               label="Max Amount (in INR)"
-              field-level-help="Highest bill amount the offer applies to."
+              field-level-help="With a Min Amount: the highest bill amount the offer applies to. Without a Min Amount: the offer applies to bills of this amount or more."
               required
               value={state.maxAmount}
               onchange={handleOfferInput}>

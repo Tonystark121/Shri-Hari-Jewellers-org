@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Points_Redeemed__c</fullName>
+    <description>Loyalty points spent on this bill (1 point = Rs. 1). Set by the loyalty engine; 0 when no points were redeemed.</description>
+    <externalId>false</externalId>
+    <label>Points Redeemed</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

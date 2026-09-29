@@ -283,9 +283,8 @@ export default class DynamicFieldSelection extends LightningElement {
     }
 
     get offerCardSubtitle() {
-        return this.isFixedPrice
-            ? 'A fixed rupee amount off the bill, when the bill is between the minimum and maximum amount.'
-            : 'A percentage off the bill, when the bill is between the minimum and maximum amount.';
+        const value = this.isFixedPrice ? 'A fixed rupee amount off the bill' : 'A percentage off the total bill';
+        return `${value}: with a Min Amount, for bills from Min to Max; without one, for bills of Max Amount or more.`;
     }
 
     handleOfferTypeSelect(event) {
@@ -311,13 +310,20 @@ export default class DynamicFieldSelection extends LightningElement {
         this.notify(name, value);
     }
 
-    /** Plain-language preview of the offer, shown under the inputs and on screen 3. */
+    /**
+     * Plain-language preview of the offer, shown under the inputs and on
+     * screen 3. Min and Max: bills from Min to Max. Max only (Min blank or
+     * 0): bills of Max or more. Same rule as GiftVoucherRedemption.
+     */
     get offerSummary() {
-        const min = this.toNumber(this.state.minAmount) ?? 0;
+        const min = this.toNumber(this.state.minAmount);
         const max = this.toNumber(this.state.maxAmount);
-        const range = max === null
-            ? `on bills from ${INR.format(min)}`
-            : `on bills from ${INR.format(min)} to ${INR.format(max)}`;
+        let range = '';
+        if (max !== null && min !== null && min > 0) {
+            range = `on bills from ${INR.format(min)} to ${INR.format(max)}`;
+        } else if (max !== null) {
+            range = `on bills of ${INR.format(max)} or more`;
+        }
         if (this.isFixedPrice) {
             const amount = this.toNumber(this.state.offerAmount);
             return amount === null ? '' : `${INR.format(amount)} off ${range}`;

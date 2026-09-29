@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Redeem_Gift_Voucher__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Ticked when the customer redeems a gift voucher on this bill. Requires Voucher Code and Voucher Redemption Channel. Only one redemption per bill: cannot be ticked together with Redeem Points.</description>
+    <inlineHelpText>Tick if the customer is redeeming a gift voucher on this bill. Cannot be combined with Redeem Points.</inlineHelpText>
+    <label>Redeem Gift Voucher</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

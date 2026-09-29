@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>New_Transaction</fullName>
+    <availability>online</availability>
+    <description>Opens the New Transaction screen flow: bill details, then Redeem Points or Redeem Gift Voucher (voucher checked immediately), then save.</description>
+    <displayType>massActionButton</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>New</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <requireRowSelection>false</requireRowSelection>
+    <url>/flow/New_Transaction?retURL=/lightning/o/Transaction_Record__c/list</url>
+</WebLink>

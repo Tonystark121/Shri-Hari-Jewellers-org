@@ -76,6 +76,10 @@ public with sharing class LoyaltyEngine {
      *   5. Calculate the points earned on the net bill.
      *   6. Create the Earn event (the new earning lot).
      *   7. Update the Loyalty Record.
+     *   8. Write Points Redeemed and Net Amount back onto the bill.
+     *
+     * The bill's starting amount is Amount - Voucher Discount: a gift voucher
+     * (see GiftVoucherRedemption) is applied before this method runs.
      *
      * Points earned by a bill are never available to that same bill, but a
      * later bill in the same batch can spend them.
@@ -168,6 +172,9 @@ public with sharing class LoyaltyEngine {
 
         List<Loyalty_Transaction__c> newEvents = new List<Loyalty_Transaction__c>();
 
+        // Bills that spent points: Points Redeemed and Net Amount to write back.
+        List<Transaction_Record__c> billsToUpdate = new List<Transaction_Record__c>();
+
         for (Transaction_Record__c transactionRecord : bills) {
 
             Account accountRecord = accountsById.get(transactionRecord.Account__c);
@@ -206,13 +213,16 @@ public with sharing class LoyaltyEngine {
             // spent.
             // -----------------------------------------------------
 
+            // Amount left after any gift voucher discount.
+            Decimal amountAfterVoucher = netAmountOf( transactionRecord.Amount__c, transactionRecord.Voucher_Discount__c );
+
             Integer pointsRedeemed = 0;
 
             if (transactionRecord.Redeem_Points__c == true) {
 
                 List<Loyalty_Transaction__c> eligible = eligibleLots(lots, transactionDate);
 
-                pointsRedeemed = pointsToApply( currentBalance, remainingIn(eligible), transactionRecord.Amount__c );
+                pointsRedeemed = pointsToApply( currentBalance, remainingIn(eligible), amountAfterVoucher );
 
                 if (pointsRedeemed > 0) {
                     consumeOldestFirst( eligible, pointsRedeemed, consumedLots );
@@ -224,7 +234,15 @@ public with sharing class LoyaltyEngine {
             // Net bill after redemption
             // -----------------------------------------------------
 
-            Decimal netAmount = netAmountOf( transactionRecord.Amount__c, pointsRedeemed);
+            Decimal netAmount = netAmountOf( amountAfterVoucher, pointsRedeemed);
+
+            if (pointsRedeemed > 0) {
+                billsToUpdate.add(new Transaction_Record__c(
+                    Id = transactionRecord.Id,
+                    Points_Redeemed__c = pointsRedeemed,
+                    Net_Amount__c = netAmount
+                ));
+            }
 
             // -----------------------------------------------------
             // Tier used for THIS purchase
@@ -311,6 +329,10 @@ public with sharing class LoyaltyEngine {
         }
 
         update as system loyaltyByAccount.values();
+
+        if (!billsToUpdate.isEmpty()) {
+            update as system billsToUpdate;
+        }
     }
 
     /**
@@ -377,13 +399,14 @@ public with sharing class LoyaltyEngine {
     }
 
     /**
-     * Net amount after loyalty-point redemption.
+     * Amount left after taking something off the bill (a voucher discount or
+     * redeemed points). Never negative.
      */
-    private static Decimal netAmountOf(Decimal grossAmount,Integer pointsRedeemed) {
+    private static Decimal netAmountOf(Decimal grossAmount, Decimal deduction) {
 
         Decimal gross = grossAmount == null? 0 : grossAmount;
-        Decimal redeemed = pointsRedeemed == null ? 0 : pointsRedeemed;
-        Decimal net = gross - redeemed;
+        Decimal taken = deduction == null ? 0 : deduction;
+        Decimal net = gross - taken;
         return net < 0 ? 0 : net;
     }
 
