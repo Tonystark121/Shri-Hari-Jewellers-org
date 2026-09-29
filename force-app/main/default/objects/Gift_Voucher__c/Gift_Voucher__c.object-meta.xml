@@ -160,7 +160,13 @@
         <type>AutoNumber</type>
     </nameField>
     <pluralLabel>Gift Vouchers</pluralLabel>
-    <searchLayouts></searchLayouts>
+    <searchLayouts>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>MassChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
+        <listViewButtons>New_Gift_Voucher</listViewButtons>
+    </searchLayouts>
     <sharingModel>Read</sharingModel>
     <visibility>Public</visibility>
 </CustomObject>

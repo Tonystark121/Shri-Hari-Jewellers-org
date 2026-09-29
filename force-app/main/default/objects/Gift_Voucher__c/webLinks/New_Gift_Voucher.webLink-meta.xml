@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>New_Gift_Voucher</fullName>
+    <availability>online</availability>
+    <description>Opens the Create Gift Voucher screen flow: set the offer, filter and select Accounts, and create one voucher per selected Account.</description>
+    <displayType>massActionButton</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>New</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <requireRowSelection>false</requireRowSelection>
+    <url>/flow/Create_Gift_Voucher?retURL=/lightning/o/Gift_Voucher__c/list</url>
+</WebLink>

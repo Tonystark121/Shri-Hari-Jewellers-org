@@ -1,0 +1,475 @@
+<template>
+  <div class="gv-container">
+
+    <!-- ========================= Step indicator ========================= -->
+    <div class="gv-progress">
+      <lightning-progress-indicator current-step={screenMode} type="path" variant="base">
+        <template for:each={steps} for:item="step">
+          <lightning-progress-step key={step.value} label={step.label} value={step.value}></lightning-progress-step>
+        </template>
+      </lightning-progress-indicator>
+    </div>
+
+    <!-- ================= Screen 1: Offer Specifications ================= -->
+    <template if:true={isOfferMode}>
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:choice" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Set offer value by</p>
+            <p class="gv-card-subtitle">Choose how the discount is given on the bill.</p>
+          </div>
+        </div>
+
+        <div class="offer-tiles" role="radiogroup" aria-label="Set offer value by">
+          <div
+            class={fixedTileClass}
+            role="radio"
+            tabindex="0"
+            aria-checked={fixedAriaChecked}
+            data-value="Fixed Price"
+            onclick={handleOfferTypeSelect}
+            onkeydown={handleOfferTileKeydown}>
+            <lightning-icon icon-name="utility:moneybag" size="small" class="offer-tile-icon"></lightning-icon>
+            <div>
+              <p class="offer-tile-title">Fixed Price</p>
+              <p class="offer-tile-text">A fixed rupee amount off the bill</p>
+            </div>
+            <template if:true={isFixedPrice}>
+              <lightning-icon icon-name="utility:success" size="x-small" variant="success" class="offer-tile-check"></lightning-icon>
+            </template>
+          </div>
+
+          <div
+            class={percentageTileClass}
+            role="radio"
+            tabindex="0"
+            aria-checked={percentageAriaChecked}
+            data-value="Percentage"
+            onclick={handleOfferTypeSelect}
+            onkeydown={handleOfferTileKeydown}>
+            <lightning-icon icon-name="utility:percent" size="small" class="offer-tile-icon"></lightning-icon>
+            <div>
+              <p class="offer-tile-title">Percentage</p>
+              <p class="offer-tile-text">A percentage off the bill</p>
+            </div>
+            <template if:true={isPercentage}>
+              <lightning-icon icon-name="utility:success" size="x-small" variant="success" class="offer-tile-check"></lightning-icon>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:currency" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">{offerCardTitle}</p>
+            <p class="gv-card-subtitle">{offerCardSubtitle}</p>
+          </div>
+        </div>
+
+        <div class="slds-grid slds-wrap slds-gutters_small">
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <lightning-input
+              data-group="offer"
+              data-name="minAmount"
+              type="number"
+              formatter="currency"
+              step="0.01"
+              label="Min Amount (in INR)"
+              field-level-help="Lowest bill amount the offer applies to. Leave blank for no minimum (0)."
+              placeholder="0"
+              value={state.minAmount}
+              onchange={handleOfferInput}>
+            </lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <lightning-input
+              data-group="offer"
+              data-name="maxAmount"
+              type="number"
+              formatter="currency"
+              step="0.01"
+              label="Max Amount (in INR)"
+              field-level-help="Highest bill amount the offer applies to."
+              required
+              value={state.maxAmount}
+              onchange={handleOfferInput}>
+            </lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <template if:true={isFixedPrice}>
+              <lightning-input
+                data-group="offer"
+                data-name="offerAmount"
+                type="number"
+                formatter="currency"
+                step="0.01"
+                label="Offer Amount (in INR)"
+                field-level-help="Rupee amount taken off the bill. Saved as the voucher's Face Value."
+                required
+                value={state.offerAmount}
+                onchange={handleOfferInput}>
+              </lightning-input>
+            </template>
+            <template if:true={isPercentage}>
+              <lightning-input
+                data-group="offer"
+                data-name="discountPercentage"
+                type="number"
+                formatter="percent-fixed"
+                step="0.01"
+                label="% Off"
+                field-level-help="Percentage taken off the bill, e.g. 10 for 10%. Saved as the voucher's Discount Percentage."
+                required
+                value={state.discountPercentage}
+                onchange={handleOfferInput}>
+              </lightning-input>
+            </template>
+          </div>
+        </div>
+
+        <template if:true={offerSummary}>
+          <div class="gv-preview">
+            <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            <span>Customers get <strong>{offerSummary}</strong>.</span>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- ===================== Screen 2: Offer Mapping ===================== -->
+    <template if:true={isMappingMode}>
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:filterList" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Filter Customers</p>
+            <p class="gv-card-subtitle">
+              Add one or more rules, then click <strong>Filter Records</strong> and select the customers who should receive this voucher.
+            </p>
+          </div>
+        </div>
+
+        <template if:true={isLoadingFields}>
+          <div class="gv-spinner-holder">
+            <lightning-spinner alternative-text="Loading fields" size="small"></lightning-spinner>
+          </div>
+        </template>
+
+        <template for:each={rules} for:item="rule">
+          <div key={rule.id} class="rule-card">
+            <div class="rule-card-header">
+              <span class="rule-badge">Rule {rule.id}</span>
+              <lightning-button
+                label="Delete Rule"
+                title="Delete Rule"
+                variant="destructive-text"
+                icon-name="utility:delete"
+                data-id={rule.id}
+                disabled={isDeleteDisabled}
+                onclick={handleRemoveRule}>
+              </lightning-button>
+            </div>
+
+            <div class="slds-grid slds-wrap slds-gutters_small">
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                <lightning-combobox
+                  data-id={rule.id}
+                  label="Field"
+                  placeholder="Select a field"
+                  value={rule.field}
+                  options={fieldOptions}
+                  onchange={handleRuleFieldChange}
+                  dropdown-alignment="auto">
+                </lightning-combobox>
+              </div>
+
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                <lightning-combobox
+                  data-id={rule.id}
+                  label="Operator"
+                  placeholder="Select an operator"
+                  value={rule.operator}
+                  options={rule.operatorOptions}
+                  disabled={rule.isOperatorDisabled}
+                  onchange={handleOperatorChange}
+                  dropdown-alignment="auto">
+                </lightning-combobox>
+              </div>
+
+              <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                <template if:true={rule.isValueDisabled}>
+                  <lightning-input label="Value" placeholder="Select a field and operator first" disabled></lightning-input>
+                </template>
+
+                <template if:true={rule.showNoValue}>
+                  <div class="gv-no-value">
+                    <span class="slds-form-element__label">Value</span>
+                    <p class="gv-no-value-text">{rule.noValueText}</p>
+                  </div>
+                </template>
+
+                <template if:true={rule.showTextInput}>
+                  <lightning-input
+                    data-id={rule.id}
+                    data-part="value"
+                    label="Value"
+                    type={rule.inputType}
+                    formatter={rule.formatter}
+                    step={rule.step}
+                    min={rule.min}
+                    max={rule.max}
+                    field-level-help={rule.fieldLevelHelp}
+                    placeholder={rule.placeholder}
+                    value={rule.value}
+                    onchange={handleValueChange}>
+                  </lightning-input>
+                </template>
+
+                <template if:true={rule.showRange}>
+                  <div class="slds-grid slds-gutters_x-small">
+                    <div class="slds-col slds-size_1-of-2">
+                      <lightning-input
+                        data-id={rule.id}
+                        data-part="value"
+                        label="From"
+                        type={rule.inputType}
+                        formatter={rule.formatter}
+                        step={rule.step}
+                        value={rule.value}
+                        onchange={handleValueChange}>
+                      </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                      <lightning-input
+                        data-id={rule.id}
+                        data-part="valueTo"
+                        label="To"
+                        type={rule.inputType}
+                        formatter={rule.formatter}
+                        step={rule.step}
+                        value={rule.valueTo}
+                        onchange={handleValueChange}>
+                      </lightning-input>
+                    </div>
+                  </div>
+                </template>
+
+                <template if:true={rule.showSingleSelect}>
+                  <lightning-combobox
+                    data-id={rule.id}
+                    data-part="value"
+                    label="Value"
+                    placeholder="Select a value"
+                    value={rule.value}
+                    options={rule.singleSelectOptions}
+                    onchange={handleValueChange}
+                    dropdown-alignment="auto">
+                  </lightning-combobox>
+                </template>
+
+                <template if:true={rule.showDualListbox}>
+                  <lightning-dual-listbox
+                    data-id={rule.id}
+                    data-part="values"
+                    name="ruleValue"
+                    label="Values"
+                    source-label="Available"
+                    selected-label="Selected"
+                    options={rule.picklistOptions}
+                    value={rule.values}
+                    size="4"
+                    onchange={handleValueChange}
+                    class="custom-dual-listbox">
+                  </lightning-dual-listbox>
+                </template>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <div class="gv-rule-actions">
+          <lightning-button label="Add Rule" title="Add Rule" icon-name="utility:add" onclick={handleAddRules}></lightning-button>
+        </div>
+
+        <div class="gv-logic">
+          <lightning-input
+            label="Rule Logic (optional)"
+            field-level-help="Combine rules by number, e.g. 1 AND (2 OR 3). Use parentheses when mixing AND and OR. Leave blank to require all rules."
+            placeholder={logicPlaceholder}
+            value={state.ruleLogic}
+            onchange={handleLogicChange}>
+          </lightning-input>
+        </div>
+
+        <div class="gv-filter-bar">
+          <lightning-button
+            variant="brand"
+            label="Filter Records"
+            title="Filter Records"
+            icon-name="utility:filterList"
+            disabled={isSearching}
+            onclick={handleFilterRecords}>
+          </lightning-button>
+        </div>
+
+        <template if:true={errorMessage}>
+          <div class="slds-notify slds-notify_alert slds-alert_error gv-alert" role="alert">
+            <lightning-icon icon-name="utility:error" size="x-small" variant="inverse" class="slds-m-right_x-small"></lightning-icon>
+            <span>{errorMessage}</span>
+          </div>
+        </template>
+      </div>
+
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:people" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Customers</p>
+            <p class="gv-card-subtitle">Tick the customers who should receive the voucher. Selections are kept when you change pages.</p>
+          </div>
+        </div>
+
+        <template if:true={isSearching}>
+          <div class="gv-spinner-holder">
+            <lightning-spinner alternative-text="Filtering records" size="medium"></lightning-spinner>
+          </div>
+        </template>
+
+        <template if:true={showResultsPlaceholder}>
+          <div class="gv-empty">
+            <lightning-icon icon-name="utility:search" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+            <p>Build your rules above and click <strong>Filter Records</strong> to see matching customers.</p>
+          </div>
+        </template>
+
+        <template if:true={showNoResults}>
+          <div class="gv-empty">
+            <lightning-icon icon-name="utility:search" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+            <p>No records match these rules. Change the rules and click <strong>Filter Records</strong> again.</p>
+          </div>
+        </template>
+
+        <template if:true={showResults}>
+          <template if:true={truncated}>
+            <div class="slds-notify slds-notify_alert slds-alert_warning gv-alert" role="alert">
+              <span>More than {maxRecords} records match. Only the first {maxRecords} are listed — add rules to narrow the results.</span>
+            </div>
+          </template>
+
+          <div class="gv-results-header">
+            <div class="gv-results-summary">
+              <span>Showing <strong>{pageStart}–{pageEnd}</strong> of <strong>{totalRecords}</strong></span>
+              <span class="gv-selected-pill">{selectedCount} selected</span>
+            </div>
+            <div>
+              <lightning-button label={selectAllLabel} title="Select every record found" variant="base" onclick={handleSelectAll}></lightning-button>
+              <lightning-button label="Clear Selection" title="Clear Selection" variant="base" class="slds-m-left_medium" disabled={hasNoSelection} onclick={handleClearSelection}></lightning-button>
+            </div>
+          </div>
+
+          <div class="gv-table">
+            <lightning-datatable
+              key-field="Id"
+              data={pageRecords}
+              columns={columns}
+              selected-rows={pageSelectedIds}
+              onrowselection={handleRowSelection}>
+            </lightning-datatable>
+          </div>
+
+          <div class="gv-pagination">
+            <lightning-button label="Previous" icon-name="utility:chevronleft" disabled={isFirstPage} onclick={handlePrevious}></lightning-button>
+            <span class="gv-page-label">Page {currentPage} of {totalPages}</span>
+            <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" disabled={isLastPage} onclick={handleNext}></lightning-button>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- ==================== Screen 3: Voucher Details ==================== -->
+    <template if:true={isDetailsMode}>
+      <div class="gv-stats">
+        <div class="gv-stat">
+          <p class="gv-stat-label">Offer</p>
+          <p class="gv-stat-value">{offerSummary}</p>
+        </div>
+        <div class="gv-stat">
+          <p class="gv-stat-label">Customers selected</p>
+          <p class="gv-stat-value gv-stat-number">{customerCount}</p>
+        </div>
+      </div>
+
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:product_consumed" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Voucher Details</p>
+            <p class="gv-card-subtitle">One voucher is created for every selected customer when you click <strong>Save</strong>.</p>
+          </div>
+        </div>
+
+        <div class="slds-grid slds-wrap slds-gutters_small">
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <div class="gv-code-row">
+              <lightning-input
+                class="gv-code-input"
+                data-group="details"
+                data-name="voucherCode"
+                label="Voucher Code"
+                field-level-help="Pre-filled with a random code. You can change it. Each customer's voucher gets this code plus a unique 4-character ending."
+                required
+                max-length="45"
+                value={state.voucherCode}
+                onchange={handleDetailsInput}>
+              </lightning-input>
+              <lightning-button-icon
+                icon-name="utility:refresh"
+                variant="border-filled"
+                alternative-text="Generate a new code"
+                title="Generate a new code"
+                disabled={isGeneratingCode}
+                onclick={handleGenerateCode}
+                class="gv-code-refresh">
+              </lightning-button-icon>
+            </div>
+            <p class="gv-hint">Each voucher gets its own code, e.g. <strong>{codeExample}</strong></p>
+          </div>
+
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <lightning-input
+              data-group="details"
+              data-name="expiryDate"
+              type="date"
+              label="Expiry Date"
+              field-level-help="Last day the voucher can be redeemed."
+              required
+              min={minExpiryDate}
+              value={state.expiryDate}
+              onchange={handleDetailsInput}>
+            </lightning-input>
+          </div>
+
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <lightning-input
+              data-group="details"
+              data-name="issuedBy"
+              label="Issued By"
+              max-length="255"
+              value={state.issuedBy}
+              onchange={handleDetailsInput}>
+            </lightning-input>
+          </div>
+        </div>
+
+        <template if:true={errorMessage}>
+          <div class="slds-notify slds-notify_alert slds-alert_error gv-alert" role="alert">
+            <span>{errorMessage}</span>
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+</template>

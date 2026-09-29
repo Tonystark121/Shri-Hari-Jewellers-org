@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Dynamic Field Selection</masterLabel>
+    <description>All three screens of the Create Gift Voucher flow, chosen by Screen Mode: offer specifications, dynamic record filtering with selection, and voucher details.</description>
+    <targets>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="screenMode" type="String" label="Screen Mode" default="offerMapping" description="offerSpecification, offerMapping or voucherDetails." />
+
+            <property name="offerType" type="String" label="Offer Type" description="Fixed Price or Percentage. Map in and out." />
+            <property name="minAmount" type="String" label="Min Amount" description="Minimum bill amount as text; blank means 0. Map in and out." />
+            <property name="maxAmount" type="String" label="Max Amount" description="Maximum bill amount as text. Map in and out." />
+            <property name="offerAmount" type="String" label="Offer Amount" description="Fixed Price amount as text. Map in and out." />
+            <property name="discountPercentage" type="String" label="Discount Percentage" description="Percentage off as text. Map in and out." />
+
+            <property name="objectAPIName" type="String" label="Object API Name" default="Account" description="Object whose records are filtered, e.g. Account." />
+            <property name="columnFields" type="String" label="Table Columns" default="Name" description="Comma-separated field API names shown in the results table, e.g. Name,CASA_ID__c,CLV__c." />
+            <property name="ruleListJSON" type="String" label="Rule List" description="The rules built on screen. Map in and out so they survive Previous." />
+            <property name="ruleLogic" type="String" label="Rule Logic" description="Rule logic such as 1 AND (2 OR 3). Map in and out." />
+            <property name="selectedRecordIds" type="String[]" label="Selected Record Ids" description="Ids of the ticked records. Map in and out." />
+            <property name="selectedCount" type="Integer" label="Selected Count" role="outputOnly" />
+
+            <property name="voucherCode" type="String" label="Voucher Code" description="Voucher code prefix. Map in and out." />
+            <property name="expiryDate" type="Date" label="Expiry Date" description="Map in and out." />
+            <property name="issuedBy" type="String" label="Issued By" description="Map in and out." />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

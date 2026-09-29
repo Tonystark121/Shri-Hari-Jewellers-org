@@ -1,0 +1,306 @@
+.gv-container {
+    position: relative;
+}
+
+/* ---------- Step indicator ---------- */
+.gv-progress {
+    margin-bottom: 1rem;
+}
+
+/* ---------- Cards ---------- */
+.gv-card {
+    position: relative;
+    background-color: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.gv-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.gv-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.gv-card-icon {
+    --slds-c-icon-color-foreground-default: #0176d3;
+    background-color: #e9f2fc;
+    border-radius: 0.5rem;
+    padding: 0.4rem;
+}
+
+.gv-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #181818;
+}
+
+.gv-card-subtitle {
+    font-size: 0.8125rem;
+    color: #5c5c5c;
+    margin-top: 0.125rem;
+}
+
+/* ---------- Offer type tiles ---------- */
+.offer-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.75rem;
+}
+
+.offer-tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 2px solid #e5e5e5;
+    border-radius: 0.75rem;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.offer-tile:hover {
+    border-color: #90d0fe;
+    box-shadow: 0 2px 8px rgba(1, 118, 211, 0.12);
+}
+
+.offer-tile:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.3);
+}
+
+.offer-tile_selected {
+    border-color: #0176d3;
+    background-color: #f3f9ff;
+}
+
+.offer-tile-icon {
+    --slds-c-icon-color-foreground-default: #0176d3;
+}
+
+.offer-tile-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #181818;
+}
+
+.offer-tile-text {
+    font-size: 0.75rem;
+    color: #5c5c5c;
+}
+
+.offer-tile-check {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.gv-preview {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    background-color: #f3f9ff;
+    color: #032d60;
+    font-size: 0.8125rem;
+}
+
+/* ---------- Rules ---------- */
+.rule-card {
+    border: 1px solid #e5e5e5;
+    border-left: 4px solid #0176d3;
+    border-radius: 0.5rem;
+    background-color: #fcfcfc;
+    padding: 0.875rem 1rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.rule-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.rule-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #0b5cab;
+    background-color: #e9f2fc;
+    border-radius: 1rem;
+    padding: 0.125rem 0.625rem;
+}
+
+.custom-dual-listbox .slds-dueling-list__options {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: auto;
+}
+
+.gv-no-value {
+    padding-top: 0.125rem;
+}
+
+.gv-no-value-text {
+    font-size: 0.8125rem;
+    color: #5c5c5c;
+    padding: 0.5rem 0.75rem;
+    border: 1px dashed #c9c9c9;
+    border-radius: 0.25rem;
+    background-color: #fafaf9;
+}
+
+.gv-rule-actions {
+    margin-top: 0.25rem;
+}
+
+.gv-logic {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background-color: #fafaf9;
+    border: 1px solid #ececec;
+}
+
+.gv-filter-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.gv-alert {
+    margin-top: 0.75rem;
+    border-radius: 0.375rem;
+    justify-content: flex-start;
+}
+
+.gv-spinner-holder {
+    position: relative;
+    min-height: 4rem;
+}
+
+/* ---------- Results ---------- */
+.gv-results-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.gv-results-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.gv-selected-pill {
+    font-weight: 700;
+    color: #ffffff;
+    background-color: #0176d3;
+    border-radius: 1rem;
+    padding: 0.125rem 0.625rem;
+}
+
+.gv-table {
+    height: 26rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.gv-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+.gv-page-label {
+    font-size: 0.8125rem;
+    color: #5c5c5c;
+}
+
+.gv-empty {
+    text-align: center;
+    padding: 1.5rem;
+    color: #5c5c5c;
+    border: 1px dashed #c9c9c9;
+    border-radius: 0.5rem;
+}
+
+/* ---------- Voucher details ---------- */
+.gv-stats {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.gv-stat {
+    background-color: #f3f9ff;
+    border: 1px solid #cfe5fb;
+    border-radius: 0.75rem;
+    padding: 0.875rem 1rem;
+}
+
+.gv-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #0b5cab;
+    font-weight: 700;
+}
+
+.gv-stat-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #032d60;
+    margin-top: 0.25rem;
+}
+
+.gv-stat-number {
+    font-size: 1.5rem;
+}
+
+.gv-code-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.gv-code-input {
+    flex: 1;
+}
+
+.gv-code-refresh {
+    margin-bottom: 0.125rem;
+}
+
+.gv-hint {
+    font-size: 0.75rem;
+    color: #5c5c5c;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 48em) {
+    .gv-stats {
+        grid-template-columns: 1fr;
+    }
+}
