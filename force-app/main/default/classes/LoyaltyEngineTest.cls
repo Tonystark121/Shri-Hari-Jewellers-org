@@ -14,6 +14,10 @@
  * Only points held in earning lots (Earn rows on Loyalty_Transaction__c) can
  * be redeemed, so a household that is to redeem is given its points through
  * withPoints(), which backs the balance with a lot.
+ *
+ * Every Account gets its Loyalty Record from the "Account: Create Loyalty
+ * Record" flow as soon as it is inserted, so tests set an opening balance on
+ * that record (openingBalance() + update) rather than inserting their own.
  */
 @IsTest
 private class LoyaltyEngineTest {
@@ -40,13 +44,21 @@ private class LoyaltyEngineTest {
         );
     }
 
+    /**
+     * The Loyalty Record the Account flow created for this household, with
+     * an opening balance of `points`. Not saved: the caller updates it.
+     */
     private static Loyalty_Record__c openingBalance(Id accountId, Integer points) {
-        return new Loyalty_Record__c(
-            Account__c = accountId,
-            Points_Balance__c = points,
-            Total_Points_Earned__c = points,
-            Total_Points_Redeemed__c = 0
-        );
+        Loyalty_Record__c loyalty = [
+            SELECT Id, Account__c
+            FROM Loyalty_Record__c
+            WHERE Account__c = :accountId
+            LIMIT 1
+        ];
+        loyalty.Points_Balance__c = points;
+        loyalty.Total_Points_Earned__c = points;
+        loyalty.Total_Points_Redeemed__c = 0;
+        return loyalty;
     }
 
     /**
@@ -70,7 +82,7 @@ private class LoyaltyEngineTest {
     /** A household holding `points`, all in one lot earned 30 days ago. */
     private static Loyalty_Record__c withPoints(Id accountId, Integer points) {
         Loyalty_Record__c loyalty = openingBalance(accountId, points);
-        insert loyalty;
+        update loyalty;
         insert earnedLot(loyalty.Id, points, Date.today().addDays(-30));
         return loyalty;
     }
@@ -175,7 +187,7 @@ private class LoyaltyEngineTest {
     static void testEarnsAtTheTierHeldBeforeTheBill() {
         Account acct = household('Fourth Purchase', 8800);
         insert acct;
-        insert openingBalance(acct.Id, 176);
+        update openingBalance(acct.Id, 176);
 
         Test.startTest();
         insert bill(acct.Id, 2400, false);
@@ -374,7 +386,7 @@ private class LoyaltyEngineTest {
     static void testRedeemUntickedLeavesTheBalanceAlone() {
         Account acct = household('Saving Up', 5000);
         insert acct;
-        insert openingBalance(acct.Id, 500);
+        update openingBalance(acct.Id, 500);
 
         Test.startTest();
         insert bill(acct.Id, 3200, false);
@@ -513,7 +525,7 @@ private class LoyaltyEngineTest {
         insert acct;
         Loyalty_Record__c opening = openingBalance(acct.Id, 500);
         opening.Last_Transaction_Date__c = Date.today();
-        insert opening;
+        update opening;
 
         Transaction_Record__c oldBill = bill(acct.Id, 3200, false);
         oldBill.Transaction_Date__c = Datetime.now().addDays(-10);
@@ -540,7 +552,7 @@ private class LoyaltyEngineTest {
         Account acct = household('Three Lots', 5000);
         insert acct;
         Loyalty_Record__c loyalty = openingBalance(acct.Id, 600);
-        insert loyalty;
+        update loyalty;
 
         Loyalty_Transaction__c lt001 = earnedLot(loyalty.Id, 100, Date.today().addDays(-30));
         Loyalty_Transaction__c lt002 = earnedLot(loyalty.Id, 200, Date.today().addDays(-20));
@@ -582,7 +594,7 @@ private class LoyaltyEngineTest {
         Account acct = household('Leave Me Be', 5000);
         insert acct;
         Loyalty_Record__c loyalty = openingBalance(acct.Id, 400);
-        insert loyalty;
+        update loyalty;
 
         Loyalty_Transaction__c oldest = earnedLot(loyalty.Id, 200, Date.today().addDays(-20));
         Loyalty_Transaction__c newest = earnedLot(loyalty.Id, 200, Date.today().addDays(-10));
@@ -605,7 +617,7 @@ private class LoyaltyEngineTest {
         Account acct = household('Stale Points', 5000);
         insert acct;
         Loyalty_Record__c loyalty = openingBalance(acct.Id, 650);
-        insert loyalty;
+        update loyalty;
 
         Loyalty_Transaction__c expired = earnedLot(loyalty.Id, 500, Date.today().addDays(-400));
         Loyalty_Transaction__c fresh = earnedLot(loyalty.Id, 150, Date.today().addDays(-10));
@@ -637,7 +649,7 @@ private class LoyaltyEngineTest {
 
         Loyalty_Record__c lastDayLoyalty = openingBalance(lastDay.Id, 200);
         Loyalty_Record__c dayAfterLoyalty = openingBalance(dayAfter.Id, 200);
-        insert new List<Loyalty_Record__c>{ lastDayLoyalty, dayAfterLoyalty };
+        update new List<Loyalty_Record__c>{ lastDayLoyalty, dayAfterLoyalty };
 
         insert new List<Loyalty_Transaction__c>{
             earnedLot(lastDayLoyalty.Id, 200, Date.today().addDays(-365)),  // expires today
@@ -667,7 +679,7 @@ private class LoyaltyEngineTest {
 
         Loyalty_Record__c extendedLoyalty = openingBalance(extended.Id, 200);
         Loyalty_Record__c shortenedLoyalty = openingBalance(shortened.Id, 200);
-        insert new List<Loyalty_Record__c>{ extendedLoyalty, shortenedLoyalty };
+        update new List<Loyalty_Record__c>{ extendedLoyalty, shortenedLoyalty };
 
         // Credited 400 days ago but still valid for another 30 days.
         Loyalty_Transaction__c extendedLot = earnedLot(extendedLoyalty.Id, 200, Date.today().addDays(-400));
@@ -775,10 +787,13 @@ private class LoyaltyEngineTest {
     static void testDuplicateLoyaltyRecordsAreRejected() {
         Account acct = household('Double Enrolled', 5000);
         insert acct;
-        insert new List<Loyalty_Record__c>{
-            openingBalance(acct.Id, 100),
-            openingBalance(acct.Id, 250)
-        };
+        // The Account flow already created one Loyalty Record; add a second.
+        insert new Loyalty_Record__c(
+            Account__c = acct.Id,
+            Points_Balance__c = 250,
+            Total_Points_Earned__c = 250,
+            Total_Points_Redeemed__c = 0
+        );
 
         String message;
         Test.startTest();
