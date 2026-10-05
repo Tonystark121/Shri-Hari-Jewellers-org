@@ -2,6 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Issued_By__c</fullName>
     <description>Who issued the voucher, as entered on the Create Gift Voucher flow.</description>
+    <externalId>false</externalId>
     <label>Issued By</label>
     <length>255</length>
     <required>false</required>

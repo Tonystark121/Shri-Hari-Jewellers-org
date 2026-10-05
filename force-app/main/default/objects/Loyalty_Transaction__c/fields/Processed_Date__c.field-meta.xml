@@ -4,7 +4,7 @@
     <description>Date/time the loyalty engine processed this transaction.</description>
     <label>Processed Date</label>
     <required>false</required>
-    <type>DateTime</type>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
+    <type>DateTime</type>
 </CustomField>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Marital_Status__c</fullName>
-    <description>Customer's marital status. Anniversary Date applies only when Married.</description>
+    <description>Customer&apos;s marital status. Anniversary Date applies only when Married.</description>
     <label>Marital Status</label>
     <required>false</required>
     <trackFeedHistory>false</trackFeedHistory>

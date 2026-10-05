@@ -4,6 +4,8 @@
     <description>Tier the household held when the points were earned.</description>
     <label>Earning Tier</label>
     <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
     <type>Picklist</type>
     <valueSet>
         <restricted>true</restricted>
@@ -31,6 +33,4 @@
             </value>
         </valueSetDefinition>
     </valueSet>
-    <trackHistory>false</trackHistory>
-    <trackTrending>false</trackTrending>
 </CustomField>

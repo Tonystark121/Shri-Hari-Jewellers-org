@@ -4,7 +4,7 @@
     <description>Date the points were credited.</description>
     <label>Credit Date</label>
     <required>false</required>
-    <type>Date</type>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
+    <type>Date</type>
 </CustomField>

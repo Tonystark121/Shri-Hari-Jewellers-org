@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Offer_Type__c</fullName>
-    <description>How the voucher's discount is set. Fixed Price: Face Value off the bill. Percentage: Discount Percentage off the bill. Either applies only when the bill is between Minimum Amount and Maximum Amount.</description>
+    <description>How the voucher&apos;s discount is set. Fixed Price: Face Value off the bill. Percentage: Discount Percentage off the bill. Either applies only when the bill is between Minimum Amount and Maximum Amount.</description>
     <label>Offer Type</label>
     <required>false</required>
     <trackTrending>false</trackTrending>

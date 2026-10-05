@@ -4,6 +4,8 @@
     <description>Kind of loyalty event.</description>
     <label>Transaction Type</label>
     <required>false</required>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
     <type>Picklist</type>
     <valueSet>
         <restricted>true</restricted>
@@ -26,6 +28,4 @@
             </value>
         </valueSetDefinition>
     </valueSet>
-    <trackHistory>true</trackHistory>
-    <trackTrending>false</trackTrending>
 </CustomField>

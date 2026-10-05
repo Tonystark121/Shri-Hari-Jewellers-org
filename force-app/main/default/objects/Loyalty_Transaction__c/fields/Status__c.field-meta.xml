@@ -4,6 +4,8 @@
     <description>Current state of the points in this transaction.</description>
     <label>Status</label>
     <required>false</required>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
     <type>Picklist</type>
     <valueSet>
         <restricted>true</restricted>
@@ -26,6 +28,4 @@
             </value>
         </valueSetDefinition>
     </valueSet>
-    <trackHistory>true</trackHistory>
-    <trackTrending>false</trackTrending>
 </CustomField>
