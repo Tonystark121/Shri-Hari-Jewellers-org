@@ -1,0 +1,1 @@
+Oct 5 2026 -> Today I'll work on research about implementating custom screen flow for ensuring conversion only when a transaction has been done. How the bulk transaction should be handled. 
