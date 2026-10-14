@@ -44,7 +44,9 @@
  * Runs without sharing: the Company update after insert must succeed even
  * when an assignment rule has given the Lead to another user, and a customer
  * or Lead the current user cannot see is still the same person and must
- * still be found.
+ * still be found. For the same reason its queries and the Company update
+ * run in system mode: Apex at this API version otherwise enforces the
+ * running user's field-level security.
  */
 public without sharing class LeadTriggerHandler {
 
@@ -93,7 +95,7 @@ public without sharing class LeadTriggerHandler {
 
         stampingCompany = true;
         try {
-            update toStamp;
+            update as system toStamp;
         } finally {
             stampingCompany = false;
         }
@@ -293,6 +295,7 @@ public without sharing class LeadTriggerHandler {
             WHERE Phone IN :phoneForms
                OR MobilePhone IN :phoneForms
                OR Email IN :lowerEmails
+            WITH SYSTEM_MODE
             ORDER BY LastModifiedDate DESC
         ]) {
             Customer customer = new Customer();
@@ -315,6 +318,7 @@ public without sharing class LeadTriggerHandler {
             FROM Account
             WHERE Phone IN :phoneForms
                OR Email__c IN :lowerEmails
+            WITH SYSTEM_MODE
             ORDER BY LastModifiedDate DESC
         ]) {
             Customer customer = new Customer();
@@ -353,6 +357,7 @@ public without sharing class LeadTriggerHandler {
             FROM Lead
             WHERE IsConverted = false
               AND (Phone IN :phoneForms OR Email IN :lowerEmails)
+            WITH SYSTEM_MODE
             ORDER BY LastModifiedDate DESC
         ]) {
             String phoneKey = phoneMatchKey(leadRecord.Phone, normalizedPhones);

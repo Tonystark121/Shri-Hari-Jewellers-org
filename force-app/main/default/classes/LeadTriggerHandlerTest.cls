@@ -14,6 +14,7 @@ private class LeadTriggerHandlerTest {
             SELECT FirstName, LastName, Company, Business_Type__c, Lead_Number__c, Phone
             FROM Lead
             WHERE Id = :leadId
+            WITH SYSTEM_MODE
         ];
     }
 
