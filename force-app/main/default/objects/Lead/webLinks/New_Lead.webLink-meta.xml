@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>New_Lead</fullName>
+    <availability>online</availability>
+    <description>Opens the New Lead screen flow: customer details are checked against existing customers (an enquiry Case is raised instead) and open Leads (duplicate) before the Lead is created. Company defaults to &quot;&lt;Name&gt; - B2C&quot;.</description>
+    <displayType>massActionButton</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>New</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <requireRowSelection>false</requireRowSelection>
+    <url>/flow/New_Lead?retURL=/lightning/o/Lead/list</url>
+</WebLink>

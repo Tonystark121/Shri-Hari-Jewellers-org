@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Phone_Must_Be_10_Digits</fullName>
+    <active>true</active>
+    <description>Phone must be 10 digits once spaces, dashes, brackets, dots and a leading +91 or 91 are ignored. The phone is saved as entered.</description>
+    <errorConditionFormula>AND(
+  NOT(ISBLANK(Phone)),
+  NOT(REGEX(
+    SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(Phone, &quot; &quot;, &quot;&quot;), &quot;-&quot;, &quot;&quot;), &quot;(&quot;, &quot;&quot;), &quot;)&quot;, &quot;&quot;), &quot;.&quot;, &quot;&quot;),
+    &quot;(\\+?91)?[0-9]{10}&quot;
+  ))
+)</errorConditionFormula>
+    <errorDisplayField>Phone</errorDisplayField>
+    <errorMessage>Phone must be a 10-digit number, optionally starting with +91 or 91.</errorMessage>
+</ValidationRule>
