@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <actionCalls>
+        <description>Reads the uploaded CSV and processes every row with the New Lead rules (LeadUploadService). The flow runtime shows its loading spinner while this runs.</description>
+        <name>Process_Upload</name>
+        <label>Process Upload</label>
+        <locationX>176</locationX>
+        <locationY>242</locationY>
+        <actionName>LeadUploadService</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Is_File_Valid</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Set_Fault_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>contentDocumentIds</name>
+            <value>
+                <elementReference>Lead_File.contentDocIds</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>LeadUploadService</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <assignments>
+        <description>Shows why the file was refused at the top of the upload screen.</description>
+        <name>Flag_File_Error</name>
+        <label>Flag File Error</label>
+        <locationX>440</locationX>
+        <locationY>458</locationY>
+        <assignmentItems>
+            <assignToReference>Show_File_Error</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Upload_Screen</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>An unexpected failure, shown on the Error screen.</description>
+        <name>Set_Fault_Error</name>
+        <label>Set Fault Error</label>
+        <locationX>704</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>Error_Text</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Error_Screen</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>A file that could not be processed at all (wrong type, empty, missing columns, too many rows) goes back to the upload screen with the reason.</description>
+        <name>Is_File_Valid</name>
+        <label>Is File Valid?</label>
+        <locationX>176</locationX>
+        <locationY>350</locationY>
+        <defaultConnector>
+            <targetReference>Upload_Results</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Processed</defaultConnectorLabel>
+        <rules>
+            <name>File_Refused</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Process_Upload.isFileValid</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Flag_File_Error</targetReference>
+            </connector>
+            <label>File Refused</label>
+        </rules>
+    </decisions>
+    <description>Upload Leads button on the Lead list. The user uploads a filled-in template CSV; LeadUploadService checks every row like the New Lead screen (existing customers get an enquiry, duplicates fail) and returns counts and a results CSV with the outcome and reason for each row.</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>Download link for the results CSV.</description>
+        <name>Results_File_Url</name>
+        <dataType>String</dataType>
+        <expression>&quot;/sfc/servlet.shepherd/version/download/&quot; &amp; {!Process_Upload.resultFileVersionId}</expression>
+    </formulas>
+    <formulas>
+        <name>Has_Failed_Rows</name>
+        <dataType>Boolean</dataType>
+        <expression>{!Process_Upload.failedRows} &gt; 0</expression>
+    </formulas>
+    <interviewLabel>Upload Leads {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Upload Leads</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <screens>
+        <name>Error_Screen</name>
+        <label>Something Went Wrong</label>
+        <locationX>704</locationX>
+        <locationY>458</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <backButtonLabel>Go Back</backButtonLabel>
+        <fields>
+            <name>Error_Message</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(186, 5, 23);&quot;&gt;⚠  The file could not be processed&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;Nothing was saved. Go back and upload the file again. If it keeps happening, share this message with your administrator:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(92, 92, 92);&quot;&gt;{!Error_Text}&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Upload_Results</name>
+        <label>Upload Results</label>
+        <locationX>176</locationX>
+        <locationY>458</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>All_Saved_Header</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 36px; color: rgb(46, 132, 74);&quot;&gt;✔&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;strong style=&quot;font-size: 20px; color: rgb(24, 24, 24);&quot;&gt;Upload complete&lt;/strong&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(112, 110, 107);&quot;&gt;Every row was saved.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>Has_Failed_Rows</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <booleanValue>false</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Some_Failed_Header</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 36px; color: rgb(221, 122, 1);&quot;&gt;⚠&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;strong style=&quot;font-size: 20px; color: rgb(24, 24, 24);&quot;&gt;Upload complete - {!Process_Upload.failedRows} row(s) need attention&lt;/strong&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(112, 110, 107);&quot;&gt;The other rows were saved. Failed rows were not saved - download the results to see the reason for each one.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>Has_Failed_Rows</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <booleanValue>true</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Upload_Summary</name>
+            <fieldText>Upload Summary</fieldText>
+            <fieldType>RegionContainer</fieldType>
+            <fields>
+                <name>Upload_Summary_Column1</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Upload_Summary_Left</name>
+                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;ROWS IN FILE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 24px; color: rgb(24, 24, 24);&quot;&gt;{!Process_Upload.totalRows}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;LEADS CREATED&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 24px; color: rgb(46, 132, 74);&quot;&gt;{!Process_Upload.leadsCreated}&lt;/strong&gt;&lt;/p&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <fields>
+                <name>Upload_Summary_Column2</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Upload_Summary_Right</name>
+                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;ENQUIRIES RAISED (EXISTING CUSTOMERS)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 24px; color: rgb(1, 118, 211);&quot;&gt;{!Process_Upload.enquiriesRaised}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;FAILED (NOT SAVED)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 24px; color: rgb(186, 5, 23);&quot;&gt;{!Process_Upload.failedRows}&lt;/strong&gt;&lt;/p&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <isRequired>false</isRequired>
+            <regionContainerType>SectionWithHeader</regionContainerType>
+        </fields>
+        <fields>
+            <name>Download_Results</name>
+            <fieldText>&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;a href=&quot;{!Results_File_Url}&quot; target=&quot;_blank&quot;&gt;&lt;strong style=&quot;font-size: 16px;&quot;&gt;⬇  Download results ({!Process_Upload.resultFileName})&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;color: rgb(112, 110, 107);&quot;&gt;Your rows with three columns added: Result (Lead Created, Enquiry Raised or Failed), Record Number and Reason.&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;color: rgb(112, 110, 107);&quot;&gt;To retry failed rows: keep only those rows, fix them, and upload the file again.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <nextOrFinishButtonLabel>Done</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Upload_Screen</name>
+        <label>Upload Leads</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Process_Upload</targetReference>
+        </connector>
+        <fields>
+            <name>File_Error_Banner</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(186, 5, 23);&quot;&gt;⚠  This file could not be uploaded&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;{!Process_Upload.errorMessage} Nothing was saved - fix the file and upload it again.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>Show_File_Error</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <booleanValue>true</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Upload_Intro</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(68, 68, 68);&quot;&gt;Add many customers at once. Every row is checked exactly like the New Lead form: existing customers get an enquiry, duplicates are skipped, and you get a results file showing what happened to each row.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>How_To_Section</name>
+            <fieldText>How to Upload</fieldText>
+            <fieldType>RegionContainer</fieldType>
+            <fields>
+                <name>How_To_Section_Column1</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>How_To_Steps</name>
+                    <fieldText>&lt;ol&gt;&lt;li&gt;&lt;a href=&quot;/resource/Lead_Upload_Template/Lead_Upload_Template.csv&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;Download the template&lt;/strong&gt;&lt;/a&gt; (or use Download Template on the Lead list).&lt;/li&gt;&lt;li&gt;Fill in one customer per row. &lt;strong&gt;Last Name, Phone and Product Description&lt;/strong&gt; are required.&lt;/li&gt;&lt;li&gt;Write dates as &lt;strong&gt;YYYY-MM-DD&lt;/strong&gt;, e.g. 1990-08-25. Anniversary Date only for a Married customer.&lt;/li&gt;&lt;li&gt;Leave &lt;strong&gt;Company&lt;/strong&gt; blank for an individual customer (B2C); enter it for a business (B2B).&lt;/li&gt;&lt;li&gt;Use the exact &lt;strong&gt;Store Code&lt;/strong&gt; and &lt;strong&gt;Campaign Name&lt;/strong&gt; from Salesforce.&lt;/li&gt;&lt;li&gt;In Excel, format the Phone and date columns as &lt;strong&gt;Text&lt;/strong&gt;, then Save As &lt;strong&gt;CSV UTF-8 (Comma delimited)&lt;/strong&gt;.&lt;/li&gt;&lt;li&gt;Upload the file below - up to 1,000 rows at a time.&lt;/li&gt;&lt;/ol&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>12</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <isRequired>false</isRequired>
+            <regionContainerType>SectionWithHeader</regionContainerType>
+        </fields>
+        <fields>
+            <name>Upload_File_Section</name>
+            <fieldText>Upload File</fieldText>
+            <fieldType>RegionContainer</fieldType>
+            <fields>
+                <name>Upload_File_Section_Column1</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Lead_File</name>
+                    <extensionName>forceContent:fileUpload</extensionName>
+                    <fieldType>ComponentInstance</fieldType>
+                    <inputParameters>
+                        <name>label</name>
+                        <value>
+                            <stringValue>Lead file (.csv)</stringValue>
+                        </value>
+                    </inputParameters>
+                    <inputParameters>
+                        <name>recordId</name>
+                        <value>
+                            <elementReference>$User.Id</elementReference>
+                        </value>
+                    </inputParameters>
+                    <inputParameters>
+                        <name>multiple</name>
+                        <value>
+                            <booleanValue>false</booleanValue>
+                        </value>
+                    </inputParameters>
+                    <inputParameters>
+                        <name>accept</name>
+                        <value>
+                            <stringValue>.csv</stringValue>
+                        </value>
+                    </inputParameters>
+                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                    <isRequired>true</isRequired>
+                    <storeOutputAutomatically>true</storeOutputAutomatically>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>12</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <isRequired>false</isRequired>
+            <regionContainerType>SectionWithHeader</regionContainerType>
+        </fields>
+        <nextOrFinishButtonLabel>Upload and Process</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Upload_Screen</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <description>Why the record was not saved.</description>
+        <name>Error_Text</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>True after a file was refused; shows the reason on the upload screen.</description>
+        <name>Show_File_Error</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
+    </variables>
+</Flow>

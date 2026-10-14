@@ -1,0 +1,11 @@
+﻿Salutation,First Name,Last Name *,Phone *,Email,Date of Birth (YYYY-MM-DD),Street,City,State,Postal Code,Country,Product Description *,Marital Status,Anniversary Date (YYYY-MM-DD),Status,Lead Source,Walk-In (Yes/No),Store Code,Campaign Name,Company,Industry,Title,Website
+Mrs.,Asha,Mehta,9876540001,asha.mehta@sample-upload.in,1990-08-25,12 Park Street,Kolkata,West Bengal,700016,India,"Gold necklace set, 22K, around 50g",Married,2015-02-14,New,Walk-in,Yes,000001,test campaign,,,,
+Mr.,Rakesh,Jain,+91 98765 40002,rakesh.jain@sample-upload.in,1985-03-10,,Mumbai,Maharashtra,400001,India,Bulk order of silver coins for Diwali gifting,Married,2010-11-20,New,Google,No,,,Jain Exports Pvt Ltd,Retail,Purchase Manager,www.jainexports.example
+Ms.,Neha,Kapoor,9876540003,,,,,,,,Diamond engagement ring,,,,,,,,,,,
+,Ravi,Shah,+91-98765-40004,ravi.shah@sample-upload.in,1998-01-05,,Ahmedabad,Gujarat,,India,Platinum band,Unmarried,,Contacted,Instagram DM,No,,,,,,
+Mr.,Test,Verma,+91-9830012395,,,,,,,,Gold bangles,,,,Walk-in,Yes,,,,,,
+Ms.,Ananya,Sharma,+91-9830012345,,,,,,,,Diamond earrings,,,,,,,,,,,
+Mr.,Arjun,Nair,9876540007,arjun.nair@sample-upload.in,,,,,,,,,,,,,,,,,,
+Ms.,Pooja,Iyer,9876540008,,1995-06-12,,,,,,Gold chain,Unmarried,2020-01-01,,,,,,,,,
+Mr.,Vikram,Rao,9876540009,,25/08/1990,,,,,,Silver anklet,,,,,,,,,,,
+Ms.,Neha,K,+91 98765 40003,,,,,,,,Diamond pendant,,,,,,,,,,,
