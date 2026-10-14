@@ -1,38 +1,38 @@
 /**
  * @description
- * Gift voucher redemption on a Transaction Record (bill).
+ * Redemptions on a Transaction Record (bill), as reported by POS.
  *
- * Called by TransactionTriggerHandler, so no bill can be saved with an
- * invalid voucher however it is created (New Transaction flow, API, data
- * load). The New Transaction flow lists only the vouchers that pass these
- * same rules; this check still runs on save.
+ * POS decides the redemption; Salesforce records it. The bill carries what
+ * happened at the till:
+ *   - Points Redeemed (any whole number, 0 for none) - LoyaltyEngine deducts
+ *     them from the balance after the bill is saved,
+ *   - a gift voucher: Voucher Code, Offer Type, Face Value (Fixed Price) or
+ *     Discount Percentage (Percentage), Voucher Discount in rupees and the
+ *     Redemption Channel.
+ * Both may appear on the same bill.
  *
- * A voucher can be redeemed on a bill when:
- *   - its code matches (case does not matter; codes are unique),
- *   - it belongs to the bill's Account,
- *   - its Status is Active,
- *   - its Expiry Date is on or after the transaction date,
- *   - the bill amount meets its range:
- *       Min and Max set  ->  Min <= amount <= Max
- *       Max only         ->  amount >= Max   (a Min of 0 counts as blank)
+ * Called by TransactionTriggerHandler, so every bill is checked however it is
+ * created (Convert and New Transaction screens, POS API, data load). A bill
+ * is rejected, with the reason, when:
+ *   - a reported figure is missing or impossible (negative points, a voucher
+ *     discount or points above the bill),
+ *   - the voucher code is not in Salesforce, belongs to another customer,
+ *     is not Active (already Redeemed, Cancelled or Expired) or is past its
+ *     Expiry Date,
+ *   - the same voucher is on two bills in one save.
+ * The voucher's own offer, face value and bill range are not re-checked:
+ * POS applied the offer, and its figures are kept on the bill.
  *
- * Discount:
- *   Fixed Price  Face Value, never more than the bill
- *   Percentage   Discount Percentage of the total bill amount
+ * Net Amount = Amount - Voucher Discount - Points Redeemed; points are earned
+ * on it.
  *
- * Only one redemption per bill: Redeem Points and Redeem Gift Voucher cannot
- * both be ticked.
- *
- * Vouchers are read and updated in system mode: the user saving a bill does
- * not need access to the voucher records to redeem one.
+ * Vouchers are read and updated in system mode: the user or integration
+ * saving a bill does not need access to the voucher records.
  */
 public with sharing class GiftVoucherRedemption {
 
     @TestVisible
-    private static final String ONE_REDEMPTION_ONLY =
-        'Only one redemption is allowed per transaction. Select either Redeem Points or Redeem Gift Voucher.';
-    @TestVisible
-    private static final String INVALID_PREFIX = 'Voucher code is invalid: ';
+    private static final String REJECTED = 'The bill was not saved: ';
 
     private static final String STATUS_ACTIVE = 'Active';
     private static final String STATUS_REDEEMED = 'Redeemed';
@@ -45,41 +45,36 @@ public with sharing class GiftVoucherRedemption {
 
     /**
      * @description
-     * Rejects bills that tick both redemptions or carry an invalid voucher,
-     * and stamps Gift Voucher, Voucher Discount, Points Redeemed (0) and Net
-     * Amount (Amount - Voucher Discount) on every bill. LoyaltyEngine later
-     * lowers Net Amount by any points redeemed.
-     *
-     * The vouchers are locked (FOR UPDATE), so two bills saved at the same
-     * moment cannot both redeem the same voucher.
+     * Checks the reported redemptions, links the voucher and stamps Net
+     * Amount. The vouchers are locked (FOR UPDATE), so two bills saved at the
+     * same moment cannot both redeem the same voucher.
      */
     public static void beforeInsert(List<Transaction_Record__c> bills) {
         Set<String> codes = new Set<String>();
+        List<Transaction_Record__c> voucherBills = new List<Transaction_Record__c>();
 
         for (Transaction_Record__c bill : bills) {
-            // Only the system sets these.
+            // Only the system links the voucher record.
             bill.Gift_Voucher__c = null;
-            bill.Voucher_Discount__c = 0;
-            bill.Points_Redeemed__c = 0;
-            bill.Net_Amount__c = bill.Amount__c;
+            bill.Points_Redeemed__c = bill.Points_Redeemed__c == null ? 0 : bill.Points_Redeemed__c;
 
-            if (bill.Redeem_Gift_Voucher__c != true) {
+            String problem = String.isBlank(bill.Voucher_Code__c) ? problemWithoutVoucher(bill) : problemWithVoucherDetails(bill);
+            if (problem == null) {
+                problem = problemWithPoints(bill);
+            }
+            if (problem != null) {
+                bill.addError(REJECTED + problem);
                 continue;
             }
-            if (bill.Redeem_Points__c == true) {
-                bill.addError(ONE_REDEMPTION_ONLY);
-                continue;
+
+            Decimal amount = bill.Amount__c == null ? 0 : bill.Amount__c;
+            bill.Net_Amount__c = amount - bill.Voucher_Discount__c - bill.Points_Redeemed__c;
+
+            if (String.isNotBlank(bill.Voucher_Code__c)) {
+                bill.Voucher_Code__c = bill.Voucher_Code__c.trim();
+                codes.add(bill.Voucher_Code__c);
+                voucherBills.add(bill);
             }
-            if (String.isBlank(bill.Voucher_Code__c)) {
-                bill.Voucher_Code__c.addError('Enter the Voucher Code, or untick Redeem Gift Voucher.');
-                continue;
-            }
-            if (String.isBlank(bill.Voucher_Redemption_Channel__c)) {
-                bill.Voucher_Redemption_Channel__c.addError('Select the Voucher Redemption Channel.');
-                continue;
-            }
-            bill.Voucher_Code__c = bill.Voucher_Code__c.trim();
-            codes.add(bill.Voucher_Code__c);
         }
 
         if (codes.isEmpty()) {
@@ -88,8 +83,7 @@ public with sharing class GiftVoucherRedemption {
 
         Map<String, Gift_Voucher__c> voucherByCode = new Map<String, Gift_Voucher__c>();
         for (Gift_Voucher__c voucher : [
-            SELECT Id, Account__c, Voucher_Code__c, Status__c, Expiry_Date__c, Offer_Type__c,
-                   Face_Value__c, Discount_Percentage__c, Minimum_Amount__c, Maximum_Amount__c
+            SELECT Id, Account__c, Voucher_Code__c, Status__c, Expiry_Date__c
             FROM Gift_Voucher__c
             WHERE Voucher_Code__c IN :codes
             WITH SYSTEM_MODE
@@ -99,29 +93,21 @@ public with sharing class GiftVoucherRedemption {
         }
 
         Set<Id> usedInThisSave = new Set<Id>();
-        for (Transaction_Record__c bill : bills) {
-            if (bill.Redeem_Gift_Voucher__c != true || bill.Redeem_Points__c == true
-                || String.isBlank(bill.Voucher_Code__c) || String.isBlank(bill.Voucher_Redemption_Channel__c)) {
-                continue;
-            }
-
+        for (Transaction_Record__c bill : voucherBills) {
             Gift_Voucher__c voucher = voucherByCode.get(bill.Voucher_Code__c.toLowerCase());
             Date billDate = bill.Transaction_Date__c == null ? Date.today() : bill.Transaction_Date__c.date();
-            String problem = problemWith(voucher, bill.Account__c, bill.Amount__c, billDate);
+            String problem = problemWith(voucher, bill.Voucher_Code__c, bill.Account__c, billDate);
 
             if (problem == null && usedInThisSave.contains(voucher.Id)) {
-                problem = 'this voucher is already being redeemed on another bill in the same save.';
+                problem = 'voucher ' + bill.Voucher_Code__c + ' is on another bill in the same save.';
             }
             if (problem != null) {
-                bill.Voucher_Code__c.addError(INVALID_PREFIX + problem);
+                bill.addError(REJECTED + problem);
                 continue;
             }
 
             usedInThisSave.add(voucher.Id);
-            Decimal discount = discountFor(voucher, bill.Amount__c);
             bill.Gift_Voucher__c = voucher.Id;
-            bill.Voucher_Discount__c = discount;
-            bill.Net_Amount__c = bill.Amount__c - discount;
         }
     }
 
@@ -156,61 +142,78 @@ public with sharing class GiftVoucherRedemption {
     // Rules
     // =====================================================================
 
-    /** Why the voucher cannot be redeemed on this bill, or null when it can. */
-    @TestVisible
-    private static String problemWith(Gift_Voucher__c voucher, Id accountId, Decimal amount, Date billDate) {
-        if (voucher == null) {
-            return 'no voucher has this code.';
+    /** A bill without a voucher code must not carry a voucher discount; other voucher details are cleared. */
+    private static String problemWithoutVoucher(Transaction_Record__c bill) {
+        if (bill.Voucher_Discount__c != null && bill.Voucher_Discount__c != 0) {
+            return 'a Voucher Discount is reported without a Voucher Code.';
         }
-        if (voucher.Account__c != accountId) {
-            return 'this voucher belongs to another customer.';
-        }
-        if (voucher.Status__c != STATUS_ACTIVE) {
-            return 'this voucher is ' + (String.isBlank(voucher.Status__c) ? 'not Active' : voucher.Status__c) + '.';
-        }
-        if (voucher.Expiry_Date__c != null && voucher.Expiry_Date__c < billDate) {
-            return 'this voucher expired on ' + voucher.Expiry_Date__c.format() + '.';
-        }
-        if (voucher.Offer_Type__c != OFFER_FIXED && voucher.Offer_Type__c != OFFER_PERCENTAGE) {
-            return 'this voucher has no Offer Type set.';
-        }
-        if (voucher.Offer_Type__c == OFFER_FIXED && (voucher.Face_Value__c == null || voucher.Face_Value__c <= 0)) {
-            return 'this voucher has no offer amount set.';
-        }
-        if (voucher.Offer_Type__c == OFFER_PERCENTAGE && (voucher.Discount_Percentage__c == null || voucher.Discount_Percentage__c <= 0)) {
-            return 'this voucher has no discount percentage set.';
-        }
-        if (voucher.Maximum_Amount__c == null) {
-            return 'this voucher has no Maximum Amount set.';
-        }
+        bill.Voucher_Discount__c = 0;
+        bill.Voucher_Offer_Type__c = null;
+        bill.Voucher_Face_Value__c = null;
+        bill.Voucher_Discount_Percentage__c = null;
+        bill.Voucher_Redemption_Channel__c = null;
+        return null;
+    }
 
-        Decimal billAmount = amount == null ? 0 : amount;
-        Decimal minimum = minimumOf(voucher);
-        if (minimum != null) {
-            if (billAmount < minimum || billAmount > voucher.Maximum_Amount__c) {
-                return 'this voucher applies only to bills from ' + rupees(minimum) + ' to ' + rupees(voucher.Maximum_Amount__c)
-                    + '; this bill is ' + rupees(billAmount) + '.';
-            }
-        } else if (billAmount < voucher.Maximum_Amount__c) {
-            return 'this voucher applies only to bills of ' + rupees(voucher.Maximum_Amount__c)
-                + ' or more; this bill is ' + rupees(billAmount) + '.';
+    /** Why the reported voucher details are incomplete or impossible, or null when they are fine. */
+    @TestVisible
+    private static String problemWithVoucherDetails(Transaction_Record__c bill) {
+        String code = bill.Voucher_Code__c.trim();
+        Decimal amount = bill.Amount__c == null ? 0 : bill.Amount__c;
+
+        if (bill.Voucher_Offer_Type__c != OFFER_FIXED && bill.Voucher_Offer_Type__c != OFFER_PERCENTAGE) {
+            return 'enter the Voucher Offer Type (Fixed Price or Percentage) of voucher ' + code + '.';
+        }
+        if (bill.Voucher_Offer_Type__c == OFFER_FIXED && (bill.Voucher_Face_Value__c == null || bill.Voucher_Face_Value__c <= 0)) {
+            return 'enter the Voucher Face Value of voucher ' + code + '.';
+        }
+        if (bill.Voucher_Offer_Type__c == OFFER_PERCENTAGE
+            && (bill.Voucher_Discount_Percentage__c == null || bill.Voucher_Discount_Percentage__c <= 0 || bill.Voucher_Discount_Percentage__c > 100)) {
+            return 'enter the Voucher Discount Percentage (more than 0, up to 100) of voucher ' + code + '.';
+        }
+        if (bill.Voucher_Discount__c == null || bill.Voucher_Discount__c <= 0) {
+            return 'enter the Voucher Discount (rupees taken off the bill) of voucher ' + code + '.';
+        }
+        if (bill.Voucher_Discount__c > amount) {
+            return 'the Voucher Discount (' + rupees(bill.Voucher_Discount__c) + ') is more than the bill Amount (' + rupees(amount) + ').';
+        }
+        if (String.isBlank(bill.Voucher_Redemption_Channel__c)) {
+            return 'select the Voucher Redemption Channel of voucher ' + code + '.';
         }
         return null;
     }
 
-    /** Rupees off the bill. Never more than the bill. */
+    /** Why the reported points are impossible on this bill, or null when they are fine. */
     @TestVisible
-    private static Decimal discountFor(Gift_Voucher__c voucher, Decimal amount) {
-        Decimal billAmount = amount == null ? 0 : amount;
-        Decimal discount = voucher.Offer_Type__c == OFFER_FIXED
-            ? voucher.Face_Value__c
-            : (billAmount * voucher.Discount_Percentage__c / 100).setScale(2, System.RoundingMode.HALF_UP);
-        return Math.min(discount, billAmount);
+    private static String problemWithPoints(Transaction_Record__c bill) {
+        Decimal points = bill.Points_Redeemed__c;
+        if (points < 0 || points != points.round(System.RoundingMode.DOWN)) {
+            return 'Points Redeemed must be a whole number of 0 or more.';
+        }
+        // A return (negative Amount) reports no points, so only a redemption is compared with the bill.
+        Decimal payable = (bill.Amount__c == null ? 0 : bill.Amount__c) - (bill.Voucher_Discount__c == null ? 0 : bill.Voucher_Discount__c);
+        if (points > 0 && points > payable) {
+            return 'Points Redeemed (' + points.intValue() + ') is more than the bill after the voucher discount (' + rupees(payable) + ').';
+        }
+        return null;
     }
 
-    /** Minimum Amount, with 0 treated as blank. */
-    private static Decimal minimumOf(Gift_Voucher__c voucher) {
-        return (voucher.Minimum_Amount__c == null || voucher.Minimum_Amount__c == 0) ? null : voucher.Minimum_Amount__c;
+    /** Why the voucher cannot be recorded as redeemed on this bill, or null when it can. */
+    @TestVisible
+    private static String problemWith(Gift_Voucher__c voucher, String code, Id accountId, Date billDate) {
+        if (voucher == null) {
+            return 'voucher ' + code + ' is not in Salesforce. Check the code on the POS bill.';
+        }
+        if (voucher.Account__c != accountId) {
+            return 'voucher ' + code + ' belongs to another customer.';
+        }
+        if (voucher.Status__c != STATUS_ACTIVE) {
+            return 'voucher ' + code + ' is ' + (String.isBlank(voucher.Status__c) ? 'not Active' : voucher.Status__c) + ' in Salesforce.';
+        }
+        if (voucher.Expiry_Date__c != null && voucher.Expiry_Date__c < billDate) {
+            return 'voucher ' + code + ' expired on ' + voucher.Expiry_Date__c.format() + '.';
+        }
+        return null;
     }
 
     private static String rupees(Decimal value) {

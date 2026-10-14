@@ -11,10 +11,10 @@
 public without sharing class TransactionTriggerHandler {
 
     /**
-     * Checks any gift voucher on the bills before they are saved and stamps
-     * Gift Voucher, Voucher Discount and Net Amount. Bills with an invalid
-     * voucher, or with both Redeem Points and Redeem Gift Voucher ticked, are
-     * rejected.
+     * Checks the redemptions POS reported on the bills (points and gift
+     * voucher), links the voucher and stamps Net Amount. Bills with
+     * impossible figures or a voucher that cannot be redeemed are rejected
+     * with the reason.
      */
     public static void beforeInsert(List<Transaction_Record__c> newTransactions) {
 
@@ -38,7 +38,7 @@ public without sharing class TransactionTriggerHandler {
         GiftVoucherRedemption.afterInsert(newTransactions);
 
         // ---------------------------------------------------------
-        // 2. Earn / redeem loyalty points
+        // 2. Deduct the points POS reported as redeemed, earn new ones
         // ---------------------------------------------------------
 
         LoyaltyEngine.processEarn(newTransactions);

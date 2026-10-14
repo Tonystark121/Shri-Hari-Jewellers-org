@@ -11,9 +11,11 @@
  * to put a household in a known tier — which is what the batch would have done
  * overnight.
  *
- * Only points held in earning lots (Earn rows on Loyalty_Transaction__c) can
- * be redeemed, so a household that is to redeem is given its points through
- * withPoints(), which backs the balance with a lot.
+ * POS reports how many points were redeemed on a bill (Points Redeemed); the
+ * engine deducts exactly that many. Only points held in earning lots (Earn
+ * rows on Loyalty_Transaction__c) can be spent, so a household that is to
+ * redeem is given its points through withPoints(), which backs the balance
+ * with a lot.
  *
  * Every Account gets its Loyalty Record from the "Account: Create Loyalty
  * Record" flow as soon as it is inserted, so tests set an opening balance on
@@ -33,12 +35,13 @@ private class LoyaltyEngineTest {
         return new Account(Name = name, Last_12M_Spend__c = last12MonthSpend);
     }
 
-    private static Transaction_Record__c bill(Id accountId, Decimal amount, Boolean redeemPoints) {
+    /** A bill of `amount` on which POS reports `pointsRedeemed` points spent (0 for none). */
+    private static Transaction_Record__c bill(Id accountId, Decimal amount, Integer pointsRedeemed) {
         billCounter++;
         return new Transaction_Record__c(
             Account__c = accountId,
             Amount__c = amount,
-            Redeem_Points__c = redeemPoints,
+            Points_Redeemed__c = pointsRedeemed,
             Bill_Number__c = 'BILL-' + String.valueOf(billCounter).leftPad(6, '0'),
             Transaction_Date__c = Datetime.now()
         );
@@ -85,6 +88,12 @@ private class LoyaltyEngineTest {
         update loyalty;
         insert earnedLot(loyalty.Id, points, Date.today().addDays(-30));
         return loyalty;
+    }
+
+    /** Why the bill was rejected, or null when it saved. */
+    private static String saveError(Transaction_Record__c transactionRecord) {
+        Database.SaveResult result = Database.insert(transactionRecord, false);
+        return result.isSuccess() ? null : result.getErrors()[0].getMessage();
     }
 
     private static Loyalty_Record__c loyaltyFor(Id accountId) {
@@ -139,7 +148,7 @@ private class LoyaltyEngineTest {
         insert acct;
 
         Test.startTest();
-        insert bill(acct.Id, 1600, false);
+        insert bill(acct.Id, 1600, 0);
         Test.stopTest();
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
@@ -163,10 +172,10 @@ private class LoyaltyEngineTest {
 
         Test.startTest();
         insert new List<Transaction_Record__c>{
-            bill(silver.Id, 10000, false),
-            bill(gold.Id, 10000, false),
-            bill(platinum.Id, 10000, false),
-            bill(diamond.Id, 10000, false)
+            bill(silver.Id, 10000, 0),
+            bill(gold.Id, 10000, 0),
+            bill(platinum.Id, 10000, 0),
+            bill(diamond.Id, 10000, 0)
         };
         Test.stopTest();
 
@@ -190,7 +199,7 @@ private class LoyaltyEngineTest {
         update openingBalance(acct.Id, 176);
 
         Test.startTest();
-        insert bill(acct.Id, 2400, false);
+        insert bill(acct.Id, 2400, 0);
         Test.stopTest();
 
         Assert.areEqual(
@@ -207,7 +216,7 @@ private class LoyaltyEngineTest {
         insert acct;
 
         Test.startTest();
-        insert bill(acct.Id, 3099, false);
+        insert bill(acct.Id, 3099, 0);
         Test.stopTest();
 
         Assert.areEqual(
@@ -224,7 +233,7 @@ private class LoyaltyEngineTest {
         insert acct;
 
         Test.startTest();
-        insert bill(acct.Id, 5000, false);
+        insert bill(acct.Id, 5000, 0);
         Test.stopTest();
 
         Assert.areEqual(100, loyaltyFor(acct.Id).Points_Balance__c, 'Entry tier is Silver at 2%');
@@ -237,7 +246,7 @@ private class LoyaltyEngineTest {
         insert acct;
 
         Test.startTest();
-        insert bill(acct.Id, 0, true);
+        insert bill(acct.Id, 0, 0);
         Test.stopTest();
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
@@ -256,7 +265,7 @@ private class LoyaltyEngineTest {
 
         List<Transaction_Record__c> bills = new List<Transaction_Record__c>();
         for (Account acct : households) {
-            bills.add(bill(acct.Id, 5000, false));
+            bills.add(bill(acct.Id, 5000, 0));
         }
 
         Test.startTest();
@@ -279,19 +288,18 @@ private class LoyaltyEngineTest {
     // =====================================================================
 
     /**
-     * The document's "Method 2": the customer holds 112 points and ticks the
-     * box against a 3,200 bill, so all 112 are spent and the bill earns on
-     * 3,088. The document writes the result as "3088 X 2% = 61.76 (60)" —
+     * The document's "Method 2": the customer holds 112 points and POS
+     * reports all 112 spent on a 3,200 bill, so the bill earns on 3,088. The document writes the result as "3088 X 2% = 61.76 (60)" —
      * taken down to a multiple of 10 — and carries 60 forward.
      */
     @IsTest
-    static void testRedeemTickedSpendsTheBalanceAndEarnsOnTheNetAmount() {
+    static void testReportedPointsAreSpentAndTheNetAmountEarns() {
         Account acct = household('Method Two', 5600);
         insert acct;
         withPoints(acct.Id, 112);
 
         Test.startTest();
-        insert bill(acct.Id, 3200, true);
+        insert bill(acct.Id, 3200, 112);
         Test.stopTest();
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
@@ -316,8 +324,8 @@ private class LoyaltyEngineTest {
         insert acct;
         withPoints(acct.Id, 112);
 
-        Transaction_Record__c redeeming = bill(acct.Id, 3200, true);
-        Transaction_Record__c plain = bill(acct.Id, 1500, false);
+        Transaction_Record__c redeeming = bill(acct.Id, 3200, 112);
+        Transaction_Record__c plain = bill(acct.Id, 1500, 0);
         plain.Transaction_Date__c = Datetime.now().addMinutes(1);
 
         Test.startTest();
@@ -347,7 +355,7 @@ private class LoyaltyEngineTest {
         Account acct = household('Method Two Ledger', 5600);
         insert acct;
         withPoints(acct.Id, 112);
-        Transaction_Record__c purchase = bill(acct.Id, 3200, true);
+        Transaction_Record__c purchase = bill(acct.Id, 3200, 112);
 
         Test.startTest();
         insert purchase;
@@ -381,15 +389,15 @@ private class LoyaltyEngineTest {
         Assert.areEqual(purchase.Id, earned.Transaction_Record__c, 'Linked to the bill');
     }
 
-    /** Leaving the box unticked earns on the whole bill and spends nothing. */
+    /** A bill with no points reported earns on the whole bill and spends nothing. */
     @IsTest
-    static void testRedeemUntickedLeavesTheBalanceAlone() {
+    static void testNoPointsReportedLeavesTheBalanceAlone() {
         Account acct = household('Saving Up', 5000);
         insert acct;
         update openingBalance(acct.Id, 500);
 
         Test.startTest();
-        insert bill(acct.Id, 3200, false);
+        insert bill(acct.Id, 3200, 0);
         Test.stopTest();
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
@@ -402,75 +410,92 @@ private class LoyaltyEngineTest {
         Assert.areEqual(
             0,
             [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__r.Account__c = :acct.Id AND Transaction_Type__c = 'Redeemed'],
-            'No Redeemed event when the box is unticked'
+            'No Redeemed event when no points are reported'
         );
     }
 
-    /**
-     * Ticking the box with fewer than 100 points is not an error: the
-     * customer pays in full and keeps them. The document is explicit that
-     * 99 points cannot be redeemed.
-     */
+    /** POS may spend part of the balance: exactly the reported points are deducted. */
     @IsTest
-    static void testRedeemTickedBelowMinimumProceedsWithoutRedeeming() {
-        Account acct = household('Just Short', 5000);
+    static void testAPartialRedemptionDeductsExactlyThePointsReported() {
+        Account acct = household('Part Spend', 5000);
+        insert acct;
+        withPoints(acct.Id, 500);
+
+        Test.startTest();
+        insert bill(acct.Id, 3200, 250);
+        Test.stopTest();
+
+        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
+        Assert.areEqual(250, loyalty.Total_Points_Redeemed__c, 'The 250 POS reported');
+        Assert.areEqual(
+            300,
+            loyalty.Points_Balance__c,
+            '500 - 250, plus 2,950 net at Silver 2% = 59, taken down to 50'
+        );
+    }
+
+    /** There is no minimum: POS decided, so a 40 point redemption is recorded. */
+    @IsTest
+    static void testASmallRedemptionIsRecorded() {
+        Account acct = household('Small Spend', 5000);
         insert acct;
         withPoints(acct.Id, 99);
 
         Test.startTest();
-        insert bill(acct.Id, 3200, true);
+        insert bill(acct.Id, 1000, 40);
         Test.stopTest();
 
-        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
-        Assert.areEqual(
-            159,
-            loyalty.Points_Balance__c,
-            '99 kept, and the full 3,200 earns 60 at Silver (64 taken down to 60)'
-        );
-        Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
+        Assert.areEqual(40, loyaltyFor(acct.Id).Total_Points_Redeemed__c, 'Below the old 100 point minimum, still recorded');
     }
 
     /**
-     * The document allows a balance of 102 to be redeemed in full, so the
-     * minimum is a floor on the balance, not a rounding step.
+     * POS reporting more points than the customer holds is rejected with the
+     * reason, and nothing changes.
      */
     @IsTest
-    static void testBalanceOfOneHundredAndTwoIsSpentInFull() {
-        Account acct = household('Exactly Over', 5000);
+    static void testMorePointsThanTheBalanceRejectsTheBill() {
+        Account acct = household('Over Spend', 5000);
         insert acct;
-        withPoints(acct.Id, 102);
+        withPoints(acct.Id, 300);
 
         Test.startTest();
-        insert bill(acct.Id, 3200, true);
+        String error = saveError(bill(acct.Id, 3200, 500));
         Test.stopTest();
 
-        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
-        Assert.areEqual(102, loyalty.Total_Points_Redeemed__c, 'All 102 points are spent');
-        Assert.areEqual(
-            60,
-            loyalty.Points_Balance__c,
-            '3200 - 102 = 3098 at 2% is 61.96, taken down to 60'
-        );
+        Assert.isNotNull(error, 'Rejected');
+        Assert.isTrue(error.contains('Points Redeemed (500) is more than the points this customer can use'), error);
+        Assert.isTrue(error.contains('(300)'), 'Says how many are available: ' + error);
+        Assert.areEqual(0, [SELECT COUNT() FROM Transaction_Record__c], 'The bill is not saved');
+        Assert.areEqual(300, loyaltyFor(acct.Id).Points_Balance__c, 'The balance is untouched');
     }
 
-    /** Points cannot exceed the bill; a bill never goes negative. */
+    /** Points can never be more than the bill after the voucher discount. */
     @IsTest
-    static void testRedemptionIsCappedAtTheBillAmount() {
+    static void testMorePointsThanTheBillRejectsTheBill() {
         Account acct = household('Points Rich', 5000);
         insert acct;
         withPoints(acct.Id, 5000);
 
         Test.startTest();
-        insert bill(acct.Id, 3200, true);
+        String error = saveError(bill(acct.Id, 3200, 3300));
         Test.stopTest();
 
-        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
-        Assert.areEqual(
-            1800,
-            loyalty.Points_Balance__c,
-            'Only the 3,200 the bill can absorb is spent; the rest stays on the balance'
-        );
-        Assert.areEqual(3200, loyalty.Total_Points_Redeemed__c, 'Lifetime redeemed is the 3,200 applied');
+        Assert.isNotNull(error, 'Rejected');
+        Assert.isTrue(error.contains('more than the bill after the voucher discount'), error);
+        Assert.areEqual(5000, loyaltyFor(acct.Id).Points_Balance__c, 'The balance is untouched');
+    }
+
+    /** Points must be a whole number of 0 or more. */
+    @IsTest
+    static void testNegativePointsAreRejected() {
+        Account acct = household('Negative', 5000);
+        insert acct;
+
+        Test.startTest();
+        String error = saveError(bill(acct.Id, 3200, -10));
+        Test.stopTest();
+
+        Assert.isTrue(error.contains('whole number of 0 or more'), error);
     }
 
     /** A bill settled entirely in points earns nothing. */
@@ -481,7 +506,7 @@ private class LoyaltyEngineTest {
         withPoints(acct.Id, 900);
 
         Test.startTest();
-        insert bill(acct.Id, 800, true);
+        insert bill(acct.Id, 800, 800);
         Test.stopTest();
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
@@ -493,25 +518,6 @@ private class LoyaltyEngineTest {
             [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__r.Account__c = :acct.Id AND Transaction_Type__c = 'Earn' AND Transaction_Record__c != null],
             'No zero-point Earn event'
         );
-    }
-
-    /**
-     * A bill too small to absorb the 100 point minimum cannot be redeemed
-     * against, even when the balance itself is healthy.
-     */
-    @IsTest
-    static void testBillSmallerThanTheMinimumCannotBeRedeemedAgainst() {
-        Account acct = household('Tiny Bill', 5000);
-        insert acct;
-        withPoints(acct.Id, 500);
-
-        Test.startTest();
-        insert bill(acct.Id, 50, true);
-        Test.stopTest();
-
-        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
-        Assert.areEqual(500, loyalty.Points_Balance__c, 'The balance is untouched');
-        Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'A 50 rupee bill cannot carry a 100 point redemption');
     }
 
     // =====================================================================
@@ -527,7 +533,7 @@ private class LoyaltyEngineTest {
         opening.Last_Transaction_Date__c = Date.today();
         update opening;
 
-        Transaction_Record__c oldBill = bill(acct.Id, 3200, false);
+        Transaction_Record__c oldBill = bill(acct.Id, 3200, 0);
         oldBill.Transaction_Date__c = Datetime.now().addDays(-10);
 
         Test.startTest();
@@ -560,7 +566,7 @@ private class LoyaltyEngineTest {
         insert new List<Loyalty_Transaction__c>{ lt003, lt001, lt002 };
 
         Test.startTest();
-        insert bill(acct.Id, 150, true);
+        insert bill(acct.Id, 150, 150);
         Test.stopTest();
 
         Map<Id, Loyalty_Transaction__c> lots = new Map<Id, Loyalty_Transaction__c>([
@@ -603,7 +609,7 @@ private class LoyaltyEngineTest {
         Datetime newestStampBefore = [SELECT SystemModstamp FROM Loyalty_Transaction__c WHERE Id = :newest.Id].SystemModstamp;
 
         Test.startTest();
-        insert bill(acct.Id, 150, true);
+        insert bill(acct.Id, 150, 150);
         Test.stopTest();
 
         Loyalty_Transaction__c newestAfter = [SELECT Remaining_Points__c, SystemModstamp FROM Loyalty_Transaction__c WHERE Id = :newest.Id];
@@ -611,7 +617,10 @@ private class LoyaltyEngineTest {
         Assert.areEqual(newestStampBefore, newestAfter.SystemModstamp, 'Newest lot was not saved again');
     }
 
-    /** Expired lots are never redeemed, even when still marked Active. */
+    /**
+     * Expired lots are never redeemed, even when still marked Active: only
+     * the 150 in the fresh lot can be spent, and asking for more is rejected.
+     */
     @IsTest
     static void testExpiredLotIsNeverRedeemed() {
         Account acct = household('Stale Points', 5000);
@@ -624,9 +633,11 @@ private class LoyaltyEngineTest {
         insert new List<Loyalty_Transaction__c>{ expired, fresh };
 
         Test.startTest();
-        insert bill(acct.Id, 1000, true);
+        String tooMany = saveError(bill(acct.Id, 1000, 600));
+        insert bill(acct.Id, 1000, 150);
         Test.stopTest();
 
+        Assert.isTrue(tooMany.contains('(150)'), 'Only the unexpired 150 count as available: ' + tooMany);
         Assert.areEqual(
             500,
             [SELECT Remaining_Points__c FROM Loyalty_Transaction__c WHERE Id = :expired.Id].Remaining_Points__c,
@@ -637,7 +648,7 @@ private class LoyaltyEngineTest {
             [SELECT Remaining_Points__c FROM Loyalty_Transaction__c WHERE Id = :fresh.Id].Remaining_Points__c,
             'Only the unexpired lot is spent'
         );
-        Assert.areEqual(150, loyaltyFor(acct.Id).Total_Points_Redeemed__c, 'Redemption capped at the usable lots');
+        Assert.areEqual(150, loyaltyFor(acct.Id).Total_Points_Redeemed__c, 'The 150 reported');
     }
 
     /** Expiry_Date__c is the last day a lot can be used. */
@@ -657,14 +668,14 @@ private class LoyaltyEngineTest {
         };
 
         Test.startTest();
-        insert new List<Transaction_Record__c>{
-            bill(lastDay.Id, 1000, true),
-            bill(dayAfter.Id, 1000, true)
-        };
+        String lastDayError = saveError(bill(lastDay.Id, 1000, 200));
+        String dayAfterError = saveError(bill(dayAfter.Id, 1000, 200));
         Test.stopTest();
 
-        Assert.areEqual(200, loyaltyFor(lastDay.Id).Total_Points_Redeemed__c, 'Usable on the expiry date itself');
-        Assert.areEqual(0, loyaltyFor(dayAfter.Id).Total_Points_Redeemed__c, 'Not usable the day after');
+        Assert.isNull(lastDayError, 'Usable on the expiry date itself');
+        Assert.areEqual(200, loyaltyFor(lastDay.Id).Total_Points_Redeemed__c, 'Spent on the last day');
+        Assert.isNotNull(dayAfterError, 'Not usable the day after, so the bill is rejected');
+        Assert.areEqual(0, loyaltyFor(dayAfter.Id).Total_Points_Redeemed__c, 'Nothing spent');
     }
 
     /**
@@ -692,14 +703,14 @@ private class LoyaltyEngineTest {
         insert new List<Loyalty_Transaction__c>{ extendedLot, shortenedLot };
 
         Test.startTest();
-        insert new List<Transaction_Record__c>{
-            bill(extended.Id, 1000, true),
-            bill(shortened.Id, 1000, true)
-        };
+        String extendedError = saveError(bill(extended.Id, 1000, 200));
+        String shortenedError = saveError(bill(shortened.Id, 1000, 200));
         Test.stopTest();
 
-        Assert.areEqual(200, loyaltyFor(extended.Id).Total_Points_Redeemed__c, 'Usable until its own expiry date');
-        Assert.areEqual(0, loyaltyFor(shortened.Id).Total_Points_Redeemed__c, 'Not usable after its own expiry date');
+        Assert.isNull(extendedError, 'Usable until its own expiry date');
+        Assert.areEqual(200, loyaltyFor(extended.Id).Total_Points_Redeemed__c, 'Spent');
+        Assert.isNotNull(shortenedError, 'Not usable after its own expiry date, so the bill is rejected');
+        Assert.areEqual(0, loyaltyFor(shortened.Id).Total_Points_Redeemed__c, 'Nothing spent');
     }
 
     // =====================================================================
@@ -713,12 +724,11 @@ private class LoyaltyEngineTest {
         insert acct;
 
         Test.startTest();
-        insert bill(acct.Id, 10000, true);
+        String error = saveError(bill(acct.Id, 10000, 100));
         Test.stopTest();
 
-        Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
-        Assert.areEqual(200, loyalty.Points_Balance__c, 'The 200 earned stay on the balance');
-        Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was available to redeem');
+        Assert.isTrue(error.contains('(0)'), 'A first bill has no points to spend: ' + error);
+        Assert.areEqual(0, loyaltyFor(acct.Id).Total_Points_Earned__c, 'The rejected bill earns nothing either');
     }
 
     /**
@@ -731,10 +741,10 @@ private class LoyaltyEngineTest {
         Account acct = household('Morning And Afternoon', 5000);
         insert acct;
 
-        Transaction_Record__c morning = bill(acct.Id, 5000, false);
+        Transaction_Record__c morning = bill(acct.Id, 5000, 0);
         morning.Transaction_Date__c = Datetime.newInstance(Date.today(), Time.newInstance(10, 0, 0, 0));
 
-        Transaction_Record__c afternoon = bill(acct.Id, 1000, true);
+        Transaction_Record__c afternoon = bill(acct.Id, 1000, 100);
         afternoon.Transaction_Date__c = Datetime.newInstance(Date.today(), Time.newInstance(15, 0, 0, 0));
 
         Test.startTest();
@@ -766,7 +776,7 @@ private class LoyaltyEngineTest {
         insert acct;
 
         Test.startTest();
-        insert bill(acct.Id, 5000, false);
+        insert bill(acct.Id, 5000, 0);
         Test.stopTest();
 
         Loyalty_Transaction__c earned = ledgerRow(acct.Id, 'Earn');
@@ -798,7 +808,7 @@ private class LoyaltyEngineTest {
         String message;
         Test.startTest();
         try {
-            insert bill(acct.Id, 3200, false);
+            insert bill(acct.Id, 3200, 0);
             Assert.fail('A household with two loyalty records should have been rejected');
         } catch (DmlException e) {
             message = e.getDmlMessage(0);

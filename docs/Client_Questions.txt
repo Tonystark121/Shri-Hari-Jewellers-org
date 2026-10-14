@@ -1,0 +1,76 @@
+ShreeHari CRM - Questions for the client
+========================================
+Last updated: 15 Oct 2026
+
+Background
+----------
+POS decides every redemption at the till. Salesforce is the back end: it
+records what POS reports on each bill (points redeemed, gift voucher used)
+and keeps the customer's loyalty points up to date. The points below are
+cases where the two systems could disagree. Each one shows what Salesforce
+does today, until the client decides.
+
+
+1. POS reports more points redeemed than the customer has in Salesforce
+-----------------------------------------------------------------------
+Example: POS says the customer redeemed 500 points; Salesforce shows only 300
+usable points (possible after a sync delay, a manual correction, or points
+that expired in Salesforce but not in POS).
+
+Today: the bill is rejected with the message
+  "The bill was not saved: Points Redeemed (500) is more than the points this
+   customer can use on <date> (300)."
+
+What should happen?
+  a. Keep rejecting the bill (POS must correct it and send it again).
+  b. Save the bill, deduct the 300 available, and flag the difference for
+     someone to review.
+  c. Save the bill as reported and let the balance go below zero.
+
+
+2. The voucher is Expired or Cancelled in Salesforce, but POS accepted it
+-------------------------------------------------------------------------
+Today: the bill is rejected ("voucher X expired on <date>" / "voucher X is
+Cancelled in Salesforce").
+
+What should happen?
+  a. Keep rejecting.
+  b. Save the bill and mark the voucher Redeemed anyway, as POS accepted it.
+
+
+3. The voucher details from POS differ from the voucher in Salesforce
+---------------------------------------------------------------------
+Example: Salesforce has the voucher as Rs. 500 Fixed Price; POS reports
+Rs. 300 off, or a Percentage offer, or a bill outside the voucher's
+minimum/maximum amount.
+
+Today: the bill is saved with POS's figures (offer type, face value,
+discount); the voucher in Salesforce is marked Redeemed. Nothing is flagged.
+
+Is that right, or should a difference be rejected / flagged for review?
+
+
+4. Points and a gift voucher on the same bill
+---------------------------------------------
+Today: allowed - both are recorded (the old "one redemption per bill" rule
+was removed because POS decides).
+
+Can POS really do both on one bill, or should Salesforce reject it?
+
+
+5. Other information on the POS bill
+------------------------------------
+Is anything else on the POS bill needed in Salesforce, or does it change the
+points earned? For example: discounts other than vouchers, GST, making
+charges, exchange of old gold.
+
+Today: only the bill amount, voucher and points are used. Points are earned
+on Net Amount = Amount - Voucher Discount - Points Redeemed, calculated by
+Salesforce.
+
+
+6. Net Amount
+-------------
+Today: Salesforce calculates Net Amount (see 5).
+
+Should POS send the net amount it charged instead, once the POS API is live?

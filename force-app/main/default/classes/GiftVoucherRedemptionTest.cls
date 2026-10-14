@@ -1,6 +1,7 @@
 /**
- * Tests for gift voucher redemption on Transaction Records: the live check
- * used by the New Transaction flow and the checks run when a bill is saved.
+ * Tests for redemptions reported by POS on Transaction Records: the gift
+ * voucher and points on the bill are recorded as reported, and a bill that
+ * cannot be recorded is rejected with the reason.
  *
  * Vouchers and bills are written and read in system mode, so the tests do not
  * depend on the running user's field access.
@@ -18,16 +19,12 @@ private class GiftVoucherRedemptionTest {
 
         Date inAMonth = Date.today().addDays(30);
         insert as system new List<Gift_Voucher__c>{
-            // Min and Max: bills from 5,000 to 10,000, Rs. 500 off
+            // Salesforce says bills from 5,000 to 10,000; POS's figures are kept regardless
             voucher(customer.Id, 'FIX-RANGE', 'Fixed Price', 500, null, 5000, 10000, 'Active', inAMonth),
-            // Max only: bills of 5,000 or more, 10% off the total bill
-            voucher(customer.Id, 'PCT-MAXONLY', 'Percentage', null, 10, null, 5000, 'Active', inAMonth),
-            // Min saved as 0 counts as Max only: bills of 3,000 or more
-            voucher(customer.Id, 'FIX-MINZERO', 'Fixed Price', 250, null, 0, 3000, 'Active', inAMonth),
-            // Face value above the bill: the discount is capped at the bill
-            voucher(customer.Id, 'FIX-BIG', 'Fixed Price', 900, null, null, 300, 'Active', inAMonth),
+            voucher(customer.Id, 'PCT-TEN', 'Percentage', null, 10, null, 5000, 'Active', inAMonth),
             voucher(other.Id, 'OTHER-CUST', 'Fixed Price', 500, null, null, 1000, 'Active', inAMonth),
             voucher(customer.Id, 'USED', 'Fixed Price', 500, null, null, 1000, 'Redeemed', inAMonth),
+            voucher(customer.Id, 'CANCELLED', 'Fixed Price', 500, null, null, 1000, 'Cancelled', inAMonth),
             voucher(customer.Id, 'EXPIRED', 'Fixed Price', 500, null, null, 1000, 'Active', Date.today().addDays(-1))
         };
     }
@@ -58,36 +55,44 @@ private class GiftVoucherRedemptionTest {
     }
 
     private static Gift_Voucher__c voucherWithCode(String code) {
-        List<Gift_Voucher__c> found = [
-            SELECT Id, Account__c, Voucher_Code__c, Status__c, Expiry_Date__c, Offer_Type__c,
-                   Face_Value__c, Discount_Percentage__c, Minimum_Amount__c, Maximum_Amount__c
+        return [
+            SELECT Id, Status__c, Redemption_Date__c, Redemption_Channel__c
             FROM Gift_Voucher__c
             WHERE Voucher_Code__c = :code
             WITH SYSTEM_MODE
         ];
-        return found.isEmpty() ? null : found[0];
     }
 
-    /** Why the voucher cannot be used on a bill of this amount today (null = it can). */
-    private static String problem(String code, Decimal amount) {
-        return GiftVoucherRedemption.problemWith(voucherWithCode(code), customerId(), amount, Date.today());
-    }
-
-    private static Decimal discount(String code, Decimal amount) {
-        return GiftVoucherRedemption.discountFor(voucherWithCode(code), amount);
-    }
-
-    private static Transaction_Record__c voucherBill(String code, Decimal amount) {
+    private static Transaction_Record__c plainBill(Decimal amount) {
         billCounter++;
         return new Transaction_Record__c(
             Account__c = customerId(),
             Amount__c = amount,
             Bill_Number__c = 'GVR-' + String.valueOf(billCounter).leftPad(6, '0'),
-            Transaction_Date__c = Datetime.now(),
-            Redeem_Gift_Voucher__c = true,
-            Voucher_Code__c = code,
-            Voucher_Redemption_Channel__c = 'POS'
+            Transaction_Date__c = Datetime.now()
         );
+    }
+
+    /** A bill on which POS reports a Fixed Price voucher of Rs. 500 face value. */
+    private static Transaction_Record__c voucherBill(String code, Decimal amount, Decimal discount) {
+        Transaction_Record__c bill = plainBill(amount);
+        bill.Voucher_Code__c = code;
+        bill.Voucher_Offer_Type__c = 'Fixed Price';
+        bill.Voucher_Face_Value__c = 500;
+        bill.Voucher_Discount__c = discount;
+        bill.Voucher_Redemption_Channel__c = 'POS';
+        return bill;
+    }
+
+    private static Transaction_Record__c saved(Id billId) {
+        return [
+            SELECT Gift_Voucher__c, Voucher_Code__c, Voucher_Offer_Type__c, Voucher_Face_Value__c,
+                   Voucher_Discount_Percentage__c, Voucher_Discount__c, Voucher_Redemption_Channel__c,
+                   Points_Redeemed__c, Net_Amount__c
+            FROM Transaction_Record__c
+            WHERE Id = :billId
+            WITH SYSTEM_MODE
+        ];
     }
 
     private static String saveError(Transaction_Record__c bill) {
@@ -95,96 +100,68 @@ private class GiftVoucherRedemptionTest {
         return result.isSuccess() ? null : result.getErrors()[0].getMessage();
     }
 
-    // =====================================================================
-    // Rules (the same ones the New Transaction flow filters its list on)
-    // =====================================================================
-
-    @IsTest
-    static void fixedVoucherWithinRangeIsValid() {
-        Assert.isNull(problem('FIX-RANGE', 6000), 'Within 5,000 to 10,000');
-        Assert.areEqual(500, discount('FIX-RANGE', 6000), 'Face value off');
-    }
-
-    @IsTest
-    static void minAndMaxAreInclusive() {
-        Assert.isNull(problem('FIX-RANGE', 5000), 'Exactly Min is allowed');
-        Assert.isNull(problem('FIX-RANGE', 10000), 'Exactly Max is allowed');
-        Assert.isTrue(problem('FIX-RANGE', 10001).contains('from'), 'Above Max is refused when a Min is set');
-        Assert.isNotNull(problem('FIX-RANGE', 4999), 'Below Min is refused');
-    }
-
-    @IsTest
-    static void maxOnlyVoucherNeedsABillOfMaxOrMore() {
-        Assert.isNull(problem('PCT-MAXONLY', 8000), 'Above Max is fine without a Min');
-        Assert.areEqual(800, discount('PCT-MAXONLY', 8000), '10% of the total 8,000 bill');
-        Assert.isNull(problem('PCT-MAXONLY', 5000), 'Exactly Max is allowed');
-        Assert.isTrue(problem('PCT-MAXONLY', 4999).contains('or more'), 'Below Max is refused');
-    }
-
-    @IsTest
-    static void minimumOfZeroCountsAsBlank() {
-        Assert.isNull(problem('FIX-MINZERO', 3500), 'Min 0: bills of Max (3,000) or more');
-        Assert.isNotNull(problem('FIX-MINZERO', 2000), 'Min 0 is not a 0-to-Max range');
-    }
-
-    @IsTest
-    static void discountNeverExceedsTheBill() {
-        Assert.isNull(problem('FIX-BIG', 400), 'Bill of Max (300) or more');
-        Assert.areEqual(400, discount('FIX-BIG', 400), 'A 900 voucher on a 400 bill takes 400 off');
-    }
-
-    @IsTest
-    static void explainsWhyAVoucherIsInvalid() {
-        Map<String, String> expectedByCode = new Map<String, String>{
-            'NO-SUCH-CODE' => 'no voucher has this code',
-            'OTHER-CUST'   => 'belongs to another customer',
-            'USED'         => 'this voucher is Redeemed',
-            'EXPIRED'      => 'expired on'
-        };
-        for (String code : expectedByCode.keySet()) {
-            String reason = problem(code, 2000);
-            Assert.isNotNull(reason, code + ' should be invalid');
-            Assert.isTrue(reason.contains(expectedByCode.get(code)), code + ': ' + reason);
-        }
+    private static void assertRejected(Transaction_Record__c bill, String expected) {
+        String error = saveError(bill);
+        Assert.isNotNull(error, 'Should be rejected: ' + expected);
+        Assert.isTrue(error.startsWith(GiftVoucherRedemption.REJECTED), 'Says the bill was not saved: ' + error);
+        Assert.isTrue(error.contains(expected), error);
     }
 
     // =====================================================================
-    // Saving a bill (trigger)
+    // Recording what POS reports
     // =====================================================================
 
     @IsTest
-    static void savingABillRedeemsTheVoucher() {
-        Transaction_Record__c bill = voucherBill('fix-range', 6000);
+    static void theReportedVoucherIsRecordedAndRedeemed() {
+        Transaction_Record__c bill = voucherBill('fix-range', 6000, 500);
 
         Test.startTest();
-        Assert.isNull(saveError(bill), 'A valid voucher bill saves');
+        Assert.isNull(saveError(bill), 'A reported voucher saves');
         Test.stopTest();
 
-        Transaction_Record__c saved = [
-            SELECT Gift_Voucher__c, Voucher_Discount__c, Points_Redeemed__c, Net_Amount__c, Voucher_Code__c
-            FROM Transaction_Record__c
-            WHERE Id = :bill.Id
-            WITH SYSTEM_MODE
-        ];
-        Gift_Voucher__c voucher = [
-            SELECT Id, Status__c, Redemption_Date__c, Redemption_Channel__c
-            FROM Gift_Voucher__c
-            WHERE Voucher_Code__c = 'FIX-RANGE'
-            WITH SYSTEM_MODE
-        ];
-        Assert.areEqual(voucher.Id, saved.Gift_Voucher__c, 'The bill links to the redeemed voucher');
-        Assert.areEqual(500, saved.Voucher_Discount__c, 'Voucher discount stamped');
-        Assert.areEqual(0, saved.Points_Redeemed__c, 'No points on a voucher bill');
-        Assert.areEqual(5500, saved.Net_Amount__c, '6,000 - 500');
+        Transaction_Record__c record = saved(bill.Id);
+        Gift_Voucher__c voucher = voucherWithCode('FIX-RANGE');
+        Assert.areEqual(voucher.Id, record.Gift_Voucher__c, 'The bill links to the voucher');
+        Assert.areEqual('Fixed Price', record.Voucher_Offer_Type__c, 'Offer type kept');
+        Assert.areEqual(500, record.Voucher_Face_Value__c, 'Face value kept');
+        Assert.areEqual(500, record.Voucher_Discount__c, 'Discount kept');
+        Assert.areEqual(0, record.Points_Redeemed__c, 'No points on this bill');
+        Assert.areEqual(5500, record.Net_Amount__c, '6,000 - 500');
         Assert.areEqual('Redeemed', voucher.Status__c, 'The voucher is used up');
         Assert.areEqual(Date.today(), voucher.Redemption_Date__c, 'Redeemed on the bill date');
         Assert.areEqual('POS', voucher.Redemption_Channel__c, 'Channel copied from the bill');
     }
 
+    /** POS applied the offer: its discount is kept even outside the voucher's range in Salesforce. */
+    @IsTest
+    static void theDiscountReportedByPosIsKept() {
+        Transaction_Record__c bill = voucherBill('FIX-RANGE', 4000, 300);
+
+        Assert.isNull(saveError(bill), 'Saves; Salesforce does not re-check the offer');
+        Assert.areEqual(300, saved(bill.Id).Voucher_Discount__c, 'The reported discount');
+        Assert.areEqual(3700, saved(bill.Id).Net_Amount__c, '4,000 - 300');
+    }
+
+    @IsTest
+    static void aPercentageVoucherCarriesItsPercentage() {
+        Transaction_Record__c withoutPercentage = voucherBill('PCT-TEN', 8000, 800);
+        withoutPercentage.Voucher_Offer_Type__c = 'Percentage';
+        withoutPercentage.Voucher_Face_Value__c = null;
+        assertRejected(withoutPercentage, 'Voucher Discount Percentage');
+
+        Transaction_Record__c complete = voucherBill('PCT-TEN', 8000, 800);
+        complete.Voucher_Offer_Type__c = 'Percentage';
+        complete.Voucher_Face_Value__c = null;
+        complete.Voucher_Discount_Percentage__c = 10;
+        Assert.isNull(saveError(complete), 'Saves with the percentage');
+        Assert.areEqual(10, saved(complete.Id).Voucher_Discount_Percentage__c, 'Percentage kept');
+        Assert.areEqual(7200, saved(complete.Id).Net_Amount__c, '8,000 - 800');
+    }
+
     @IsTest
     static void pointsAreEarnedOnTheNetAmount() {
         Test.startTest();
-        Assert.isNull(saveError(voucherBill('FIX-RANGE', 6000)), 'Saves');
+        Assert.isNull(saveError(voucherBill('FIX-RANGE', 6000, 500)), 'Saves');
         Test.stopTest();
 
         Loyalty_Transaction__c earned = [
@@ -197,77 +174,99 @@ private class GiftVoucherRedemptionTest {
         Assert.areEqual(5500, earned.Net_Loyalty_Amount__c, 'Points are earned on the amount after the voucher');
     }
 
+    /** POS may apply a voucher and points on the same bill. */
     @IsTest
-    static void aVoucherCannotBeRedeemedTwice() {
-        Assert.isNull(saveError(voucherBill('FIX-RANGE', 6000)), 'First redemption saves');
-
-        String error = saveError(voucherBill('FIX-RANGE', 7000));
-        Assert.isNotNull(error, 'Second redemption is refused');
-        Assert.isTrue(error.contains('this voucher is Redeemed'), error);
-    }
-
-    @IsTest
-    static void theSameVoucherTwiceInOneSaveIsRefused() {
-        List<Transaction_Record__c> bills = new List<Transaction_Record__c>{
-            voucherBill('FIX-RANGE', 6000),
-            voucherBill('FIX-RANGE', 7000)
-        };
-
-        List<Database.SaveResult> results = Database.insert(bills, false, AccessLevel.SYSTEM_MODE);
-
-        Assert.isTrue(results[0].isSuccess(), 'The first bill redeems the voucher');
-        Assert.isFalse(results[1].isSuccess(), 'The second cannot');
-        Assert.isTrue(results[1].getErrors()[0].getMessage().contains('another bill'), results[1].getErrors()[0].getMessage());
-    }
-
-    @IsTest
-    static void pointsAndVoucherTogetherAreRefused() {
-        Transaction_Record__c bill = voucherBill('FIX-RANGE', 6000);
-        bill.Redeem_Points__c = true;
-
-        String error = saveError(bill);
-        Assert.isNotNull(error, 'Both redemptions are refused');
-        Assert.isTrue(error.contains('Only one redemption is allowed per transaction'), error);
-    }
-
-    @IsTest
-    static void invalidOrIncompleteVoucherBillsAreRefused() {
-        Assert.isTrue(saveError(voucherBill('NO-SUCH-CODE', 6000)).contains('Voucher code is invalid'), 'Unknown code');
-        Assert.isTrue(saveError(voucherBill('OTHER-CUST', 6000)).contains('another customer'), 'Another customer\'s voucher');
-        Assert.isTrue(saveError(voucherBill('EXPIRED', 6000)).contains('expired'), 'Expired voucher');
-
-        Transaction_Record__c noCode = voucherBill(null, 6000);
-        Assert.isTrue(saveError(noCode).contains('Enter the Voucher Code'), 'Code required');
-
-        Transaction_Record__c noChannel = voucherBill('FIX-RANGE', 6000);
-        noChannel.Voucher_Redemption_Channel__c = null;
-        Assert.isTrue(saveError(noChannel).contains('Redemption Channel'), 'Channel required');
-    }
-
-    @IsTest
-    static void systemFieldsCannotBeSetByTheCaller() {
-        Id voucherId = [SELECT Id FROM Gift_Voucher__c WHERE Voucher_Code__c = 'FIX-RANGE' WITH SYSTEM_MODE].Id;
-        billCounter++;
-        Transaction_Record__c bill = new Transaction_Record__c(
-            Account__c = customerId(),
-            Amount__c = 6000,
-            Bill_Number__c = 'GVR-SPOOF',
-            Transaction_Date__c = Datetime.now(),
-            Gift_Voucher__c = voucherId,
-            Voucher_Discount__c = 999
+    static void aVoucherAndPointsOnOneBillAreBothRecorded() {
+        Loyalty_Record__c loyalty = [SELECT Id FROM Loyalty_Record__c WHERE Account__c = :customerId() WITH SYSTEM_MODE];
+        loyalty.Points_Balance__c = 300;
+        update as system loyalty;
+        insert as system new Loyalty_Transaction__c(
+            Loyalty_Record__c = loyalty.Id,
+            Transaction_Type__c = 'Earn',
+            Status__c = 'Active',
+            Points_Earned__c = 300,
+            Remaining_Points__c = 300,
+            Credit_Date__c = Date.today().addDays(-10),
+            Expiry_Date__c = Date.today().addDays(355)
         );
+        Transaction_Record__c bill = voucherBill('FIX-RANGE', 6000, 500);
+        bill.Points_Redeemed__c = 200;
+
+        Test.startTest();
+        Assert.isNull(saveError(bill), 'Both are recorded');
+        Test.stopTest();
+
+        Assert.areEqual(5300, saved(bill.Id).Net_Amount__c, '6,000 - 500 voucher - 200 points');
+    }
+
+    @IsTest
+    static void aBillWithoutAVoucherClearsStrayVoucherDetails() {
+        Id voucherId = voucherWithCode('FIX-RANGE').Id;
+        Transaction_Record__c bill = plainBill(6000);
+        bill.Gift_Voucher__c = voucherId;
+        bill.Voucher_Offer_Type__c = 'Fixed Price';
+        bill.Voucher_Face_Value__c = 500;
 
         Assert.isNull(saveError(bill), 'Saves as a plain bill');
 
-        Transaction_Record__c saved = [
-            SELECT Gift_Voucher__c, Voucher_Discount__c, Net_Amount__c
-            FROM Transaction_Record__c
-            WHERE Id = :bill.Id
-            WITH SYSTEM_MODE
-        ];
-        Assert.isNull(saved.Gift_Voucher__c, 'Only a ticked, valid voucher is linked');
-        Assert.areEqual(0, saved.Voucher_Discount__c, 'Discount is always calculated, never taken from the caller');
-        Assert.areEqual(6000, saved.Net_Amount__c, 'Full amount');
-        Assert.areEqual('Active', [SELECT Status__c FROM Gift_Voucher__c WHERE Id = :voucherId WITH SYSTEM_MODE].Status__c, 'The voucher is untouched');
+        Transaction_Record__c record = saved(bill.Id);
+        Assert.isNull(record.Gift_Voucher__c, 'Only the system links a voucher');
+        Assert.isNull(record.Voucher_Offer_Type__c, 'No code, no voucher details');
+        Assert.areEqual(0, record.Voucher_Discount__c, 'No discount');
+        Assert.areEqual(6000, record.Net_Amount__c, 'Full amount');
+        Assert.areEqual('Active', voucherWithCode('FIX-RANGE').Status__c, 'The voucher is untouched');
+    }
+
+    // =====================================================================
+    // Rejected, with the reason
+    // =====================================================================
+
+    @IsTest
+    static void aVoucherSalesforceCannotRecordIsRejected() {
+        assertRejected(voucherBill('NO-SUCH-CODE', 6000, 500), 'is not in Salesforce');
+        assertRejected(voucherBill('OTHER-CUST', 6000, 500), 'belongs to another customer');
+        assertRejected(voucherBill('USED', 6000, 500), 'is Redeemed in Salesforce');
+        assertRejected(voucherBill('CANCELLED', 6000, 500), 'is Cancelled in Salesforce');
+        assertRejected(voucherBill('EXPIRED', 6000, 500), 'expired on');
+    }
+
+    @IsTest
+    static void aVoucherCannotBeRedeemedTwice() {
+        Assert.isNull(saveError(voucherBill('FIX-RANGE', 6000, 500)), 'First redemption saves');
+        assertRejected(voucherBill('FIX-RANGE', 7000, 500), 'is Redeemed in Salesforce');
+    }
+
+    @IsTest
+    static void theSameVoucherTwiceInOneSaveIsRejected() {
+        List<Database.SaveResult> results = Database.insert(new List<Transaction_Record__c>{
+            voucherBill('FIX-RANGE', 6000, 500),
+            voucherBill('FIX-RANGE', 7000, 500)
+        }, false, AccessLevel.SYSTEM_MODE);
+
+        Assert.isTrue(results[0].isSuccess(), 'The first bill redeems the voucher');
+        Assert.isFalse(results[1].isSuccess(), 'The second cannot');
+        Assert.isTrue(results[1].getErrors()[0].getMessage().contains('another bill in the same save'), results[1].getErrors()[0].getMessage());
+    }
+
+    @IsTest
+    static void incompleteOrImpossibleVoucherDetailsAreRejected() {
+        Transaction_Record__c noOfferType = voucherBill('FIX-RANGE', 6000, 500);
+        noOfferType.Voucher_Offer_Type__c = null;
+        assertRejected(noOfferType, 'Voucher Offer Type');
+
+        Transaction_Record__c noFaceValue = voucherBill('FIX-RANGE', 6000, 500);
+        noFaceValue.Voucher_Face_Value__c = null;
+        assertRejected(noFaceValue, 'Voucher Face Value');
+
+        assertRejected(voucherBill('FIX-RANGE', 6000, null), 'enter the Voucher Discount');
+        assertRejected(voucherBill('FIX-RANGE', 400, 500), 'is more than the bill Amount');
+
+        Transaction_Record__c noChannel = voucherBill('FIX-RANGE', 6000, 500);
+        noChannel.Voucher_Redemption_Channel__c = null;
+        assertRejected(noChannel, 'Voucher Redemption Channel');
+
+        Transaction_Record__c discountWithoutCode = plainBill(6000);
+        discountWithoutCode.Voucher_Discount__c = 500;
+        assertRejected(discountWithoutCode, 'without a Voucher Code');
     }
 }

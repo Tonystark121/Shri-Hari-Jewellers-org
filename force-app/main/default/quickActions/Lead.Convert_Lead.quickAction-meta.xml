@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QuickAction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Opens the Convert Lead screen flow: a Lead converts only when the customer buys - the bill is entered and the customer account, contact and bill are saved together. Replaces the standard Convert button.</description>
+    <flowDefinition>Convert_Lead</flowDefinition>
+    <label>Convert</label>
+    <optionsCreateFeedItem>false</optionsCreateFeedItem>
+    <type>Flow</type>
+</QuickAction>

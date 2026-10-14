@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Follow_up_Date_Time__c</fullName>
+    <description>When staff will next contact the customer. Set from the Lead Stage flow each time the Lead is moved to or kept in Contacted.</description>
+    <externalId>false</externalId>
+    <label>Follow-up Date and Time</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>DateTime</type>
+</CustomField>

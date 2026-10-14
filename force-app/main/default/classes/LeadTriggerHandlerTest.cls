@@ -263,6 +263,34 @@ private class LeadTriggerHandlerTest {
         Assert.areEqual(household.Id, customer.accountId, 'Within the household');
     }
 
+    @IsTest
+    static void tellsASystemCompanyFromATypedOne() {
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany(null), 'Blank');
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta - B2C'), 'The New Lead screen default');
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta - B2C-000123 '), 'Stamped with the Lead Number');
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany('asha mehta - b2c-7'), 'Any case');
+        Assert.isFalse(LeadTriggerHandler.isSystemCompany('Mehta Jewellers Pvt Ltd'), 'Typed by a user');
+        Assert.isFalse(LeadTriggerHandler.isSystemCompany('B2C Retail - B2C Store'), 'Mentions B2C but typed');
+    }
+
+    @IsTest
+    static void listsEveryAccountWithThePhoneOrEmail() {
+        Account byPhone = new Account(Name = 'Iyer Household', Phone = '+91 98300 12388');
+        Account byContact = new Account(Name = 'Iyer Traders');
+        Account unrelated = new Account(Name = 'Other Household', Phone = '9830099999');
+        insert new List<Account>{ byPhone, byContact, unrelated };
+        insert new Contact(LastName = 'Iyer', AccountId = byContact.Id, Email = 'iyer@matcher.example.com');
+
+        Test.startTest();
+        LeadTriggerHandler.CheckResult result = checkOne('9830012388', 'iyer@matcher.example.com');
+        Test.stopTest();
+
+        Assert.areEqual(2, result.matchingAccountCount, 'The phone match and the Contact email match');
+        Set<Id> found = new Map<Id, Account>(result.matchingAccounts).keySet();
+        Assert.isTrue(found.contains(byPhone.Id), 'The Account with the phone in another format');
+        Assert.isTrue(found.contains(byContact.Id), 'The Account of the Contact with the email');
+    }
+
     // =====================================================================
     // Matching: invocable check (New Lead flow)
     // =====================================================================

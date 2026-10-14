@@ -26,6 +26,10 @@
  *   uploads. Leads from the website API are not checked here yet - that API
  *   will raise the enquiry itself.
  *
+ * Conversion
+ *   A Lead converts only together with its first bill, through
+ *   LeadConversionTransactionService. Any other conversion is refused.
+ *
  * Duplicate open Leads are blocked by the Lead Duplicate Check duplicate
  * rule, not here.
  *
@@ -58,6 +62,10 @@ public without sharing class LeadTriggerHandler {
     @TestVisible
     private static final String COMPANY_LOCKED =
         'Company is set automatically for B2C Leads and cannot be changed.';
+
+    @TestVisible
+    private static final String CONVERSION_NOT_ALLOWED =
+        'A Lead is converted only when the customer buys. Use the Convert button and enter the bill.';
 
     /** True while this class writes the Lead Number into Company. */
     private static Boolean stampingCompany = false;
@@ -103,12 +111,21 @@ public without sharing class LeadTriggerHandler {
 
     public static void beforeUpdate(List<Lead> leads, Map<Id, Lead> oldLeads) {
         for (Lead leadRecord : leads) {
+            Lead oldLead = oldLeads.get(leadRecord.Id);
+
+            // A Lead converts only when it buys, through the Convert button
+            // (LeadConversionTransactionService). Standard conversion - the Convert
+            // dialog, the Path's Converted step, the API - is refused.
+            if (leadRecord.IsConverted && !oldLead.IsConverted && !LeadConversionTransactionService.isConverting()) {
+                leadRecord.addError(CONVERSION_NOT_ALLOWED);
+                continue;
+            }
+
             // Conversion updates the Lead too; leave it alone.
             if (leadRecord.IsConverted) {
                 continue;
             }
 
-            Lead oldLead = oldLeads.get(leadRecord.Id);
             if (stampingCompany || oldLead.Business_Type__c != BUSINESS_TYPE_B2C) {
                 continue;
             }
@@ -176,6 +193,14 @@ public without sharing class LeadTriggerHandler {
     @TestVisible
     private static Boolean isAutoCompany(String company) {
         return String.isBlank(company) || company.trim().endsWithIgnoreCase(B2C_SUFFIX);
+    }
+
+    /**
+     * True when Company was filled in by the system rather than typed by a
+     * user: blank, "<Name> - B2C" or "<Name> - B2C-<Lead Number>".
+     */
+    public static Boolean isSystemCompany(String company) {
+        return String.isBlank(company) || Pattern.matches('(?i).* - B2C(-[0-9]+)?', company.trim());
     }
 
     /** "<First Name> <Last Name> - B2C" */
@@ -335,6 +360,66 @@ public without sharing class LeadTriggerHandler {
         return customers;
     }
 
+    /**
+     * Every customer Account for the given phones (10-digit form) and emails,
+     * keyed by phoneKey() / emailKey(): Accounts with that phone or email and
+     * the Accounts of Contacts with it, most recently modified first, each
+     * Account once per key. Lets staff pick the customer when there are
+     * several.
+     */
+    public static Map<String, List<Account>> findAccounts(Set<String> normalizedPhones, Set<String> emails) {
+        Map<String, List<Account>> accountsByKey = new Map<String, List<Account>>();
+        Set<String> phoneForms = storedFormsOf(normalizedPhones == null ? new Set<String>() : normalizedPhones);
+        Set<String> lowerEmails = lowerCased(emails);
+
+        if (phoneForms.isEmpty() && lowerEmails.isEmpty()) {
+            return accountsByKey;
+        }
+
+        Map<Id, Set<String>> keysByAccountId = new Map<Id, Set<String>>();
+        for (Contact contactRecord : [
+            SELECT AccountId, Phone, MobilePhone, Email
+            FROM Contact
+            WHERE AccountId != null
+              AND (Phone IN :phoneForms OR MobilePhone IN :phoneForms OR Email IN :lowerEmails)
+            WITH SYSTEM_MODE
+        ]) {
+            addKey(keysByAccountId, contactRecord.AccountId, phoneMatchKey(contactRecord.Phone, normalizedPhones));
+            addKey(keysByAccountId, contactRecord.AccountId, phoneMatchKey(contactRecord.MobilePhone, normalizedPhones));
+            addKey(keysByAccountId, contactRecord.AccountId, emailMatchKey(contactRecord.Email, lowerEmails));
+        }
+        for (Account accountRecord : [
+            SELECT Id, Phone, Email__c
+            FROM Account
+            WHERE Phone IN :phoneForms OR Email__c IN :lowerEmails
+            WITH SYSTEM_MODE
+        ]) {
+            addKey(keysByAccountId, accountRecord.Id, phoneMatchKey(accountRecord.Phone, normalizedPhones));
+            addKey(keysByAccountId, accountRecord.Id, emailMatchKey(accountRecord.Email__c, lowerEmails));
+        }
+
+        if (keysByAccountId.isEmpty()) {
+            return accountsByKey;
+        }
+
+        Set<Id> accountIds = keysByAccountId.keySet();
+        for (Account accountRecord : [
+            SELECT Id, Name, Phone, Email__c, Customer_Tier__c, Last_12M_Spend__c, CASA_ID__c
+            FROM Account
+            WHERE Id IN :accountIds
+            WITH SYSTEM_MODE
+            ORDER BY LastModifiedDate DESC
+        ]) {
+            for (String key : keysByAccountId.get(accountRecord.Id)) {
+                if (!accountsByKey.containsKey(key)) {
+                    accountsByKey.put(key, new List<Account>());
+                }
+                accountsByKey.get(key).add(accountRecord);
+            }
+        }
+        return accountsByKey;
+    }
+
     // =====================================================================
     // Matching: open Leads
     // =====================================================================
@@ -408,6 +493,12 @@ public without sharing class LeadTriggerHandler {
         @InvocableVariable(label='Case Owner Id' description='Account owner, or the current user when the owner is inactive.')
         public Id caseOwnerId;
 
+        @InvocableVariable(label='Matching Accounts' description='Every Account with this phone or email, or with a Contact that has it. Most recently changed first.')
+        public List<Account> matchingAccounts;
+
+        @InvocableVariable(label='Matching Account Count')
+        public Integer matchingAccountCount;
+
         @InvocableVariable(label='Is Open Lead' description='True when an unconverted Lead has this phone or email.')
         public Boolean isOpenLead;
 
@@ -449,6 +540,9 @@ public without sharing class LeadTriggerHandler {
         }
 
         Map<String, Customer> customers = findCustomers(phones, emails);
+        Map<String, List<Account>> accountsByKey = customers.isEmpty()
+            ? new Map<String, List<Account>>()
+            : findAccounts(phones, emails);
         Map<String, Lead> openLeads = findOpenLeads(phones, emails);
 
         List<CheckResult> results = new List<CheckResult>();
@@ -468,6 +562,7 @@ public without sharing class LeadTriggerHandler {
 
             Customer customer;
             Lead openLead;
+            Map<Id, Account> matchingAccounts = new Map<Id, Account>();
             for (String key : keys) {
                 if (customer == null && customers.containsKey(key)) {
                     customer = customers.get(key);
@@ -475,7 +570,16 @@ public without sharing class LeadTriggerHandler {
                 if (openLead == null && openLeads.containsKey(key)) {
                     openLead = openLeads.get(key);
                 }
+                if (accountsByKey.containsKey(key)) {
+                    for (Account accountRecord : accountsByKey.get(key)) {
+                        if (!matchingAccounts.containsKey(accountRecord.Id)) {
+                            matchingAccounts.put(accountRecord.Id, accountRecord);
+                        }
+                    }
+                }
             }
+            result.matchingAccounts = matchingAccounts.values();
+            result.matchingAccountCount = matchingAccounts.size();
 
             result.isExistingCustomer = customer != null;
             if (customer != null) {
@@ -507,6 +611,24 @@ public without sharing class LeadTriggerHandler {
         }
         String normalized = normalizePhone(storedPhone);
         return normalizedPhones.contains(normalized) ? phoneKey(normalized) : null;
+    }
+
+    /** emailKey() of a stored email when it is one of the emails searched for, else null. */
+    private static String emailMatchKey(String storedEmail, Set<String> lowerEmails) {
+        if (String.isBlank(storedEmail) || !lowerEmails.contains(storedEmail.trim().toLowerCase())) {
+            return null;
+        }
+        return emailKey(storedEmail);
+    }
+
+    private static void addKey(Map<Id, Set<String>> keysByAccountId, Id accountId, String key) {
+        if (key == null) {
+            return;
+        }
+        if (!keysByAccountId.containsKey(accountId)) {
+            keysByAccountId.put(accountId, new Set<String>());
+        }
+        keysByAccountId.get(accountId).add(key);
     }
 
     private static void putIfAbsent(Map<String, Customer> customers, String key, Customer customer) {

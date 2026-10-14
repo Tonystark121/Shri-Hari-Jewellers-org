@@ -33,9 +33,6 @@ public with sharing class LoyaltyEngine {
     public class LoyaltyException extends Exception {}
 
 
-    @TestVisible
-    private static final Integer MINIMUM_REDEEMABLE_POINTS = 100;
-
     // Points earned on a bill are taken down to a multiple of this.
     @TestVisible
     private static final Decimal EARNED_POINTS_STEP = 10;
@@ -70,17 +67,17 @@ public with sharing class LoyaltyEngine {
      *
      * For each bill, in chronological order:
      *
-     *   1. Determine the redemption amount.
+     *   1. Take the points POS reported as redeemed (Points Redeemed). A
+     *      bill reporting more than the customer can use on the bill date is
+     *      rejected with the reason.
      *   2. Consume eligible earning lots, oldest first.
      *   3. Create the Redeemed event.
-     *   4. Calculate the net bill.
-     *   5. Calculate the points earned on the net bill.
-     *   6. Create the Earn event (the new earning lot).
-     *   7. Update the Loyalty Record.
-     *   8. Write Points Redeemed and Net Amount back onto the bill.
+     *   4. Calculate the points earned on the Net Amount.
+     *   5. Create the Earn event (the new earning lot).
+     *   6. Update the Loyalty Record.
      *
-     * The bill's starting amount is Amount - Voucher Discount: a gift voucher
-     * (see GiftVoucherRedemption) is applied before this method runs.
+     * Net Amount (Amount - Voucher Discount - Points Redeemed) is stamped
+     * before the bill is saved, by GiftVoucherRedemption.
      *
      * Points earned by a bill are never available to that same bill, but a
      * later bill in the same batch can spend them.
@@ -173,9 +170,6 @@ public with sharing class LoyaltyEngine {
 
         List<Loyalty_Transaction__c> newEvents = new List<Loyalty_Transaction__c>();
 
-        // Bills that spent points: Points Redeemed and Net Amount to write back.
-        List<Transaction_Record__c> billsToUpdate = new List<Transaction_Record__c>();
-
         for (Transaction_Record__c transactionRecord : bills) {
 
             Account accountRecord = accountsById.get(transactionRecord.Account__c);
@@ -201,49 +195,36 @@ public with sharing class LoyaltyEngine {
 
 
             // -----------------------------------------------------
-            // Redemption
-            //
-            // Redeem only when:
-            //
-            // 1. Redeem_Points__c = true
-            // 2. Balance >= 100
-            // 3. Applicable redemption amount >= 100
+            // Redemption, as reported by POS
             //
             // Points are worth Rs. 1 each, and only points held in
             // earning lots still usable on the bill date can be
-            // spent.
+            // spent. POS decided the redemption; a bill reporting
+            // more than the customer holds is rejected, never cut
+            // down, so the books match the till.
             // -----------------------------------------------------
 
-            // Amount left after any gift voucher discount.
-            Decimal amountAfterVoucher = netAmountOf( transactionRecord.Amount__c, transactionRecord.Voucher_Discount__c );
-
-            Integer pointsRedeemed = 0;
-
-            if (transactionRecord.Redeem_Points__c == true) {
-
-                List<Loyalty_Transaction__c> eligible = eligibleLots(lots, transactionDate);
-
-                pointsRedeemed = pointsToApply( currentBalance, remainingIn(eligible), amountAfterVoucher );
-
-                if (pointsRedeemed > 0) {
-                    consumeOldestFirst( eligible, pointsRedeemed, consumedLots );
-                    newEvents.add( redemptionEvent( loyalty, transactionRecord, pointsRedeemed, processedAt ) );
-                }
-            }
-
-            // -----------------------------------------------------
-            // Net bill after redemption
-            // -----------------------------------------------------
-
-            Decimal netAmount = netAmountOf( amountAfterVoucher, pointsRedeemed);
+            Integer pointsRedeemed = whole(transactionRecord.Points_Redeemed__c);
 
             if (pointsRedeemed > 0) {
-                billsToUpdate.add(new Transaction_Record__c(
-                    Id = transactionRecord.Id,
-                    Points_Redeemed__c = pointsRedeemed,
-                    Net_Amount__c = netAmount
-                ));
+
+                List<Loyalty_Transaction__c> eligible = eligibleLots(lots, transactionDate);
+                Integer available = Math.min( currentBalance, remainingIn(eligible) );
+
+                if (pointsRedeemed > available) {
+                    transactionRecord.addError(
+                        'The bill was not saved: Points Redeemed (' + pointsRedeemed + ') is more than the points '
+                        + 'this customer can use on ' + transactionDate.format() + ' (' + available + ').'
+                    );
+                    continue;
+                }
+
+                consumeOldestFirst( eligible, pointsRedeemed, consumedLots );
+                newEvents.add( redemptionEvent( loyalty, transactionRecord, pointsRedeemed, processedAt ) );
             }
+
+            // Stamped before insert by GiftVoucherRedemption.
+            Decimal netAmount = transactionRecord.Net_Amount__c == null ? 0 : transactionRecord.Net_Amount__c;
 
             // -----------------------------------------------------
             // Tier used for THIS purchase
@@ -330,50 +311,8 @@ public with sharing class LoyaltyEngine {
         }
 
         update as system loyaltyByAccount.values();
-
-        if (!billsToUpdate.isEmpty()) {
-            update as system billsToUpdate;
-        }
     }
 
-    /**
-     * Determines how many points can actually be redeemed.
-     *
-     * Rules:
-     * - Balance must be >= 100.
-     * - Bill must be positive.
-     * - 1 point = Rs. 1.
-     * - Cannot redeem more points than the balance, than the eligible
-     *   earning lots hold, or than the bill amount.
-     * - If applicable redemption is < 100, no redemption occurs.
-     */
-    @TestVisible
-    private static Integer pointsToApply( Integer balance, Integer eligibleLotPoints, Decimal grossAmount ) {
-
-        if (balance < MINIMUM_REDEEMABLE_POINTS) {
-            return 0;
-        }
-
-        if (grossAmount == null || grossAmount <= 0) {
-            return 0;
-        }
-
-
-        // Only whole rupees can be redeemed.
-        Integer billAmount = Integer.valueOf( grossAmount.round( System.RoundingMode.DOWN ) );
-
-
-        // Customer cannot redeem more than they hold, more than
-        // the usable lots cover, or more than the bill amount.
-        Integer applicablePoints = Math.min( Math.min( balance, eligibleLotPoints ), billAmount );
-
-
-        // Minimum redemption is 100 points.
-        if (applicablePoints < MINIMUM_REDEEMABLE_POINTS) {
-            return 0;
-        }
-        return applicablePoints;
-    }
     /**
      * Calculates loyalty points: the tier percentage of the net amount,
      * taken down to the nearest multiple of 10 at or below it.
@@ -398,18 +337,6 @@ public with sharing class LoyaltyEngine {
         Decimal completeSteps = calculatedPoints.divide(EARNED_POINTS_STEP, 0, System.RoundingMode.DOWN);
 
         return Integer.valueOf( completeSteps * EARNED_POINTS_STEP );
-    }
-
-    /**
-     * Amount left after taking something off the bill (a voucher discount or
-     * redeemed points). Never negative.
-     */
-    private static Decimal netAmountOf(Decimal grossAmount, Decimal deduction) {
-
-        Decimal gross = grossAmount == null? 0 : grossAmount;
-        Decimal taken = deduction == null ? 0 : deduction;
-        Decimal net = gross - taken;
-        return net < 0 ? 0 : net;
     }
 
     /**

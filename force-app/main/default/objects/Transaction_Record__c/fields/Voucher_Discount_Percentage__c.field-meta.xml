@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Voucher_Discount_Percentage__c</fullName>
+    <description>Percentage off of the gift voucher redeemed on this bill, as reported by POS. Required for Percentage vouchers.</description>
+    <externalId>false</externalId>
+    <label>Voucher Discount Percentage</label>
+    <precision>5</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Percent</type>
+</CustomField>

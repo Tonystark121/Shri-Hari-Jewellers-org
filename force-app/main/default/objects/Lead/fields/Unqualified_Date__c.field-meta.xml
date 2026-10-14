@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Unqualified_Date__c</fullName>
+    <description>The day the customer was found not to buy. The Lead Stage flow fills in today; staff can change it.</description>
+    <externalId>false</externalId>
+    <label>Unqualified Date</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Date</type>
+</CustomField>

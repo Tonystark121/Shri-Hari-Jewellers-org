@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Points_Redeemed__c</fullName>
-    <description>Loyalty points spent on this bill (1 point = Rs. 1). Set by the loyalty engine; 0 when no points were redeemed.</description>
+    <description>Loyalty points the customer spent on this bill (1 point = Rs. 1), as reported by POS. Deducted from the balance, oldest points first. A bill reporting more points than the customer can use is rejected.</description>
     <externalId>false</externalId>
     <label>Points Redeemed</label>
     <precision>18</precision>
