@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>No_Future_Transaction_Date</fullName>
+    <active>true</active>
+    <description>Blocks bills dated after today (IST). Future-dated bills fall outside the Last 12 Month Spend window and would not count towards spend or tier.</description>
+    <errorConditionFormula>DATEVALUE(Transaction_Date__c + (5.5 / 24)) &gt; TODAY()</errorConditionFormula>
+    <errorDisplayField>Transaction_Date__c</errorDisplayField>
+    <errorMessage>Transaction Date cannot be in the future. Enter today&apos;s date or an earlier one.</errorMessage>
+</ValidationRule>

@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>LeadConversionService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Baseline CRM access for ShreeHari users: read/edit on Account, Contact, Lead, Opportunity and all ShreeHari custom objects, plus field-level access to every permissionable field on those objects.</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>ShreeHari CRM User</label>

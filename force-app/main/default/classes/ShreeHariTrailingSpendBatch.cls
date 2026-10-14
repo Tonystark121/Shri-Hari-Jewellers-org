@@ -81,13 +81,15 @@ public without sharing class ShreeHariTrailingSpendBatch
         List<AggregateResult> transactionRecords = [
             SELECT
                 Account__c accountId,
-                SUM(Amount__c) totalAmount
+                SUM(Net_Amount__c) totalAmount
             FROM Transaction_Record__c
             WHERE Account__c IN :accountIds
               AND Transaction_Date__c >= :windowStart
               AND Transaction_Date__c < :windowEndExclusive
             GROUP BY Account__c
         ];
+        
+        System.debug(transactionRecords);
 
         for (AggregateResult result : transactionRecords) {
 
@@ -107,6 +109,8 @@ public without sharing class ShreeHariTrailingSpendBatch
             Decimal calculatedValue = transactionTotals.containsKey(accountRecord.Id) ? transactionTotals.get(accountRecord.Id) : 0;
 
             calculatedValue = calculatedValue.setScale( 2, System.RoundingMode.HALF_UP );
+            
+            System.debug('***line 111' +  currentValue + calculatedValue);
 
             if (currentValue != calculatedValue) {
 

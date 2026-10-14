@@ -156,6 +156,21 @@
             </connector>
             <label>Details Missing</label>
         </rules>
+        <rules>
+            <name>Future_Transaction_Date</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Is_Future_Bill_Date</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Bill_Details</targetReference>
+            </connector>
+            <label>Future Transaction Date</label>
+        </rules>
     </decisions>
     <decisions>
         <name>Is_Voucher_Redeemed</name>
@@ -197,6 +212,12 @@
         <name>Bill_Date</name>
         <dataType>Date</dataType>
         <expression>DATEVALUE({!Transaction_Record.Transaction_Date__c} + (5.5 / 24))</expression>
+    </formulas>
+    <formulas>
+        <description>True when the bill is dated after today. Same rule as the No_Future_Transaction_Date validation rule on Transaction Record, checked here so the user is told on the Bill Details screen instead of at save.</description>
+        <name>Is_Future_Bill_Date</name>
+        <dataType>Boolean</dataType>
+        <expression>{!Bill_Date} &gt; TODAY()</expression>
     </formulas>
     <formulas>
         <description>Preview only: same rule as GiftVoucherRedemption.discountFor (Fixed Price = Face Value, never more than the bill; Percentage = % of the total bill). The saved discount is calculated by Apex.</description>
@@ -418,6 +439,21 @@
                 <conditionLogic>and</conditionLogic>
                 <conditions>
                     <leftValueReference>Show_Missing_Details</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <booleanValue>true</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Future_Date_Message</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(186, 5, 23);&quot;&gt;⚠ Transaction Date cannot be in the future.&lt;/strong&gt;&lt;span style=&quot;color: rgb(186, 5, 23);&quot;&gt; Enter today&apos;s date or an earlier one to continue.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>Is_Future_Bill_Date</leftValueReference>
                     <operator>EqualTo</operator>
                     <rightValue>
                         <booleanValue>true</booleanValue>

@@ -131,7 +131,7 @@ private class LoyaltyEngineTest {
 
     /**
      * The document's first worked example: a 2,000 purchase discounted to
-     * 1,600 earns 1600 x 2% = 32 points at Silver.
+     * 1,600 earns at Silver: 1600 x 2% = 32, taken down to 30 points.
      */
     @IsTest
     static void testEarnPoints() {
@@ -143,8 +143,8 @@ private class LoyaltyEngineTest {
         Test.stopTest();
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
-        Assert.areEqual(32, loyalty.Points_Balance__c, '1600 at Silver 2% earns 32 points');
-        Assert.areEqual(32, loyalty.Total_Points_Earned__c, 'Lifetime earned should match');
+        Assert.areEqual(30, loyalty.Points_Balance__c, '1600 at Silver 2% is 32, taken down to 30 points');
+        Assert.areEqual(30, loyalty.Total_Points_Earned__c, 'Lifetime earned should match');
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
         Assert.areEqual(Date.today(), loyalty.Last_Transaction_Date__c, 'Stamped with the bill date');
     }
@@ -181,7 +181,7 @@ private class LoyaltyEngineTest {
      * document the third purchase still earns at Silver even though it pushes
      * the running total into Gold; only the fourth purchase earns 4%. Here
      * the household is already Gold on 8,800 of billing, so its next bill of
-     * 2,400 earns 2400 x 4% = 96.
+     * 2,400 earns at 4%: 2400 x 4% = 96, taken down to 90.
      */
     @IsTest
     static void testEarnsAtTheTierHeldBeforeTheBill() {
@@ -194,15 +194,15 @@ private class LoyaltyEngineTest {
         Test.stopTest();
 
         Assert.areEqual(
-            272,
+            266,
             loyaltyFor(acct.Id).Points_Balance__c,
-            'The document: 2400 x 4% = 96, on top of the 176 already held'
+            '2400 x 4% = 96, taken down to 90, on top of the 176 already held'
         );
     }
 
-    /** Points accrue per whole Rs 100; the remainder earns nothing. */
+    /** Points are the tier % of the bill, taken down to a multiple of 10. */
     @IsTest
-    static void testPartialHundredsAreRoundedDown() {
+    static void testPointsAreTakenDownToAMultipleOfTen() {
         Account acct = household('Rounding', null);
         insert acct;
 
@@ -213,7 +213,7 @@ private class LoyaltyEngineTest {
         Assert.areEqual(
             60,
             loyaltyFor(acct.Id).Points_Balance__c,
-            '3,099 at 2% is 30 whole hundreds x 2, not 61.98'
+            '3,099 at 2% is 61.98, taken down to 60'
         );
     }
 
@@ -282,7 +282,7 @@ private class LoyaltyEngineTest {
      * The document's "Method 2": the customer holds 112 points and ticks the
      * box against a 3,200 bill, so all 112 are spent and the bill earns on
      * 3,088. The document writes the result as "3088 X 2% = 61.76 (60)" —
-     * rounded down to whole hundreds of rupees — and carries 60 forward.
+     * taken down to a multiple of 10 — and carries 60 forward.
      */
     @IsTest
     static void testRedeemTickedSpendsTheBalanceAndEarnsOnTheNetAmount() {
@@ -394,9 +394,9 @@ private class LoyaltyEngineTest {
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(
-            564,
+            560,
             loyalty.Points_Balance__c,
-            'The 500 is untouched and the full 3,200 earns 64 at Silver'
+            'The 500 is untouched and the full 3,200 earns 60 at Silver (64 taken down to 60)'
         );
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
         Assert.areEqual(
@@ -423,9 +423,9 @@ private class LoyaltyEngineTest {
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(
-            163,
+            159,
             loyalty.Points_Balance__c,
-            '99 kept, and the full 3,200 earns 64 at Silver'
+            '99 kept, and the full 3,200 earns 60 at Silver (64 taken down to 60)'
         );
         Assert.areEqual(0, loyalty.Total_Points_Redeemed__c, 'Nothing was redeemed');
     }
@@ -449,7 +449,7 @@ private class LoyaltyEngineTest {
         Assert.areEqual(
             60,
             loyalty.Points_Balance__c,
-            '3200 - 102 = 3098, which is 30 whole hundreds x 2%'
+            '3200 - 102 = 3098 at 2% is 61.96, taken down to 60'
         );
     }
 
@@ -743,8 +743,8 @@ private class LoyaltyEngineTest {
 
         Loyalty_Record__c loyalty = loyaltyFor(acct.Id);
         Assert.areEqual(100, loyalty.Total_Points_Redeemed__c, 'The afternoon bill spent the morning points');
-        Assert.areEqual(118, loyalty.Total_Points_Earned__c, '100 in the morning + 900 net x 2% = 18');
-        Assert.areEqual(18, loyalty.Points_Balance__c, '100 - 100 + 18');
+        Assert.areEqual(110, loyalty.Total_Points_Earned__c, '100 in the morning + 900 net x 2% = 18, taken down to 10');
+        Assert.areEqual(10, loyalty.Points_Balance__c, '100 - 100 + 10');
 
         Loyalty_Transaction__c morningLot = [
             SELECT Remaining_Points__c, Status__c

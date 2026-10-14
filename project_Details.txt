@@ -1,0 +1,48 @@
+Transaction record trigger: 
+
+"Before save :" the voucher check runs, and the system resets and stamps Gift Voucher, Voucher Discount, Points Redeemed and Net Amount.
+"After save :" the voucher is marked Redeemed.
+After save: loyalty points are redeemed and earned.
+After save: the Account's Last 12 Month Spend is recalculated, which moves the tier.
+
+
+GiftVoucherRedemption: 
+
+Decides whether a voucher can be used on a bill, and calculates the discount.
+
+Rejects the bill when:
+both Redeem Points and Redeem Gift Voucher are ticked;
+the voucher code or redemption channel is missing;
+the code is unknown, or the voucher belongs to another customer;
+the voucher is not Active, or it expired before the bill date;
+the voucher has no offer type, value or Maximum Amount;
+the bill is outside the voucher's amount range;
+the same voucher is used twice in one save.
+
+ShreeHariTrailingSpendBatch
+The nightly recalculation of Last 12 Month Spend for every Account. It is needed so tiers drop when old bills age out of the window.
+
+LoyaltyPointsExpiryBatch
+The nightly job that marks expired lots as Expired and reduces the balance by the unspent points.
+
+DynamicFieldController
+The server side of the filter screen in the Create Gift Voucher flow.
+
+Search: it turns the user's on-screen rules into a safe search (up to 2,000 records, respecting the user's access), including birthday and anniversary filters by month or next N days.
+Voucher codes: it generates unique codes in the form PREFIX-XXXX.
+
+ShreeHariLeadRestResource
+The website's endpoint for creating Leads.
+
+Validates:
+last name and lead source are required;
+at least one of phone or email is required;
+picklist values, email format and field lengths;
+dates must be real and not in the future.
+Defaults: Company "Halsa Global", Status "New", Business Type "Unknown".
+Routing: it resolves the store code and campaign name, and applies the Lead assignment rule.
+Duplicates: a blocked duplicate Lead returns a 409. It does not check against existing customers.
+
+
+
+LoyaltyEngine:

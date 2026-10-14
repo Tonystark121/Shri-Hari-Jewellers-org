@@ -3,7 +3,7 @@
     <fullName>CLV__c</fullName>
     <description>Customer Lifetime Value - total spend of this household, summed from every Transaction Record. Recalculated by the platform after each POS or Shopify push; never edited by hand.</description>
     <label>CLV</label>
-    <summarizedField>Transaction_Record__c.Amount__c</summarizedField>
+    <summarizedField>Transaction_Record__c.Net_Amount__c</summarizedField>
     <summaryForeignKey>Transaction_Record__c.Account__c</summaryForeignKey>
     <summaryOperation>sum</summaryOperation>
     <trackHistory>false</trackHistory>

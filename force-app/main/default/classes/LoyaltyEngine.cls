@@ -36,8 +36,9 @@ public with sharing class LoyaltyEngine {
     @TestVisible
     private static final Integer MINIMUM_REDEEMABLE_POINTS = 100;
 
+    // Points earned on a bill are taken down to a multiple of this.
     @TestVisible
-    private static final Decimal EARNING_BLOCK = 100;
+    private static final Decimal EARNED_POINTS_STEP = 10;
 
     @TestVisible
     private static final String DEFAULT_TIER = 'Silver';
@@ -374,16 +375,17 @@ public with sharing class LoyaltyEngine {
         return applicablePoints;
     }
     /**
-     * Calculates loyalty points.
+     * Calculates loyalty points: the tier percentage of the net amount,
+     * taken down to the nearest multiple of 10 at or below it.
      *
      * Example:
      *
      * netAmount = 3088
      * tierPercentage = 2
      *
-     * floor(3088 / 100) = 30
+     * 3088 x 2% = 61.76
      *
-     * 30 * 2 = 60 points
+     * 61.76 taken down to a multiple of 10 = 60 points
      */
     @TestVisible
     private static Integer pointsFor( Decimal netAmount, Decimal tierPercentage) {
@@ -392,10 +394,10 @@ public with sharing class LoyaltyEngine {
             return 0;
         }
 
-        Decimal completeHundreds = netAmount.divide(EARNING_BLOCK,0,System.RoundingMode.DOWN);
-        Decimal points = completeHundreds * tierPercentage;
+        Decimal calculatedPoints = netAmount * tierPercentage / 100;
+        Decimal completeSteps = calculatedPoints.divide(EARNED_POINTS_STEP, 0, System.RoundingMode.DOWN);
 
-        return Integer.valueOf( points.setScale(0, System.RoundingMode.DOWN));
+        return Integer.valueOf( completeSteps * EARNED_POINTS_STEP );
     }
 
     /**
