@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Allot_Points</fullName>
+    <availability>online</availability>
+    <description>Opens the Allot Loyalty Points screen flow: choose Fixed Points or a % of Last 12 Month Spend, filter and select customers, and give each a Bonus points lot.</description>
+    <displayType>massActionButton</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>Allot Points</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <requireRowSelection>false</requireRowSelection>
+    <url>/flow/Allot_Loyalty_Points?retURL=/lightning/o/Loyalty_Record__c/list</url>
+</WebLink>

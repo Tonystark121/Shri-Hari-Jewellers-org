@@ -167,7 +167,9 @@
         <type>AutoNumber</type>
     </nameField>
     <pluralLabel>Loyalty Records</pluralLabel>
-    <searchLayouts></searchLayouts>
+    <searchLayouts>
+        <listViewButtons>Allot_Points</listViewButtons>
+    </searchLayouts>
     <sharingModel>ControlledByParent</sharingModel>
     <visibility>Public</visibility>
 </CustomObject>

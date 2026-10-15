@@ -761,11 +761,6 @@
             <targetReference>New_Next_Step</targetReference>
         </connector>
         <fields>
-            <name>New_Stage_Line</name>
-            <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STAGE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(255, 255, 255); background-color: rgb(1, 118, 211);"&gt;&lt;strong&gt;  ● New  &lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;Contacted&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;Qualified&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;Converted&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
             <name>New_Lead_Details</name>
             <fieldText>Lead Details</fieldText>
             <fieldType>RegionContainer</fieldType>
@@ -790,7 +785,7 @@
                 <fieldType>Region</fieldType>
                 <fields>
                     <name>New_Details_Right</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;BUSINESS TYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Business_Type}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD SOURCE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Lead_Source}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;STORE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Store}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;CAMPAIGN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Campaign}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;BUSINESS TYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Business_Type}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD SOURCE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Lead_Source}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;STORE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Store}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;CAMPAIGN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Campaign}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
                     <fieldType>DisplayText</fieldType>
                 </fields>
                 <inputParameters>
@@ -1086,11 +1081,6 @@
             <targetReference>Contacted_Next_Step</targetReference>
         </connector>
         <fields>
-            <name>Contacted_Stage_Line</name>
-            <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STAGE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ New&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(255, 255, 255); background-color: rgb(1, 118, 211);"&gt;&lt;strong&gt;  ● Contacted  &lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;Qualified&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;Converted&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
             <name>Contacted_Overdue_Banner</name>
             <fieldText>&lt;p&gt;&lt;strong style="font-size: 14px; color: rgb(221, 122, 1);"&gt;⏰  Follow-up overdue&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(68, 68, 68);"&gt;This customer was due a call on {!Get_Lead.Follow_up_Date_Time__c}. Call them, then choose a stage below.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
@@ -1149,6 +1139,19 @@
             <fields>
                 <name>Contacted_Contacted_Fields_Column2</name>
                 <fieldType>Region</fieldType>
+                <fields>
+                    <name>Contacted_Lead_Status</name>
+                    <dataType>String</dataType>
+                    <defaultValue>
+                        <elementReference>Get_Lead.Status</elementReference>
+                    </defaultValue>
+                    <fieldText>Lead Status</fieldText>
+                    <fieldType>InputField</fieldType>
+                    <isReadOnly>
+                        <booleanValue>true</booleanValue>
+                    </isReadOnly>
+                    <isRequired>false</isRequired>
+                </fields>
                 <fields>
                     <name>Contacted_Follow_Up</name>
                     <dataType>DateTime</dataType>
@@ -1370,17 +1373,17 @@
             <targetReference>Qualified_Next_Step</targetReference>
         </connector>
         <fields>
-            <name>Qualified_Stage_Line</name>
-            <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STAGE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ New&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ Contacted&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(255, 255, 255); background-color: rgb(1, 118, 211);"&gt;&lt;strong&gt;  ● Qualified  &lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;Converted&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
             <name>Qualified_Discussion</name>
             <fieldText>Discussion</fieldText>
             <fieldType>RegionContainer</fieldType>
             <fields>
                 <name>Qualified_Discussion_Column1</name>
                 <fieldType>Region</fieldType>
+                <fields>
+                    <name>Qualified_Lead_Status</name>
+                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
+                </fields>
                 <fields>
                     <name>Qualified_Notes_Show_Label</name>
                     <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;QUALIFICATION NOTES&lt;/span&gt;&lt;/p&gt;</fieldText>
@@ -1599,13 +1602,8 @@
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <fields>
-            <name>Unqualified_Stage_Line</name>
-            <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STAGE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ New&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(255, 255, 255); background-color: rgb(186, 5, 23);"&gt;&lt;strong&gt;  ✖ Unqualified  &lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
             <name>Unqualified_Banner</name>
-            <fieldText>&lt;p&gt;&lt;strong style="font-size: 16px; color: rgb(186, 5, 23);"&gt;✖  This Lead is Unqualified&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(68, 68, 68);"&gt;It cannot be moved to another stage.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style="font-size: 16px; color: rgb(186, 5, 23);"&gt;✖  This Lead is Unqualified&lt;/strong&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
         <fields>
@@ -1672,59 +1670,6 @@
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
         </fields>
-        <fields>
-            <name>Unqualified_Discussion</name>
-            <fieldText>Discussion</fieldText>
-            <fieldType>RegionContainer</fieldType>
-            <fields>
-                <name>Unqualified_Discussion_Column1</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Unqualified_Remark_History_Label</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;CONTACTED REMARK&lt;/span&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <fields>
-                    <name>Unqualified_Remark_History_Text</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;{!Get_Lead.Contacted_Remark__c}&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Get_Lead.Contacted_Remark__c</leftValueReference>
-                            <operator>IsNull</operator>
-                            <rightValue>
-                                <booleanValue>false</booleanValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <fields>
-                    <name>Unqualified_Remark_History_Empty</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(112, 110, 107);"&gt;&lt;em&gt;No discussion saved&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Get_Lead.Contacted_Remark__c</leftValueReference>
-                            <operator>IsNull</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>12</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <isRequired>false</isRequired>
-            <regionContainerType>SectionWithHeader</regionContainerType>
-        </fields>
         <showFooter>false</showFooter>
         <showHeader>false</showHeader>
     </screens>
@@ -1736,11 +1681,6 @@
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
-        <fields>
-            <name>Converted_Stage_Line</name>
-            <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STAGE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ New&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ Contacted&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(46, 132, 74);"&gt;&lt;strong&gt;✔ Qualified&lt;/strong&gt;&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;   ───   &lt;/span&gt;&lt;span style="font-size: 14px; color: rgb(255, 255, 255); background-color: rgb(46, 132, 74);"&gt;&lt;strong&gt;  ✔ Converted  &lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
         <fields>
             <name>Converted_Banner</name>
             <fieldText>&lt;p&gt;&lt;strong style="font-size: 16px; color: rgb(46, 132, 74);"&gt;✔  This Lead is converted&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(68, 68, 68);"&gt;The customer bought on {!Get_Lead.ConvertedDate}. Their bills and loyalty points are on the account.&lt;/span&gt;&lt;/p&gt;</fieldText>

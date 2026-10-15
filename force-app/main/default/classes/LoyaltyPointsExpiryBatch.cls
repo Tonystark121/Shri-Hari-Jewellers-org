@@ -1,9 +1,10 @@
 /**
  * Daily loyalty points expiry.
  *
- * An earning lot (Loyalty_Transaction__c, Transaction_Type__c = Earn) can be
- * spent up to and including its Expiry_Date__c (Credit Date + 365 for
- * points earned on a bill, or a custom date e.g. for gift vouchers) - see
+ * A lot (Loyalty_Transaction__c, Transaction_Type__c Earn or Bonus - see
+ * LoyaltyEngine.LOT_TYPES) can be spent up to and including its
+ * Expiry_Date__c (Credit Date + 365 for points earned on a bill, or the date
+ * chosen when Bonus points were given) - see
  * LoyaltyEngine.eligibleLots(). From the next day on, whatever is still
  * unspent on the lot is lost:
  *
@@ -24,9 +25,6 @@
  */
 public without sharing class LoyaltyPointsExpiryBatch
     implements Database.Batchable<sObject>, Schedulable {
-
-    @TestVisible
-    private static final String LEDGER_TYPE_EARN = 'Earn';
 
     @TestVisible
     private static final String LEDGER_STATUS_ACTIVE = 'Active';
@@ -75,7 +73,7 @@ public without sharing class LoyaltyPointsExpiryBatch
      */
     public Database.QueryLocator start(Database.BatchableContext context) {
 
-        String earnType = LEDGER_TYPE_EARN;
+        Set<String> lotTypes = LoyaltyEngine.LOT_TYPES;
         String activeStatus = LEDGER_STATUS_ACTIVE;
         Date cutOff = asOf;
 
@@ -85,7 +83,7 @@ public without sharing class LoyaltyPointsExpiryBatch
             WHERE Id IN (
                 SELECT Loyalty_Record__c
                 FROM Loyalty_Transaction__c
-                WHERE Transaction_Type__c = :earnType
+                WHERE Transaction_Type__c IN :lotTypes
                   AND Status__c = :activeStatus
                   AND Remaining_Points__c > 0
                   AND Expiry_Date__c < :cutOff
@@ -126,14 +124,14 @@ public without sharing class LoyaltyPointsExpiryBatch
         // have emptied a lot (it is then Redeemed and skipped).
         // ---------------------------------------------------------
 
-        String earnType = LEDGER_TYPE_EARN;
+        Set<String> lotTypes = LoyaltyEngine.LOT_TYPES;
         String activeStatus = LEDGER_STATUS_ACTIVE;
 
         List<Loyalty_Transaction__c> expiredLots = [
             SELECT Id, Loyalty_Record__c, Remaining_Points__c
             FROM Loyalty_Transaction__c
             WHERE Loyalty_Record__c IN :loyaltyIds
-              AND Transaction_Type__c = :earnType
+              AND Transaction_Type__c IN :lotTypes
               AND Status__c = :activeStatus
               AND Remaining_Points__c > 0
               AND Expiry_Date__c < :asOf

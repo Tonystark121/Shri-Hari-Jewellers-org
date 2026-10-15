@@ -3,19 +3,20 @@
     <apiVersion>67.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>Dynamic Field Selection</masterLabel>
-    <description>All three screens of the Create Gift Voucher flow, chosen by Screen Mode: offer specifications, dynamic record filtering with selection, and voucher details.</description>
+    <description>The screens of the Create Gift Voucher and Allot Loyalty Points flows, chosen by Screen Mode: offer or points specification, dynamic record filtering with selection, and voucher or allotment details.</description>
     <targets>
         <target>lightning__FlowScreen</target>
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__FlowScreen">
-            <property name="screenMode" type="String" label="Screen Mode" default="offerMapping" description="offerSpecification, offerMapping or voucherDetails." />
+            <property name="screenMode" type="String" label="Screen Mode" default="offerMapping" description="offerSpecification, offerMapping or voucherDetails (Create Gift Voucher); pointsSpecification, offerMapping or pointsDetails (Allot Loyalty Points)." />
+            <property name="purpose" type="String" label="Purpose" default="giftVoucher" description="giftVoucher or loyaltyPoints: the step labels and wording on the shared offerMapping screen." />
 
-            <property name="offerType" type="String" label="Offer Type" description="Fixed Price or Percentage. Map in and out." />
+            <property name="offerType" type="String" label="Offer Type" description="Fixed Price or Percentage (vouchers); Fixed Points or Percentage (points). Map in and out." />
             <property name="minAmount" type="String" label="Min Amount" description="Minimum bill amount as text; blank means 0. Map in and out." />
             <property name="maxAmount" type="String" label="Max Amount" description="Maximum bill amount as text. Map in and out." />
-            <property name="offerAmount" type="String" label="Offer Amount" description="Fixed Price amount as text. Map in and out." />
-            <property name="discountPercentage" type="String" label="Discount Percentage" description="Percentage off as text. Map in and out." />
+            <property name="offerAmount" type="String" label="Offer Amount" description="Fixed Price amount, or Fixed Points, as text. Map in and out." />
+            <property name="discountPercentage" type="String" label="Discount Percentage" description="Percentage off, or % of Last 12 Month Spend, as text. Map in and out." />
 
             <property name="objectAPIName" type="String" label="Object API Name" default="Account" description="Object whose records are filtered, e.g. Account." />
             <property name="columnFields" type="String" label="Table Columns" default="Name" description="Comma-separated field API names shown in the results table, e.g. Name,CASA_ID__c,CLV__c." />
@@ -27,6 +28,7 @@
             <property name="voucherCode" type="String" label="Voucher Code" description="Voucher code prefix. Map in and out." />
             <property name="expiryDate" type="Date" label="Expiry Date" description="Map in and out." />
             <property name="issuedBy" type="String" label="Issued By" description="Map in and out." />
+            <property name="reason" type="String" label="Reason" description="Why the points are given (pointsDetails). Map in and out." />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

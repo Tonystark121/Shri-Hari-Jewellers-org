@@ -10,18 +10,31 @@ const MAX_RECORDS = 2000;
 const MAX_NEXT_DAYS = 90;
 const MAX_CODE_PREFIX_LENGTH = 45;
 const MAX_ISSUED_BY_LENGTH = 255;
+const MAX_REASON_LENGTH = 255;
 
 const MODE_OFFER = 'offerSpecification';
 const MODE_MAPPING = 'offerMapping';
 const MODE_DETAILS = 'voucherDetails';
+const MODE_POINTS = 'pointsSpecification';
+const MODE_POINTS_DETAILS = 'pointsDetails';
+
+const PURPOSE_VOUCHER = 'giftVoucher';
+const PURPOSE_POINTS = 'loyaltyPoints';
 
 const OFFER_FIXED = 'Fixed Price';
 const OFFER_PERCENTAGE = 'Percentage';
+const ALLOT_FIXED = 'Fixed Points';
 
-const STEPS = [
+const VOUCHER_STEPS = [
     { label: 'Offer Specifications', value: MODE_OFFER },
     { label: 'Offer Mapping', value: MODE_MAPPING },
     { label: 'Voucher Details', value: MODE_DETAILS }
+];
+
+const POINTS_STEPS = [
+    { label: 'Points', value: MODE_POINTS },
+    { label: 'Customers', value: MODE_MAPPING },
+    { label: 'Allotment Details', value: MODE_POINTS_DETAILS }
 ];
 
 const NUMERIC_OPERATORS = [
@@ -95,7 +108,9 @@ const MONTH_OPTIONS = [
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 });
 
 /**
- * All three screens of the Create Gift Voucher flow, chosen by screenMode:
+ * The screens of the Create Gift Voucher and Allot Loyalty Points flows,
+ * chosen by screenMode (purpose says which flow, for the step labels and the
+ * wording of the shared customer screen):
  *
  *   offerSpecification  Fixed Price / Percentage cards, Min / Max amount and
  *                       the offer amount or % off.
@@ -104,12 +119,16 @@ const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR',
  *                       table (50 per page, up to 2,000) to tick records.
  *   voucherDetails      Voucher code prefix (pre-filled, editable,
  *                       regenerable), Expiry Date and Issued By.
+ *   pointsSpecification Fixed Points / Percentage of Last 12 Month Spend
+ *                       cards, and the points or %.
+ *   pointsDetails       Expiry Date and Reason of the Bonus points.
  *
  * Every value is mapped back into the flow and in again, so it survives the
  * user going Previous and Next.
  */
 export default class DynamicFieldSelection extends LightningElement {
     @api screenMode = MODE_MAPPING;
+    @api purpose = PURPOSE_VOUCHER;
 
     // Offer Mapping inputs
     @api objectAPIName = 'Account';
@@ -128,14 +147,17 @@ export default class DynamicFieldSelection extends LightningElement {
         // Voucher Details
         voucherCode: '',
         expiryDate: null,
-        issuedBy: ''
+        issuedBy: '',
+        // Allotment Details
+        reason: ''
     };
 
     // ---- Public properties: getters/setters over state, so the component
     // ---- never reassigns what the flow passed in.
 
-    @api get offerType() { return this.state.offerType; }
-    set offerType(value) { this.setState('offerType', value || OFFER_FIXED); }
+    // Blank until chosen: the default depends on the purpose (Fixed Price or Fixed Points).
+    @api get offerType() { return this.offerTypeValue; }
+    set offerType(value) { this.setState('offerType', value || ''); }
 
     @api get minAmount() { return this.state.minAmount; }
     set minAmount(value) { this.setState('minAmount', this.asText(value)); }
@@ -163,6 +185,9 @@ export default class DynamicFieldSelection extends LightningElement {
 
     @api get issuedBy() { return this.state.issuedBy; }
     set issuedBy(value) { this.setState('issuedBy', value || ''); }
+
+    @api get reason() { return this.state.reason; }
+    set reason(value) { this.setState('reason', value || ''); }
 
     @api
     get selectedRecordIds() {
@@ -199,7 +224,6 @@ export default class DynamicFieldSelection extends LightningElement {
     // Voucher Details state
     isGeneratingCode = false;
 
-    steps = STEPS;
 
     // =====================================================================
     // Lifecycle
@@ -208,6 +232,10 @@ export default class DynamicFieldSelection extends LightningElement {
     connectedCallback() {
         if (this.isMappingMode) {
             this.initMapping();
+        }
+        if ((this.isOfferMode || this.isPointsMode) && !this.state.offerType) {
+            // Tell the flow about the default choice, which it never sees otherwise.
+            this.notify('offerType', this.offerTypeValue);
         }
     }
 
@@ -226,6 +254,10 @@ export default class DynamicFieldSelection extends LightningElement {
                 : 'Filter the records and select at least one customer before continuing.';
         } else if (this.isDetailsMode) {
             message = this.detailsValidationMessage();
+        } else if (this.isPointsMode) {
+            message = this.pointsValidationMessage();
+        } else if (this.isPointsDetailsMode) {
+            message = this.pointsDetailsValidationMessage();
         }
         return message ? { isValid: false, errorMessage: message } : { isValid: true };
     }
@@ -246,16 +278,41 @@ export default class DynamicFieldSelection extends LightningElement {
         return this.screenMode === MODE_DETAILS;
     }
 
+    get isPointsMode() {
+        return this.screenMode === MODE_POINTS;
+    }
+
+    get isPointsDetailsMode() {
+        return this.screenMode === MODE_POINTS_DETAILS;
+    }
+
+    get isPointsPurpose() {
+        return this.purpose === PURPOSE_POINTS || this.isPointsMode || this.isPointsDetailsMode;
+    }
+
+    get steps() {
+        return this.isPointsPurpose ? POINTS_STEPS : VOUCHER_STEPS;
+    }
+
+    /** What the selected customers receive, for the shared customer screen. */
+    get rewardText() {
+        return this.isPointsPurpose ? 'these points' : 'this voucher';
+    }
+
+    get offerTypeValue() {
+        return this.state.offerType || (this.isPointsPurpose ? ALLOT_FIXED : OFFER_FIXED);
+    }
+
     // =====================================================================
     // Screen 1: Offer Specifications
     // =====================================================================
 
     get isFixedPrice() {
-        return this.state.offerType === OFFER_FIXED;
+        return this.offerTypeValue === OFFER_FIXED;
     }
 
     get isPercentage() {
-        return this.state.offerType === OFFER_PERCENTAGE;
+        return this.offerTypeValue === OFFER_PERCENTAGE;
     }
 
     get fixedAriaChecked() {
@@ -289,7 +346,7 @@ export default class DynamicFieldSelection extends LightningElement {
 
     handleOfferTypeSelect(event) {
         const value = event.currentTarget.dataset.value;
-        if (value && value !== this.state.offerType) {
+        if (value && value !== this.offerTypeValue) {
             this.setState('offerType', value);
             this.notify('offerType', value);
         }
@@ -363,6 +420,86 @@ export default class DynamicFieldSelection extends LightningElement {
 
         problems.forEach(([name, message]) => {
             const input = byName(name);
+            if (input) {
+                input.setCustomValidity(message);
+            }
+        });
+        inputs.forEach((input) => input.reportValidity());
+        return problems.length ? problems[0][1] : undefined;
+    }
+
+    // =====================================================================
+    // Points Specification (Allot Loyalty Points, screen 1)
+    // =====================================================================
+
+    get isFixedPoints() {
+        return this.offerTypeValue === ALLOT_FIXED;
+    }
+
+    get fixedPointsAriaChecked() {
+        return String(this.isFixedPoints);
+    }
+
+    get fixedPointsTileClass() {
+        return this.tileClass(this.isFixedPoints);
+    }
+
+    /** Plain-language preview of the points, shown under the input and on the details screen. */
+    get pointsSummary() {
+        if (this.isFixedPoints) {
+            const points = this.toNumber(this.state.offerAmount);
+            return points === null ? '' : `${points.toLocaleString('en-IN')} points`;
+        }
+        const pct = this.toNumber(this.state.discountPercentage);
+        return pct === null ? '' : `${pct}% of their Last 12 Month Spend, taken down to a multiple of 10 points`;
+    }
+
+    pointsValidationMessage() {
+        const inputs = [...this.template.querySelectorAll('lightning-input[data-group="points"]')];
+        inputs.forEach((input) => input.setCustomValidity(''));
+        const problems = [];
+
+        if (this.isFixedPoints) {
+            const points = this.toNumber(this.state.offerAmount);
+            if (points === null || points <= 0 || !Number.isInteger(points)) {
+                problems.push(['offerAmount', 'Enter the Points: a whole number greater than 0.']);
+            }
+        } else {
+            const pct = this.toNumber(this.state.discountPercentage);
+            if (pct === null || pct <= 0 || pct > 100) {
+                problems.push(['discountPercentage', 'Percentage must be greater than 0 and at most 100.']);
+            }
+        }
+        return this.report(inputs, problems);
+    }
+
+    // =====================================================================
+    // Points Details (Allot Loyalty Points, screen 3)
+    // =====================================================================
+
+    pointsDetailsValidationMessage() {
+        const inputs = [...this.template.querySelectorAll('lightning-input[data-group="pointsDetails"]')];
+        inputs.forEach((input) => input.setCustomValidity(''));
+        const reason = (this.state.reason || '').trim();
+        const problems = [];
+
+        if (!this.state.expiryDate) {
+            problems.push(['expiryDate', 'Enter an Expiry Date.']);
+        } else if (this.state.expiryDate <= this.isoDate(new Date())) {
+            problems.push(['expiryDate', 'Expiry Date must be after today.']);
+        }
+        if (!reason) {
+            problems.push(['reason', 'Enter the Reason.']);
+        } else if (reason.length > MAX_REASON_LENGTH) {
+            problems.push(['reason', `Reason can be at most ${MAX_REASON_LENGTH} characters.`]);
+        }
+        return this.report(inputs, problems);
+    }
+
+    /** Marks each problem on its input and returns the first message (undefined when none). */
+    report(inputs, problems) {
+        problems.forEach(([name, message]) => {
+            const input = inputs.find((candidate) => candidate.dataset.name === name);
             if (input) {
                 input.setCustomValidity(message);
             }

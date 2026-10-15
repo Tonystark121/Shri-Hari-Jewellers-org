@@ -74,3 +74,14 @@ Salesforce.
 Today: Salesforce calculates Net Amount (see 5).
 
 Should POS send the net amount it charged instead, once the POS API is live?
+
+
+7. Converted Lead screen - extra line
+-------------------------------------
+On a converted Lead, the Lead Stage screen shows:
+  "✔ This Lead is converted
+   The customer bought on <date>. Their bills and loyalty points are on the
+   account."
+followed by links to the Account and Contact.
+
+Keep the second line, shorten it to the purchase date only, or remove it?

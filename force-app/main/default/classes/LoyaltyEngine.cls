@@ -5,16 +5,19 @@
  *
  *   Transaction_Record__c  - what did the customer purchase?
  *   Loyalty_Transaction__c - what happened to the customer's points?
- *                            (the ledger: one row per Earn / Redeemed event)
+ *                            (the ledger: one row per Earn / Bonus /
+ *                            Redeemed event)
  *   Loyalty_Record__c      - what is the customer's balance right now?
  *                            (materialised current state, kept in step
  *                            with the ledger)
  *
- * Every Earn event is also an earning lot. Remaining_Points__c says how much
- * of the lot is still unspent, and redemptions consume lots oldest first
- * (FIFO). A lot earned on a bill gets Expiry_Date__c = Credit Date + 365
- * days; lots created elsewhere (e.g. gift voucher coupons) carry their own
- * Expiry_Date__c. A separate scheduled job marks lots Expired.
+ * Every Earn event (points earned on a bill) and every Bonus event (points
+ * given by hand on the Allot Loyalty Points flow) is also a lot.
+ * Remaining_Points__c says how much of the lot is still unspent, and
+ * redemptions consume lots oldest first (FIFO). A lot earned on a bill gets
+ * Expiry_Date__c = Credit Date + 365 days; a Bonus lot carries the Expiry
+ * Date chosen when it was given. A separate scheduled job marks lots
+ * Expired.
  *
  * The ledger and the balance are system-maintained: the user saving the bill
  * (usually the POS integration user) needs no access to them. Queries and DML
@@ -50,7 +53,22 @@ public with sharing class LoyaltyEngine {
     private static final String LEDGER_TYPE_EARN = 'Earn';
 
     @TestVisible
+    private static final String LEDGER_TYPE_BONUS = 'Bonus';
+
+    @TestVisible
     private static final String LEDGER_TYPE_REDEEMED = 'Redeemed';
+
+    /** Ledger types that are lots: points that can be spent and that expire. */
+    public static final Set<String> LOT_TYPES = new Set<String>{ LEDGER_TYPE_EARN, LEDGER_TYPE_BONUS };
+
+    @TestVisible
+    private static final String SOURCE_MANUAL = 'Manual';
+
+    @TestVisible
+    private static final String ALLOT_FIXED = 'Fixed Points';
+
+    @TestVisible
+    private static final String ALLOT_PERCENTAGE = 'Percentage';
 
     // Loyalty_Transaction__c.Status__c values
     @TestVisible
@@ -341,7 +359,7 @@ public with sharing class LoyaltyEngine {
 
     /**
      * The earning lots a redemption on `redemptionDate` may consume, in
-     * FIFO order. A lot qualifies only when it is an Active Earn lot with
+     * FIFO order. A lot qualifies only when it is an Active Earn or Bonus lot with
      * points remaining, was credited on or before the redemption date, and
      * has not expired - Expiry_Date__c is the last usable day.
      */
@@ -352,7 +370,7 @@ public with sharing class LoyaltyEngine {
 
         for (Loyalty_Transaction__c lot : lots) {
 
-            if (lot.Transaction_Type__c == LEDGER_TYPE_EARN
+            if (LOT_TYPES.contains(lot.Transaction_Type__c)
                 && lot.Status__c == LEDGER_STATUS_ACTIVE
                 && whole(lot.Remaining_Points__c) > 0
                 && lot.Credit_Date__c != null
@@ -618,7 +636,7 @@ public with sharing class LoyaltyEngine {
         }
 
         Set<Id> loyaltyIds = new Set<Id>(byLoyalty.keySet());
-        String earnType = LEDGER_TYPE_EARN;
+        Set<String> lotTypes = LOT_TYPES;
         String activeStatus = LEDGER_STATUS_ACTIVE;
 
         List<Loyalty_Transaction__c> openLots = [
@@ -632,7 +650,7 @@ public with sharing class LoyaltyEngine {
                 Expiry_Date__c
             FROM Loyalty_Transaction__c
             WHERE Loyalty_Record__c IN :loyaltyIds
-            AND Transaction_Type__c = :earnType
+            AND Transaction_Type__c IN :lotTypes
             AND Status__c = :activeStatus
             AND Remaining_Points__c > 0
             WITH SYSTEM_MODE
@@ -644,6 +662,194 @@ public with sharing class LoyaltyEngine {
         }
 
         return byLoyalty;
+    }
+
+    // =====================================================================
+    // Bonus points (Allot Loyalty Points flow)
+    // =====================================================================
+
+    public class AllotRequest {
+        @InvocableVariable(label='Account Ids' description='The customers to give points to.' required=true)
+        public List<String> accountIds;
+
+        @InvocableVariable(label='Allotment Type' description='Fixed Points, or Percentage of Last 12 Month Spend.' required=true)
+        public String allotmentType;
+
+        @InvocableVariable(label='Points' description='Fixed Points: the points every customer gets.')
+        public Decimal points;
+
+        @InvocableVariable(label='Percentage' description='Percentage: the % of each customer\'s Last 12 Month Spend given as points.')
+        public Decimal percentage;
+
+        @InvocableVariable(label='Expiry Date' description='Last day the points can be redeemed.' required=true)
+        public Date expiryDate;
+
+        @InvocableVariable(label='Reason' description='Why the points are given, e.g. Diwali bonus.' required=true)
+        public String reason;
+    }
+
+    public class AllotResult {
+        @InvocableVariable(label='Is Success' description='True when the points were given. Nothing is saved otherwise.')
+        public Boolean isSuccess;
+
+        @InvocableVariable(label='Error Message' description='Why nothing was saved. Blank on success.')
+        public String errorMessage;
+
+        @InvocableVariable(label='Customers Given Points')
+        public Integer customersGiven;
+
+        @InvocableVariable(label='Customers Skipped' description='Customers whose percentage came to 0 points.')
+        public Integer customersSkipped;
+
+        @InvocableVariable(label='Total Points')
+        public Integer totalPoints;
+    }
+
+    /**
+     * Gives Bonus points to each selected customer: a fixed number, or a
+     * percentage of their Last 12 Month Spend taken down to a multiple of 10
+     * like points earned on a bill (customers it comes to 0 for are
+     * skipped). Each customer gets one Bonus lot (Source Manual, with the
+     * Reason and Expiry Date) and their balance and Total Points Earned go
+     * up; Last Transaction Date and tier are untouched, as no purchase was
+     * made. All or nothing.
+     */
+    @InvocableMethod(
+        label='Allot Loyalty Points'
+        description='Gives Bonus loyalty points to the selected customers: a fixed number, or a % of Last 12 Month Spend.'
+        category='Loyalty'
+    )
+    public static List<AllotResult> allotBonusPoints(List<AllotRequest> requests) {
+        List<AllotResult> results = new List<AllotResult>();
+        for (AllotRequest request : requests) {
+            results.add(allot(request));
+        }
+        return results;
+    }
+
+    private static AllotResult allot(AllotRequest request) {
+        AllotResult result = new AllotResult();
+        result.isSuccess = false;
+        result.customersGiven = 0;
+        result.customersSkipped = 0;
+        result.totalPoints = 0;
+
+        result.errorMessage = problemWithAllotment(request);
+        if (result.errorMessage != null) {
+            return result;
+        }
+
+        Set<Id> accountIds = new Set<Id>();
+        for (String accountId : request.accountIds) {
+            if (String.isNotBlank(accountId)) {
+                accountIds.add(Id.valueOf(accountId));
+            }
+        }
+
+        Boolean isFixed = request.allotmentType == ALLOT_FIXED;
+        Map<Id, Integer> pointsByAccount = new Map<Id, Integer>();
+        Map<Id, Decimal> spendByAccount = new Map<Id, Decimal>();
+        for (Account accountRecord : [
+            SELECT Id, Last_12M_Spend__c FROM Account WHERE Id IN :accountIds WITH SYSTEM_MODE
+        ]) {
+            Integer points = isFixed
+                ? request.points.intValue()
+                : pointsFor(accountRecord.Last_12M_Spend__c, request.percentage);
+            if (points > 0) {
+                pointsByAccount.put(accountRecord.Id, points);
+                spendByAccount.put(accountRecord.Id, accountRecord.Last_12M_Spend__c);
+            } else {
+                result.customersSkipped++;
+            }
+        }
+
+        if (pointsByAccount.isEmpty()) {
+            result.errorMessage = 'None of the selected customers gets any points: '
+                + request.percentage + '% of their Last 12 Month Spend comes to less than '
+                + EARNED_POINTS_STEP.intValue() + ' points.';
+            return result;
+        }
+
+        Savepoint beforeAllotment = Database.setSavepoint();
+        try {
+            Map<Id, Loyalty_Record__c> loyaltyByAccount = loyaltyRecordsFor(pointsByAccount.keySet());
+            insertNewLoyaltyRecords(loyaltyByAccount.values());
+
+            Datetime processedAt = Datetime.now();
+            List<Loyalty_Transaction__c> lots = new List<Loyalty_Transaction__c>();
+            for (Id accountId : pointsByAccount.keySet()) {
+                Loyalty_Record__c loyalty = loyaltyByAccount.get(accountId);
+                Integer points = pointsByAccount.get(accountId);
+
+                Loyalty_Transaction__c lot = new Loyalty_Transaction__c(
+                    Loyalty_Record__c = loyalty.Id,
+                    Transaction_Type__c = LEDGER_TYPE_BONUS,
+                    Status__c = LEDGER_STATUS_ACTIVE,
+                    Source__c = SOURCE_MANUAL,
+                    Reason__c = request.reason.trim(),
+                    Points_Earned__c = points,
+                    Remaining_Points__c = points,
+                    Credit_Date__c = Date.today(),
+                    Expiry_Date__c = request.expiryDate,
+                    Processed_Date__c = processedAt
+                );
+                if (!isFixed) {
+                    // Snapshot of what the points were worked out on.
+                    lot.Earning_Rate__c = request.percentage;
+                    lot.Net_Loyalty_Amount__c = spendByAccount.get(accountId);
+                }
+                lots.add(lot);
+
+                loyalty.Points_Balance__c = whole(loyalty.Points_Balance__c) + points;
+                loyalty.Total_Points_Earned__c = whole(loyalty.Total_Points_Earned__c) + points;
+                result.totalPoints += points;
+            }
+
+            insert as system lots;
+            update as system loyaltyByAccount.values();
+        } catch (Exception failure) {
+            Database.rollback(beforeAllotment);
+            result.errorMessage = 'No points were given: ' + failure.getMessage();
+            result.totalPoints = 0;
+            return result;
+        }
+
+        result.isSuccess = true;
+        result.customersGiven = pointsByAccount.size();
+        return result;
+    }
+
+    /** Why the allotment cannot be made, or null when it can. */
+    private static String problemWithAllotment(AllotRequest request) {
+        if (request.accountIds == null || request.accountIds.isEmpty()) {
+            return 'Select at least one customer.';
+        }
+        for (String accountId : request.accountIds) {
+            if (String.isNotBlank(accountId) && !(accountId instanceof Id)) {
+                return 'A selected customer could not be read. Filter and select the customers again.';
+            }
+        }
+        if (request.allotmentType == ALLOT_FIXED) {
+            if (request.points == null || request.points <= 0 || request.points != request.points.round(System.RoundingMode.DOWN)) {
+                return 'Points must be a whole number greater than 0.';
+            }
+        } else if (request.allotmentType == ALLOT_PERCENTAGE) {
+            if (request.percentage == null || request.percentage <= 0 || request.percentage > 100) {
+                return 'Percentage must be greater than 0 and at most 100.';
+            }
+        } else {
+            return 'Choose Fixed Points or Percentage.';
+        }
+        if (request.expiryDate == null || request.expiryDate <= Date.today()) {
+            return 'Expiry Date must be after today.';
+        }
+        if (String.isBlank(request.reason)) {
+            return 'Enter the Reason.';
+        }
+        if (request.reason.trim().length() > 255) {
+            return 'Reason can be at most 255 characters.';
+        }
+        return null;
     }
 
     private static Integer whole(  Decimal value ) {

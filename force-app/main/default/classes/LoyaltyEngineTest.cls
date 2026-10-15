@@ -766,6 +766,136 @@ private class LoyaltyEngineTest {
     }
 
     // =====================================================================
+    // Bonus points (Allot Loyalty Points flow)
+    // =====================================================================
+
+    private static LoyaltyEngine.AllotResult allot(
+        List<Id> accountIds, String allotmentType, Decimal points, Decimal percentage, Date expiry, String reason
+    ) {
+        LoyaltyEngine.AllotRequest request = new LoyaltyEngine.AllotRequest();
+        request.accountIds = new List<String>();
+        for (Id accountId : accountIds) {
+            request.accountIds.add(accountId);
+        }
+        request.allotmentType = allotmentType;
+        request.points = points;
+        request.percentage = percentage;
+        request.expiryDate = expiry;
+        request.reason = reason;
+        return LoyaltyEngine.allotBonusPoints(new List<LoyaltyEngine.AllotRequest>{ request })[0];
+    }
+
+    /** Fixed points: every customer gets the same Bonus lot; no purchase is recorded. */
+    @IsTest
+    static void testFixedPointsAreGivenAsABonusLot() {
+        Account first = household('Bonus One', 5000);
+        Account second = household('Bonus Two', 5000);
+        insert new List<Account>{ first, second };
+        Date expiry = Date.today().addDays(30);
+
+        Test.startTest();
+        LoyaltyEngine.AllotResult result = allot(new List<Id>{ first.Id, second.Id }, 'Fixed Points', 500, null, expiry, ' Diwali bonus ');
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Should be allotted: ' + result.errorMessage);
+        Assert.areEqual(2, result.customersGiven, 'Both customers');
+        Assert.areEqual(1000, result.totalPoints, '2 x 500');
+
+        Loyalty_Transaction__c lot = [
+            SELECT Transaction_Type__c, Status__c, Source__c, Reason__c, Points_Earned__c, Remaining_Points__c,
+                   Credit_Date__c, Expiry_Date__c, Transaction_Record__c
+            FROM Loyalty_Transaction__c
+            WHERE Loyalty_Record__r.Account__c = :first.Id
+            WITH SYSTEM_MODE
+        ];
+        Assert.areEqual('Bonus', lot.Transaction_Type__c, 'A Bonus row');
+        Assert.areEqual('Active', lot.Status__c, 'Spendable');
+        Assert.areEqual('Manual', lot.Source__c, 'Given by hand');
+        Assert.areEqual('Diwali bonus', lot.Reason__c, 'With the reason');
+        Assert.areEqual(500, lot.Remaining_Points__c, 'All 500 unspent');
+        Assert.areEqual(Date.today(), lot.Credit_Date__c, 'Credited today');
+        Assert.areEqual(expiry, lot.Expiry_Date__c, 'Expires on the chosen date');
+        Assert.isNull(lot.Transaction_Record__c, 'Not tied to a bill');
+
+        Loyalty_Record__c loyalty = loyaltyFor(first.Id);
+        Assert.areEqual(500, loyalty.Points_Balance__c, 'Balance up by 500');
+        Assert.areEqual(500, loyalty.Total_Points_Earned__c, 'Lifetime earned up by 500');
+        Assert.isNull(loyalty.Last_Transaction_Date__c, 'A bonus is not a purchase');
+    }
+
+    /**
+     * Percentage: the % of each customer's Last 12 Month Spend, taken down to
+     * a multiple of 10. 2% of 12,345 = 246.9 -> 240; 2% of 300 = 6 -> 0, so
+     * that customer is skipped.
+     */
+    @IsTest
+    static void testPercentageOfLastTwelveMonthSpend() {
+        Account bigSpender = household('Big Spender', 12345);
+        Account smallSpender = household('Small Spender', 300);
+        insert new List<Account>{ bigSpender, smallSpender };
+
+        Test.startTest();
+        LoyaltyEngine.AllotResult result = allot(
+            new List<Id>{ bigSpender.Id, smallSpender.Id }, 'Percentage', null, 2, Date.today().addDays(90), 'Anniversary bonus'
+        );
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Should be allotted: ' + result.errorMessage);
+        Assert.areEqual(1, result.customersGiven, 'Only the big spender');
+        Assert.areEqual(1, result.customersSkipped, '6 points rounds down to 0');
+        Assert.areEqual(240, result.totalPoints, '246.9 taken down to 240');
+
+        Loyalty_Transaction__c lot = [
+            SELECT Points_Earned__c, Earning_Rate__c, Net_Loyalty_Amount__c
+            FROM Loyalty_Transaction__c
+            WHERE Loyalty_Record__r.Account__c = :bigSpender.Id
+            WITH SYSTEM_MODE
+        ];
+        Assert.areEqual(240, lot.Points_Earned__c, 'Points given');
+        Assert.areEqual(2, lot.Earning_Rate__c, 'The % used');
+        Assert.areEqual(12345, lot.Net_Loyalty_Amount__c, 'The spend it was worked out on');
+        Assert.areEqual(0, [SELECT COUNT() FROM Loyalty_Transaction__c WHERE Loyalty_Record__r.Account__c = :smallSpender.Id], 'No 0-point row');
+    }
+
+    /** Bonus points are spent on a bill like earned points. */
+    @IsTest
+    static void testBonusPointsCanBeRedeemed() {
+        Account acct = household('Bonus Spender', 5000);
+        insert acct;
+        Assert.isTrue(allot(new List<Id>{ acct.Id }, 'Fixed Points', 300, null, Date.today().addDays(30), 'Welcome bonus').isSuccess, 'Given');
+
+        Test.startTest();
+        insert bill(acct.Id, 1000, 200);
+        Test.stopTest();
+
+        Loyalty_Transaction__c lot = [
+            SELECT Remaining_Points__c, Status__c
+            FROM Loyalty_Transaction__c
+            WHERE Loyalty_Record__r.Account__c = :acct.Id AND Transaction_Type__c = 'Bonus'
+            WITH SYSTEM_MODE
+        ];
+        Assert.areEqual(100, lot.Remaining_Points__c, '200 of the 300 spent');
+        Assert.areEqual('Active', lot.Status__c, 'Still has points');
+    }
+
+    @IsTest
+    static void testAnInvalidAllotmentSavesNothing() {
+        Account acct = household('Refused', 5000);
+        insert acct;
+        List<Id> ids = new List<Id>{ acct.Id };
+        Date nextMonth = Date.today().addDays(30);
+
+        Assert.areEqual('Select at least one customer.', allot(new List<Id>(), 'Fixed Points', 100, null, nextMonth, 'X').errorMessage, 'Customers');
+        Assert.areEqual('Points must be a whole number greater than 0.', allot(ids, 'Fixed Points', 0, null, nextMonth, 'X').errorMessage, 'Points');
+        Assert.areEqual('Points must be a whole number greater than 0.', allot(ids, 'Fixed Points', 10.5, null, nextMonth, 'X').errorMessage, 'Whole points');
+        Assert.areEqual('Percentage must be greater than 0 and at most 100.', allot(ids, 'Percentage', null, 150, nextMonth, 'X').errorMessage, 'Percentage');
+        Assert.areEqual('Expiry Date must be after today.', allot(ids, 'Fixed Points', 100, null, Date.today(), 'X').errorMessage, 'Expiry');
+        Assert.areEqual('Enter the Reason.', allot(ids, 'Fixed Points', 100, null, nextMonth, '  ').errorMessage, 'Reason');
+        Assert.isTrue(allot(ids, 'Percentage', null, 0.01, nextMonth, 'X').errorMessage.startsWith('None of the selected customers gets any points'), 'All skipped');
+        Assert.areEqual(0, [SELECT COUNT() FROM Loyalty_Transaction__c], 'Nothing saved');
+    }
+
+    // =====================================================================
     // Historical snapshot
     // =====================================================================
 

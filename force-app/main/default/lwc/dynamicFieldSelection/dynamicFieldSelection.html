@@ -139,6 +139,105 @@
       </div>
     </template>
 
+    <!-- ============ Allot Loyalty Points, screen 1: Points ============ -->
+    <template if:true={isPointsMode}>
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:choice" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Allot points by</p>
+            <p class="gv-card-subtitle">Choose how many points each selected customer gets.</p>
+          </div>
+        </div>
+
+        <div class="offer-tiles" role="radiogroup" aria-label="Allot points by">
+          <div
+            class={fixedPointsTileClass}
+            role="radio"
+            tabindex="0"
+            aria-checked={fixedPointsAriaChecked}
+            data-value="Fixed Points"
+            onclick={handleOfferTypeSelect}
+            onkeydown={handleOfferTileKeydown}>
+            <lightning-icon icon-name="utility:ribbon" size="small" class="offer-tile-icon"></lightning-icon>
+            <div>
+              <p class="offer-tile-title">Fixed Points</p>
+              <p class="offer-tile-text">The same number of points for every customer</p>
+            </div>
+            <template if:true={isFixedPoints}>
+              <lightning-icon icon-name="utility:success" size="x-small" variant="success" class="offer-tile-check"></lightning-icon>
+            </template>
+          </div>
+
+          <div
+            class={percentageTileClass}
+            role="radio"
+            tabindex="0"
+            aria-checked={percentageAriaChecked}
+            data-value="Percentage"
+            onclick={handleOfferTypeSelect}
+            onkeydown={handleOfferTileKeydown}>
+            <lightning-icon icon-name="utility:percent" size="small" class="offer-tile-icon"></lightning-icon>
+            <div>
+              <p class="offer-tile-title">Percentage</p>
+              <p class="offer-tile-text">A percentage of each customer's Last 12 Month Spend</p>
+            </div>
+            <template if:true={isPercentage}>
+              <lightning-icon icon-name="utility:success" size="x-small" variant="success" class="offer-tile-check"></lightning-icon>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:ribbon" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Points</p>
+          </div>
+        </div>
+
+        <div class="slds-grid slds-wrap slds-gutters_small">
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <template if:true={isFixedPoints}>
+              <lightning-input
+                data-group="points"
+                data-name="offerAmount"
+                type="number"
+                step="1"
+                label="Points"
+                field-level-help="Points every selected customer gets."
+                required
+                value={state.offerAmount}
+                onchange={handleOfferInput}>
+              </lightning-input>
+            </template>
+            <template if:true={isPercentage}>
+              <lightning-input
+                data-group="points"
+                data-name="discountPercentage"
+                type="number"
+                formatter="percent-fixed"
+                step="0.01"
+                label="% of Last 12 Month Spend"
+                field-level-help="E.g. 2 gives a customer with Rs. 50,000 spend 1,000 points. Taken down to a multiple of 10, like points earned on bills; customers it comes to 0 for are skipped."
+                required
+                value={state.discountPercentage}
+                onchange={handleOfferInput}>
+              </lightning-input>
+            </template>
+          </div>
+        </div>
+
+        <template if:true={pointsSummary}>
+          <div class="gv-preview">
+            <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            <span>Each selected customer gets <strong>{pointsSummary}</strong>.</span>
+          </div>
+        </template>
+      </div>
+    </template>
+
     <!-- ===================== Screen 2: Offer Mapping ===================== -->
     <template if:true={isMappingMode}>
       <div class="gv-card">
@@ -147,7 +246,7 @@
           <div>
             <p class="gv-card-title">Filter Customers</p>
             <p class="gv-card-subtitle">
-              Add one or more rules, then click <strong>Filter Records</strong> and select the customers who should receive this voucher.
+              Add one or more rules, then click <strong>Filter Records</strong> and select the customers who should receive {rewardText}.
             </p>
           </div>
         </div>
@@ -328,7 +427,7 @@
           <lightning-icon icon-name="utility:people" size="small" class="gv-card-icon"></lightning-icon>
           <div>
             <p class="gv-card-title">Customers</p>
-            <p class="gv-card-subtitle">Tick the customers who should receive the voucher. Selections are kept when you change pages.</p>
+            <p class="gv-card-subtitle">Tick the customers who should receive {rewardText}. Selections are kept when you change pages.</p>
           </div>
         </div>
 
@@ -469,6 +568,58 @@
             <span>{errorMessage}</span>
           </div>
         </template>
+      </div>
+    </template>
+    <!-- ======= Allot Loyalty Points, screen 3: Allotment Details ======= -->
+    <template if:true={isPointsDetailsMode}>
+      <div class="gv-stats">
+        <div class="gv-stat">
+          <p class="gv-stat-label">Points</p>
+          <p class="gv-stat-value">{pointsSummary}</p>
+        </div>
+        <div class="gv-stat">
+          <p class="gv-stat-label">Customers selected</p>
+          <p class="gv-stat-value gv-stat-number">{customerCount}</p>
+        </div>
+      </div>
+
+      <div class="gv-card">
+        <div class="gv-card-header">
+          <lightning-icon icon-name="utility:ribbon" size="small" class="gv-card-icon"></lightning-icon>
+          <div>
+            <p class="gv-card-title">Allotment Details</p>
+            <p class="gv-card-subtitle">The points are added to every selected customer when you click <strong>Save</strong>.</p>
+          </div>
+        </div>
+
+        <div class="slds-grid slds-wrap slds-gutters_small">
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <lightning-input
+              data-group="pointsDetails"
+              data-name="expiryDate"
+              type="date"
+              label="Expiry Date"
+              field-level-help="Last day the points can be redeemed."
+              required
+              min={minExpiryDate}
+              value={state.expiryDate}
+              onchange={handleDetailsInput}>
+            </lightning-input>
+          </div>
+
+          <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+            <lightning-input
+              data-group="pointsDetails"
+              data-name="reason"
+              label="Reason"
+              placeholder="e.g. Diwali bonus"
+              required
+              max-length="255"
+              value={state.reason}
+              onchange={handleDetailsInput}>
+            </lightning-input>
+          </div>
+        </div>
       </div>
     </template>
   </div>
