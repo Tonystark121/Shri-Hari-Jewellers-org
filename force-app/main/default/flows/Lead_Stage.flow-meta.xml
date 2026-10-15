@@ -769,7 +769,7 @@
                 <fieldType>Region</fieldType>
                 <fields>
                     <name>New_Details_Left</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;NAME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Name}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;PHONE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Phone}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;EMAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Email}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD NUMBER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Lead_Number__c}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;NAME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Name}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;PHONE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Phone}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;EMAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Email}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
                     <fieldType>DisplayText</fieldType>
                 </fields>
                 <inputParameters>
@@ -785,7 +785,7 @@
                 <fieldType>Region</fieldType>
                 <fields>
                     <name>New_Details_Right</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;BUSINESS TYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Business_Type}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD SOURCE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Lead_Source}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;STORE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Store}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;CAMPAIGN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Campaign}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;BUSINESS TYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Business_Type}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD SOURCE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Lead_Source}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;STORE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Store}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;CAMPAIGN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Show_Campaign}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
                     <fieldType>DisplayText</fieldType>
                 </fields>
                 <inputParameters>
@@ -1081,6 +1081,11 @@
             <targetReference>Contacted_Next_Step</targetReference>
         </connector>
         <fields>
+            <name>Contacted_Lead_Status</name>
+            <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;LEAD STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="font-size: 14px; color: rgb(24, 24, 24);"&gt;&lt;strong&gt;{!Get_Lead.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
             <name>Contacted_Overdue_Banner</name>
             <fieldText>&lt;p&gt;&lt;strong style="font-size: 14px; color: rgb(221, 122, 1);"&gt;⏰  Follow-up overdue&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(68, 68, 68);"&gt;This customer was due a call on {!Get_Lead.Follow_up_Date_Time__c}. Call them, then choose a stage below.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
@@ -1094,18 +1099,6 @@
                     </rightValue>
                 </conditions>
             </visibilityRule>
-        </fields>
-        <fields>
-            <name>Contacted_Select_Stage</name>
-            <choiceReferences>Choice_None</choiceReferences>
-            <choiceReferences>Choice_Unqualified</choiceReferences>
-            <choiceReferences>Choice_Qualified</choiceReferences>
-            <choiceReferences>Choice_Converted</choiceReferences>
-            <dataType>String</dataType>
-            <defaultSelectedChoiceReference>Choice_None</defaultSelectedChoiceReference>
-            <fieldText>Select Stage</fieldText>
-            <fieldType>RadioButtons</fieldType>
-            <isRequired>true</isRequired>
         </fields>
         <fields>
             <name>Contacted_Contacted_Fields</name>
@@ -1127,30 +1120,6 @@
                         <errorMessage>&lt;p&gt;Enter the Contacted Remark (up to 5,000 characters).&lt;/p&gt;</errorMessage>
                         <formulaExpression>OR(TRIM(BLANKVALUE({!Contacted_Contacted_Remark}, "")) = TRIM(BLANKVALUE({!Get_Lead.Contacted_Remark__c}, "")), AND(LEN(TRIM({!Contacted_Contacted_Remark})) &gt; 0, LEN({!Contacted_Contacted_Remark}) &lt;= 5000))</formulaExpression>
                     </validationRule>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <fields>
-                <name>Contacted_Contacted_Fields_Column2</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Contacted_Lead_Status</name>
-                    <dataType>String</dataType>
-                    <defaultValue>
-                        <elementReference>Get_Lead.Status</elementReference>
-                    </defaultValue>
-                    <fieldText>Lead Status</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <isReadOnly>
-                        <booleanValue>true</booleanValue>
-                    </isReadOnly>
-                    <isRequired>false</isRequired>
                 </fields>
                 <fields>
                     <name>Contacted_Follow_Up</name>
@@ -1175,6 +1144,17 @@
                 </inputParameters>
                 <isRequired>false</isRequired>
             </fields>
+            <fields>
+                <name>Contacted_Contacted_Fields_Column2</name>
+                <fieldType>Region</fieldType>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
             <visibilityRule>
@@ -1187,6 +1167,18 @@
                     </rightValue>
                 </conditions>
             </visibilityRule>
+        </fields>
+        <fields>
+            <name>Contacted_Select_Stage</name>
+            <choiceReferences>Choice_None</choiceReferences>
+            <choiceReferences>Choice_Unqualified</choiceReferences>
+            <choiceReferences>Choice_Qualified</choiceReferences>
+            <choiceReferences>Choice_Converted</choiceReferences>
+            <dataType>String</dataType>
+            <defaultSelectedChoiceReference>Choice_None</defaultSelectedChoiceReference>
+            <fieldText>Select Stage</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
         </fields>
         <fields>
             <name>Contacted_Unqualified_Fields</name>

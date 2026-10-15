@@ -9,6 +9,9 @@
  *      Contact under it that has) is used. A new Account carries the Lead's
  *      phone, email and personal details (name: the Company when a user
  *      typed it, else the person - never the Lead's "<Name> - B2C-<number>"),
+ *      An existing Account keeps every value it has; only its blank Email,
+ *      Business Type ("Unknown" counts as blank) and Description (the
+ *      product description) are filled from the Lead,
  *   2. save the bill (Transaction_Record__c) on that Account,
  *   3. convert the Lead into that Account with Salesforce's own conversion,
  *      which creates the Contact (or merges into the one on that Account
@@ -33,6 +36,8 @@ public without sharing class LeadConversionTransactionService {
     // Database.convertLead accepts at most 100 Leads per call.
     private static final Integer CONVERT_CHUNK_SIZE = 100;
     private static final Integer ACCOUNT_NAME_MAX_LENGTH = 255;
+    /** The Account default: a placeholder, so it is replaced like a blank. */
+    private static final String BUSINESS_TYPE_UNKNOWN = 'Unknown';
 
     /** True only while this class converts Leads; see LeadTriggerHandler. */
     private static Boolean converting = false;
@@ -213,6 +218,12 @@ public without sharing class LeadConversionTransactionService {
             }
         }
 
+        // Existing customers: their blank details ------------------------------
+        failures = fillBlankDetails(pending, requests, leadsById, customerByRequest);
+        if (!failures.isEmpty()) {
+            return failures;
+        }
+
         // Bill -----------------------------------------------------------------
         List<Transaction_Record__c> bills = new List<Transaction_Record__c>();
         for (Integer i : pending) {
@@ -288,6 +299,78 @@ public without sharing class LeadConversionTransactionService {
         return failures;
     }
 
+    /**
+     * Fills an existing customer's blank Email, Business Type and Description
+     * (the product description) from the Lead. Values already on the Account
+     * are kept; Business Type "Unknown" (the Account default) counts as blank.
+     * Salesforce's own conversion fills the other blank mapped fields.
+     */
+    private static Map<Integer, String> fillBlankDetails(
+        List<Integer> pending,
+        List<ConvertRequest> requests,
+        Map<Id, Lead> leadsById,
+        Map<Integer, LeadTriggerHandler.Customer> customerByRequest
+    ) {
+        Map<Integer, String> failures = new Map<Integer, String>();
+        // The first Lead for an Account fills it; later ones find nothing blank.
+        Map<Id, Integer> requestByAccount = new Map<Id, Integer>();
+        for (Integer i : pending) {
+            LeadTriggerHandler.Customer customer = customerByRequest.get(i);
+            if (customer != null && !requestByAccount.containsKey(customer.accountId)) {
+                requestByAccount.put(customer.accountId, i);
+            }
+        }
+        if (requestByAccount.isEmpty()) {
+            return failures;
+        }
+
+        Set<Id> accountIds = requestByAccount.keySet();
+        List<Account> updates = new List<Account>();
+        List<Integer> updatedRequests = new List<Integer>();
+        for (Account accountRecord : [
+            SELECT Id, Email__c, Business_Type__c, Description
+            FROM Account
+            WHERE Id IN :accountIds
+            WITH SYSTEM_MODE
+        ]) {
+            Integer i = requestByAccount.get(accountRecord.Id);
+            Lead leadRecord = leadsById.get(requests[i].leadId);
+            Account changes = new Account(Id = accountRecord.Id);
+            Boolean changed = false;
+
+            if (String.isBlank(accountRecord.Email__c) && String.isNotBlank(leadRecord.Email)) {
+                changes.Email__c = leadRecord.Email;
+                changed = true;
+            }
+            if ((String.isBlank(accountRecord.Business_Type__c) || accountRecord.Business_Type__c == BUSINESS_TYPE_UNKNOWN)
+                && String.isNotBlank(leadRecord.Business_Type__c) && leadRecord.Business_Type__c != BUSINESS_TYPE_UNKNOWN) {
+                changes.Business_Type__c = leadRecord.Business_Type__c;
+                changed = true;
+            }
+            if (String.isBlank(accountRecord.Description) && String.isNotBlank(leadRecord.Description)) {
+                changes.Description = leadRecord.Description;
+                changed = true;
+            }
+            if (changed) {
+                updates.add(changes);
+                updatedRequests.add(i);
+            }
+        }
+
+        if (!updates.isEmpty()) {
+            List<Database.SaveResult> saves = Database.update(updates, saveDespiteDuplicates(), AccessLevel.SYSTEM_MODE);
+            for (Integer position = 0; position < saves.size(); position++) {
+                if (!saves[position].isSuccess()) {
+                    failures.put(
+                        updatedRequests[position],
+                        'The customer Account could not be updated: ' + messageFrom(saves[position].getErrors())
+                    );
+                }
+            }
+        }
+        return failures;
+    }
+
     /** A new customer Account carrying the Lead's contact and personal details. */
     private static Account newAccountFor(ConvertRequest request, Lead leadRecord) {
         Account accountRecord = new Account(
@@ -299,7 +382,8 @@ public without sharing class LeadConversionTransactionService {
             Anniversary_Date__c = leadRecord.Anniversary_Date__c,
             Marital_Status__c = leadRecord.Marital_Status__c,
             Primary_Store__c = leadRecord.Store_Association__c,
-            Campaign_Attribution__c = leadRecord.Campaign_Attribution__c
+            Campaign_Attribution__c = leadRecord.Campaign_Attribution__c,
+            Description = leadRecord.Description
         );
         if (isOwnedByUser(leadRecord)) {
             accountRecord.OwnerId = leadRecord.OwnerId;
@@ -462,7 +546,7 @@ public without sharing class LeadConversionTransactionService {
         }
         return new Map<Id, Lead>([
             SELECT Id, FirstName, LastName, Company, Business_Type__c, Phone, Email, IsConverted, OwnerId,
-                   Date_of_Birth__c, Anniversary_Date__c, Marital_Status__c,
+                   Date_of_Birth__c, Anniversary_Date__c, Marital_Status__c, Description,
                    Store_Association__c, Campaign_Attribution__c
             FROM Lead
             WHERE Id IN :leadIds

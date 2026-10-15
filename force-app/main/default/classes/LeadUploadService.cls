@@ -498,8 +498,11 @@ public with sharing class LeadUploadService {
         row.email = email;
     }
 
-    /** Enquiry Case for an existing customer, filled in the same way as on the New Lead screen. */
-    private static Case enquiryFor(Lead leadRecord, LeadTriggerHandler.Customer customer) {
+    /**
+     * Enquiry Case for an existing customer, filled in the same way as on the
+     * New Lead screen. Also used by the website API (ShreeHariLeadRestResource).
+     */
+    public static Case enquiryFor(Lead leadRecord, LeadTriggerHandler.Customer customer) {
         String fullName = String.isBlank(leadRecord.FirstName)
             ? leadRecord.LastName
             : leadRecord.FirstName + ' ' + leadRecord.LastName;

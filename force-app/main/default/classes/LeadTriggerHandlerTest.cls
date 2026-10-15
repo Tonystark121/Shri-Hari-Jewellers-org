@@ -164,20 +164,20 @@ private class LeadTriggerHandlerTest {
         );
     }
 
-    /** Leads from the website API are not checked here; the API will raise the enquiry itself. */
+    /** API inserts are checked too (the API raises the enquiry first; this is the safety net). */
     @IsTest
-    static void websiteApiLeadsAreNotCheckedYet() {
+    static void apiLeadsForAnExistingCustomerAreRefusedToo() {
         insert new Account(Name = 'Bose Household', Phone = '9830012344');
         RestContext.request = new RestRequest();
 
         Test.startTest();
         Database.SaveResult result = Database.insert(
-            new Lead(LastName = 'Bose', Company = 'Halsa Global', Phone = '9830012344'),
+            new Lead(LastName = 'Bose', Company = 'Bose Traders', Phone = '9830012344'),
             false
         );
         Test.stopTest();
 
-        Assert.isTrue(result.isSuccess(), 'Saved as before until the API phase');
+        Assert.isFalse(result.isSuccess(), 'Refused like any other insert');
     }
 
 

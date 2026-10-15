@@ -9,14 +9,28 @@
  * token never reaches this class. Any verb other than POST is rejected by the
  * platform with 405, because no other @Http method is declared here.
  *
- * Everything the endpoint needs lives in this one class:
+ * Leads are created the same way as on the New Lead screen:
+ *   - lastName, phone, description (product description) and leadSource are
+ *     required; phone must be 10 digits (a leading +91 or 91, spaces and
+ *     dashes are fine) and is saved exactly as sent;
+ *   - a blank company makes the Lead B2C (LeadTriggerHandler assigns
+ *     "<Name> - B2C-<Lead Number>"); a company makes it B2B. businessType in
+ *     the payload is ignored;
+ *   - anniversaryDate only for a Married customer, after dateOfBirth;
+ *   - an existing customer (same phone or email on an Account or Contact)
+ *     gets an enquiry Case instead of a Lead (201, action ENQUIRY_CREATED);
+ *   - an open Lead with the same phone or email is refused (409).
+ * status defaults to New and qualificationNotes is saved when sent.
+ *
+ * Everything else the endpoint needs lives in this one class:
  *
  *   1. HTTP entry point       createLead()
  *   2. Parsing                parse()
  *   3. Validation             validate() and its helpers
  *   4. Mapping                buildLead(), resolveStore/Campaign()
- *   5. Persistence            insertWithAssignment(), translate()
- *   6. Response rendering     buildResponse(), writeError()
+ *   5. Persistence            existingCustomerOrLead(), insertEnquiry(),
+ *                             insertWithAssignment(), translate()
+ *   6. Response rendering     buildResponse(), buildEnquiryResponse(), writeError()
  *   7. Inner types            LeadRequest, LeadResponse, ApiException
  *
  * Picklist values and field lengths are read from the Lead describe rather than
@@ -33,17 +47,14 @@ global with sharing class ShreeHariLeadRestResource {
     private static final String CONTENT_TYPE = 'application/json; charset=UTF-8';
     @TestVisible
     private static final String DEFAULT_STATUS = 'New';
-    /** Company is required on Lead; every enquiry without one is filed under this. */
     @TestVisible
-    private static final String DEFAULT_COMPANY = 'Halsa Global';
+    private static final String BUSINESS_TYPE_B2B = 'B2B';
     @TestVisible
-    private static final String DEFAULT_BUSINESS_TYPE = 'Unknown';
+    private static final String MARITAL_STATUS_MARRIED = 'Married';
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         '^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$'
     );
     private static final Pattern DATE_PATTERN = Pattern.compile('^\\d{4}-\\d{2}-\\d{2}$');
-    @TestVisible
-    private static final String MARITAL_STATUS_UNMARRIED = 'Unmarried';
 
     // =====================================================================
     // 1. HTTP entry point
@@ -75,12 +86,18 @@ global with sharing class ShreeHariLeadRestResource {
             validate(payload);
 
             Lead record = buildLead(payload);
-            insertWithAssignment(record);
+            LeadTriggerHandler.Customer customer = existingCustomerOrLead(record);
+
+            LeadResponse result;
+            if (customer != null) {
+                result = buildEnquiryResponse(insertEnquiry(record, customer));
+            } else {
+                insertWithAssignment(record);
+                result = buildResponse(record.Id);
+            }
 
             response.statusCode = 201;
-            response.responseBody = Blob.valueOf(
-                JSON.serialize(buildResponse(record.Id), true)
-            );
+            response.responseBody = Blob.valueOf(JSON.serialize(result, true));
 
         } catch (ApiException e) {
             writeError(response, e.errorCode, e.httpStatus, e.jsonField, e.getMessage());
@@ -113,7 +130,7 @@ global with sharing class ShreeHariLeadRestResource {
             throw badRequest(
                 'INVALID_JSON',
                 null,
-                'Request body is empty. Send a JSON object with at least lastName and leadSource.'
+                'Request body is empty. Send a JSON object with at least lastName, phone, description and leadSource.'
             );
         }
         LeadRequest payload;
@@ -146,6 +163,20 @@ global with sharing class ShreeHariLeadRestResource {
                 'lastName is required. Send the customer name, or the full name when the form captures only one.'
             );
         }
+        if (String.isBlank(p.phone)) {
+            throw badRequest(
+                'MISSING_REQUIRED_FIELD',
+                'phone',
+                'phone is required: a 10-digit number, optionally starting with +91 or 91.'
+            );
+        }
+        if (String.isBlank(p.description)) {
+            throw badRequest(
+                'MISSING_REQUIRED_FIELD',
+                'description',
+                'description is required: what the customer is interested in, e.g. product, design, metal or budget.'
+            );
+        }
         if (String.isBlank(p.leadSource)) {
             throw badRequest(
                 'MISSING_REQUIRED_FIELD',
@@ -154,12 +185,12 @@ global with sharing class ShreeHariLeadRestResource {
             );
         }
 
-        // At least one way to reach the customer ---------------------------
-        if (String.isBlank(p.phone) && String.isBlank(p.email)) {
+        // Phone: saved as sent, checked as 10 digits -----------------------
+        if (!LeadTriggerHandler.isValidPhone(LeadTriggerHandler.normalizePhone(p.phone))) {
             throw badRequest(
-                'CONTACT_INFO_REQUIRED',
+                'INVALID_PHONE',
                 'phone',
-                'Send at least one of phone or email so the tele-calling team can reach the customer.'
+                '\'' + p.phone + '\' is not a valid phone. Send a 10-digit number, optionally starting with +91 or 91.'
             );
         }
 
@@ -170,7 +201,6 @@ global with sharing class ShreeHariLeadRestResource {
         validatePicklist(Lead.Industry, 'industry', p.industry);
         validatePicklist(Lead.Salutation, 'salutation', p.salutation);
         validatePicklist(Lead.Marital_Status__c, 'maritalStatus', p.maritalStatus);
-        validatePicklist(Lead.Business_Type__c, 'businessType', p.businessType);
 
         // Email format -----------------------------------------------------
         if (String.isNotBlank(p.email) && !EMAIL_PATTERN.matcher(p.email).matches()) {
@@ -194,11 +224,11 @@ global with sharing class ShreeHariLeadRestResource {
         Date dateOfBirth = parseDate('dateOfBirth', p.dateOfBirth);
         Date anniversaryDate = parseDate('anniversaryDate', p.anniversaryDate);
 
-        if (anniversaryDate != null && MARITAL_STATUS_UNMARRIED.equals(p.maritalStatus)) {
+        if (anniversaryDate != null && !MARITAL_STATUS_MARRIED.equals(p.maritalStatus)) {
             throw badRequest(
                 'ANNIVERSARY_NOT_ALLOWED',
                 'anniversaryDate',
-                'anniversaryDate can only be sent when maritalStatus is Married or omitted.'
+                'anniversaryDate can only be sent when maritalStatus is Married.'
             );
         }
         if (anniversaryDate != null && dateOfBirth != null && anniversaryDate <= dateOfBirth) {
@@ -332,7 +362,8 @@ global with sharing class ShreeHariLeadRestResource {
         record.Salutation = p.salutation;
         record.FirstName = p.firstName;
         record.LastName = p.lastName;
-        record.Company = String.isBlank(p.company) ? DEFAULT_COMPANY : p.company;
+        // Blank: LeadTriggerHandler makes the Lead B2C and names the company.
+        record.Company = p.company;
 
         record.Date_of_Birth__c = parseDate('dateOfBirth', p.dateOfBirth);
         record.Marital_Status__c = p.maritalStatus;
@@ -350,7 +381,9 @@ global with sharing class ShreeHariLeadRestResource {
 
         record.LeadSource = p.leadSource;
         record.Status = String.isBlank(p.status) ? DEFAULT_STATUS : p.status;
-        record.Business_Type__c = String.isBlank(p.businessType) ? DEFAULT_BUSINESS_TYPE : p.businessType;
+        if (String.isNotBlank(p.company)) {
+            record.Business_Type__c = BUSINESS_TYPE_B2B;
+        }
         record.Rating = p.rating;
         record.Industry = p.industry;
         record.Walk_In_Flag__c = (p.walkInFlag == true);
@@ -415,6 +448,59 @@ global with sharing class ShreeHariLeadRestResource {
     // =====================================================================
     // 5. Persistence
     // =====================================================================
+
+    /**
+     * The existing customer this phone or email belongs to (an enquiry is
+     * raised for them instead of a Lead), or null for a new customer. An open
+     * Lead with the same phone or email is refused, as on the New Lead screen.
+     * Phones are compared as 10 digits, so +91-98300 12345 and 9830012345
+     * match.
+     */
+    private static LeadTriggerHandler.Customer existingCustomerOrLead(Lead record) {
+        String phone = LeadTriggerHandler.normalizePhone(record.Phone);
+        Set<String> phones = new Set<String>{ phone };
+        Set<String> emails = String.isBlank(record.Email) ? new Set<String>() : new Set<String>{ record.Email };
+        List<String> keys = new List<String>{ LeadTriggerHandler.phoneKey(phone) };
+        if (String.isNotBlank(record.Email)) {
+            keys.add(LeadTriggerHandler.emailKey(record.Email));
+        }
+
+        Map<String, LeadTriggerHandler.Customer> customers = LeadTriggerHandler.findCustomers(phones, emails);
+        for (String key : keys) {
+            if (customers.containsKey(key) && customers.get(key).accountId != null) {
+                return customers.get(key);
+            }
+        }
+
+        Map<String, Lead> openLeads = LeadTriggerHandler.findOpenLeads(phones, emails);
+        for (String key : keys) {
+            if (openLeads.containsKey(key)) {
+                Lead openLead = openLeads.get(key);
+                throw error(
+                    'DUPLICATE_DETECTED',
+                    409,
+                    null,
+                    'A Lead with this phone or email already exists: ' + openLead.Name + ' (' + openLead.Id + ').'
+                );
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Raises the enquiry Case for an existing customer, filled in the same way
+     * as on the New Lead screen and in Upload Leads. Saved in system mode: the
+     * customer's account and owner need not be visible to the integration user.
+     */
+    private static Case insertEnquiry(Lead record, LeadTriggerHandler.Customer customer) {
+        Case enquiry = LeadUploadService.enquiryFor(record, customer);
+        try {
+            Database.insert(enquiry, true, AccessLevel.SYSTEM_MODE);
+        } catch (DmlException e) {
+            throw error('DML_EXCEPTION', 500, null, e.getDmlMessage(0));
+        }
+        return enquiry;
+    }
 
     /**
      * Inserts the Lead, letting the active assignment rule route it. The rule is
@@ -512,6 +598,20 @@ global with sharing class ShreeHariLeadRestResource {
         return result;
     }
 
+    /** The existing customer's enquiry: no Lead is created. */
+    private static LeadResponse buildEnquiryResponse(Case enquiry) {
+        Case saved = [SELECT Id, CaseNumber, AccountId FROM Case WHERE Id = :enquiry.Id WITH SYSTEM_MODE];
+
+        LeadResponse result = new LeadResponse();
+        result.success = true;
+        result.action = 'ENQUIRY_CREATED';
+        result.caseId = saved.Id;
+        result.caseNumber = saved.CaseNumber;
+        result.accountId = saved.AccountId;
+        result.message = 'Customer already exists; an enquiry Case was created.';
+        return result;
+    }
+
     /**
      * Renders the standard error envelope from section 06 of the specification,
      * in the documented key order.
@@ -593,7 +693,7 @@ global with sharing class ShreeHariLeadRestResource {
         // Classification and routing
         public String leadSource;
         public String status;
-        public String businessType;
+        public String businessType; // Ignored: set from company, as on the New Lead screen.
         public String rating;
         public String industry;
         public String storeCode;
@@ -641,11 +741,19 @@ global with sharing class ShreeHariLeadRestResource {
         }
     }
 
-    /** Success payload, serialised straight to the 201 response body. */
+    /**
+     * Success payload, serialised straight to the 201 response body. A new
+     * Lead (action CREATED) fills the lead fields; an existing customer's
+     * enquiry (action ENQUIRY_CREATED) fills caseId, caseNumber and accountId.
+     * Blank fields are left out of the JSON.
+     */
     public class LeadResponse {
         public Boolean success;
         public String action;
         public String leadId;
+        public String caseId;
+        public String caseNumber;
+        public String accountId;
         public String status;
         public String company;
         public String storeAssociationId;

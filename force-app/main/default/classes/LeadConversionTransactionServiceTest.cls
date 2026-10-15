@@ -301,6 +301,78 @@ private class LeadConversionTransactionServiceTest {
         );
     }
 
+    /** A new customer's Account gets the product description too. */
+    @IsTest
+    static void aNewAccountGetsTheProductDescription() {
+        Lead buyer = enquiry('Nisha', 'Kapoor');
+        buyer.Description = 'Diamond ring, budget 80,000';
+        insert buyer;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = convertOne(buyer.Id, null, bill('CTS-0020', 80000));
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Account saved = [SELECT Description, Email__c, Business_Type__c FROM Account WHERE Id = :result.accountId WITH SYSTEM_MODE];
+        Assert.areEqual('Diamond ring, budget 80,000', saved.Description, 'Product description on the Account');
+        Assert.areEqual(buyer.Email, saved.Email__c, 'Email on the Account');
+        Assert.areEqual('B2C', saved.Business_Type__c, 'Business Type on the Account');
+    }
+
+    /** A picked Account's blank Email, Business Type ("Unknown") and Description are filled from the Lead. */
+    @IsTest
+    static void anExistingAccountsBlankDetailsAreFilled() {
+        Lead buyer = enquiry('Tara', 'Bhat');
+        buyer.Description = 'Gold bangles';
+        insert buyer;
+        Account household = new Account(Name = 'Bhat Household', Phone = buyer.Phone, Business_Type__c = 'Unknown');
+        insert household;
+
+        LeadConversionTransactionService.ConvertRequest conversionRequest = request(buyer.Id, null, bill('CTS-0021', 2000));
+        conversionRequest.accountId = household.Id;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ conversionRequest }
+        )[0];
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Account saved = [SELECT Name, Phone, Email__c, Business_Type__c, Description FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE];
+        Assert.areEqual(buyer.Email, saved.Email__c, 'Blank Email filled');
+        Assert.areEqual('B2C', saved.Business_Type__c, 'Unknown replaced');
+        Assert.areEqual('Gold bangles', saved.Description, 'Blank Description filled');
+        Assert.areEqual('Bhat Household', saved.Name, 'Name kept');
+    }
+
+    /** Values already on a picked Account are never overwritten. */
+    @IsTest
+    static void anExistingAccountsValuesAreKept() {
+        Lead buyer = enquiry('Vikram', 'Sen');
+        buyer.Description = 'Silver anklet';
+        insert buyer;
+        Account household = new Account(
+            Name = 'Sen Traders', Phone = buyer.Phone, Email__c = 'accounts@sentraders.example',
+            Business_Type__c = 'B2B', Description = 'Wholesale buyer'
+        );
+        insert household;
+
+        LeadConversionTransactionService.ConvertRequest conversionRequest = request(buyer.Id, null, bill('CTS-0022', 2000));
+        conversionRequest.accountId = household.Id;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ conversionRequest }
+        )[0];
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Account saved = [SELECT Email__c, Business_Type__c, Description FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE];
+        Assert.areEqual('accounts@sentraders.example', saved.Email__c, 'Email kept');
+        Assert.areEqual('B2B', saved.Business_Type__c, 'Business Type kept');
+        Assert.areEqual('Wholesale buyer', saved.Description, 'Description kept');
+    }
+
     /** Staff can create a new customer even when the phone and email match one. */
     @IsTest
     static void aNewAccountCanBeCreatedDespiteAMatch() {

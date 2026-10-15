@@ -22,9 +22,9 @@
  * Existing customers
  *   A Lead whose phone or email belongs to an existing customer (Account or
  *   Contact) is not saved: an enquiry Case is raised for the customer
- *   instead. The New Lead flow does that before saving; this check stops
- *   uploads. Leads from the website API are not checked here yet - that API
- *   will raise the enquiry itself.
+ *   instead. The New Lead flow, Upload Leads and the website API
+ *   (ShreeHariLeadRestResource) raise the enquiry before saving; this check
+ *   stops any other insert.
  *
  * Conversion
  *   A Lead converts only together with its first bill, through
@@ -83,9 +83,7 @@ public without sharing class LeadTriggerHandler {
             }
         }
 
-        if (RestContext.request == null) {
-            blockExistingCustomers(leads);
-        }
+        blockExistingCustomers(leads);
     }
 
     /** Adds the Lead Number to the Company of every new B2C Lead. */
