@@ -513,7 +513,7 @@ public with sharing class LeadUploadService {
             Subject = 'Enquiry from ' + fullName,
             Origin = 'Phone',
             Priority = 'Medium',
-            Type = 'Enquiry',
+            Type = 'Service Enquiry',
             Status = 'New',
             SuppliedName = fullName,
             SuppliedPhone = leadRecord.Phone,

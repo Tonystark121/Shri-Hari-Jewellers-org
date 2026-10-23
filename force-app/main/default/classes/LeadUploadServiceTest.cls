@@ -148,7 +148,7 @@ private class LeadUploadServiceTest {
         Assert.areEqual(household.Id, enquiry.AccountId, 'On the customer');
         Assert.areEqual('Phone', enquiry.Origin, 'Origin Phone, as on the screen');
         Assert.areEqual('Medium', enquiry.Priority, 'Priority Medium');
-        Assert.areEqual('Enquiry', enquiry.Type, 'Type Enquiry');
+        Assert.areEqual('Service Enquiry', enquiry.Type, 'Type Service Enquiry');
         Assert.areEqual('Gold necklace', enquiry.Description, 'Product Description carried over');
         Assert.areEqual('Walk-in', enquiry.Lead_Source__c, 'Lead Source carried over');
         Assert.areEqual('Enquiry from Test Sharma', enquiry.Subject, 'Subject filled in');

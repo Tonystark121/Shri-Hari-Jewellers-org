@@ -3,12 +3,13 @@
     <fullName>Campaign__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
     <description>Campaign that brought in the enquiry.</description>
-    <externalId>false</externalId>
     <label>Campaign</label>
     <referenceTo>Campaign</referenceTo>
     <relationshipLabel>Enquiries</relationshipLabel>
     <relationshipName>Enquiries</relationshipName>
     <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
     <type>Lookup</type>
 </CustomField>

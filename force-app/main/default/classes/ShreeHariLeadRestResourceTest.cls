@@ -240,7 +240,7 @@ private class ShreeHariLeadRestResourceTest {
         Assert.areEqual(household.Id, enquiry.AccountId, 'On the customer');
         Assert.areEqual('Phone', enquiry.Origin, 'Same as the New Lead screen');
         Assert.areEqual('Medium', enquiry.Priority, 'Same as the New Lead screen');
-        Assert.areEqual('Enquiry', enquiry.Type, 'An enquiry');
+        Assert.areEqual('Service Enquiry', enquiry.Type, 'A service enquiry');
         Assert.areEqual('Enquiry from Ananya Sharma', enquiry.Subject, 'Named after the customer');
         Assert.areEqual('Gold ring, budget 40,000 INR.', enquiry.Description, 'The product description');
         Assert.areEqual('+91 98300 12399', enquiry.SuppliedPhone, 'Phone as sent');

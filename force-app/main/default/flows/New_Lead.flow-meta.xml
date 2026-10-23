@@ -32,6 +32,37 @@
     </actionCalls>
     <apiVersion>62.0</apiVersion>
     <assignments>
+        <description>Copies the Type, Lead Source and the Subject built from the Type onto the enquiry.</description>
+        <name>Set_Enquiry_Choices</name>
+        <label>Set Enquiry Choices</label>
+        <locationX>176</locationX>
+        <locationY>890</locationY>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.Type</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Case_Type_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.Subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Enquiry_Subject</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.Lead_Source__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Enquiry_Lead_Source_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Enquiry</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
         <description>New Leads start in status New.</description>
         <name>Set_Defaults</name>
         <label>Set Defaults</label>
@@ -222,13 +253,6 @@
             </value>
         </assignmentItems>
         <assignmentItems>
-            <assignToReference>Enquiry_Case.Subject</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Enquiry_Subject</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
             <assignToReference>Enquiry_Case.Description</assignToReference>
             <operator>Assign</operator>
             <value>
@@ -247,13 +271,6 @@
             <operator>Assign</operator>
             <value>
                 <stringValue>Medium</stringValue>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Enquiry_Case.Type</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <stringValue>Enquiry</stringValue>
             </value>
         </assignmentItems>
         <assignmentItems>
@@ -296,13 +313,6 @@
             <operator>Assign</operator>
             <value>
                 <elementReference>Lead_Record.Campaign_Attribution__c</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Enquiry_Case.Lead_Source__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Lead_Record.LeadSource</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -368,6 +378,18 @@
         </rules>
     </decisions>
     <description>New button on Lead. One screen laid out like the Lead page layout (Personal Details, Lead Details, Company Information). On Save the phone and email are checked: an existing customer gets an enquiry Case instead of a Lead; an open Lead with the same phone or email is shown as a banner on the form; otherwise the Lead is created. A blank Company makes the Lead B2C and the system assigns &quot;&lt;Name&gt; - B2C-&lt;Lead Number&gt;&quot;.</description>
+    <dynamicChoiceSets>
+        <name>Case_Type_Choices</name>
+        <dataType>Picklist</dataType>
+        <picklistField>Type</picklistField>
+        <picklistObject>Case</picklistObject>
+    </dynamicChoiceSets>
+    <dynamicChoiceSets>
+        <name>Lead_Source_Choices</name>
+        <dataType>Picklist</dataType>
+        <picklistField>LeadSource</picklistField>
+        <picklistObject>Lead</picklistObject>
+    </dynamicChoiceSets>
     <dynamicChoiceSets>
         <description>Values of the Lead Salutation picklist (Mr., Ms., Mrs., Dr., Prof., ...).</description>
         <name>Salutation_Choices</name>
@@ -439,7 +461,7 @@
     <formulas>
         <name>Enquiry_Subject</name>
         <dataType>String</dataType>
-        <expression>&quot;Enquiry from &quot; &amp; {!Full_Name}</expression>
+        <expression>IF({!Case_Type_Input} = &quot;Service Enquiry&quot;, &quot;Enquiry&quot;, BLANKVALUE({!Case_Type_Input}, &quot;Enquiry&quot;)) &amp; &quot; from &quot; &amp; {!Full_Name}</expression>
     </formulas>
     <interviewLabel>New Lead {!$Flow.CurrentDateTime}</interviewLabel>
     <label>New Lead</label>
@@ -614,7 +636,7 @@
         <allowPause>false</allowPause>
         <backButtonLabel>Back to Lead</backButtonLabel>
         <connector>
-            <targetReference>Create_Enquiry</targetReference>
+            <targetReference>Set_Enquiry_Choices</targetReference>
         </connector>
         <fields>
             <name>Existing_Customer_Banner</name>
@@ -629,9 +651,16 @@
                 <name>Enquiry_Section_Column1</name>
                 <fieldType>Region</fieldType>
                 <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Enquiry_Case.Subject</objectFieldReference>
+                    <name>Case_Type_Input</name>
+                    <choiceReferences>Case_Type_Choices</choiceReferences>
+                    <dataType>String</dataType>
+                    <defaultValue>
+                        <stringValue>Service Enquiry</stringValue>
+                    </defaultValue>
+                    <fieldText>Type</fieldText>
+                    <fieldType>DropdownBox</fieldType>
+                    <helpText>&lt;p&gt;What the customer is contacting us about. The Subject follows the Type.&lt;/p&gt;</helpText>
+                    <isRequired>true</isRequired>
                 </fields>
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
@@ -654,6 +683,18 @@
                     <isRequired>false</isRequired>
                     <objectFieldReference>Enquiry_Case.Priority</objectFieldReference>
                 </fields>
+                <fields>
+                    <name>Enquiry_Lead_Source_Input</name>
+                    <choiceReferences>Lead_Source_Choices</choiceReferences>
+                    <dataType>String</dataType>
+                    <defaultValue>
+                        <elementReference>Lead_Record.LeadSource</elementReference>
+                    </defaultValue>
+                    <fieldText>Lead Source</fieldText>
+                    <fieldType>DropdownBox</fieldType>
+                    <helpText>&lt;p&gt;Where this request came from. Filled in from the Lead form.&lt;/p&gt;</helpText>
+                    <isRequired>false</isRequired>
+                </fields>
                 <inputParameters>
                     <name>width</name>
                     <value>
@@ -664,6 +705,11 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
+        </fields>
+        <fields>
+            <name>Subject_Preview</name>
+            <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;Subject&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;{!Enquiry_Subject}&lt;/strong&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
         </fields>
         <fields>
             <fieldType>ObjectProvided</fieldType>

@@ -2,23 +2,23 @@
 <StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <sorted>false</sorted>
     <standardValue>
-        <fullName>Problem</fullName>
+        <fullName>Service Enquiry</fullName>
         <default>false</default>
-        <label>Problem</label>
+        <label>Service Enquiry</label>
     </standardValue>
     <standardValue>
-        <fullName>Feature Request</fullName>
+        <fullName>Complaint</fullName>
         <default>false</default>
-        <label>Feature Request</label>
+        <label>Complaint</label>
     </standardValue>
     <standardValue>
-        <fullName>Question</fullName>
+        <fullName>Warranty Claim</fullName>
         <default>false</default>
-        <label>Question</label>
+        <label>Warranty Claim</label>
     </standardValue>
     <standardValue>
-        <fullName>Enquiry</fullName>
+        <fullName>Delivery Issue</fullName>
         <default>false</default>
-        <label>Enquiry</label>
+        <label>Delivery Issue</label>
     </standardValue>
 </StandardValueSet>
