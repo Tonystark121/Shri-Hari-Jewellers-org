@@ -9,9 +9,10 @@
  *      Contact under it that has) is used. A new Account carries the Lead's
  *      phone, email and personal details (name: the Company when a user
  *      typed it (B2B), else "<Name> Family (<Lead Number>)" (B2C)).
- *      An existing Account keeps every value it has; only its blank Email,
- *      Business Type ("Unknown" counts as blank) and Description (the
- *      product description) are filled from the Lead,
+ *      An existing Account keeps every value it has; its blank Email and
+ *      Business Type ("Unknown" counts as blank) are filled from the Lead,
+ *      and the Lead's Description (the product description) is added to
+ *      the Account's on a new line,
  *   2. save the bill (Transaction_Record__c) on that Account,
  *   3. convert the Lead into that Account with Salesforce's own conversion,
  *      which creates a new Contact on the Account from the Lead's details -
@@ -301,10 +302,12 @@ public without sharing class LeadConversionTransactionService {
     }
 
     /**
-     * Fills an existing customer's blank Email, Business Type and Description
-     * (the product description) from the Lead. Values already on the Account
-     * are kept; Business Type "Unknown" (the Account default) counts as blank.
-     * Salesforce's own conversion fills the other blank mapped fields.
+     * Fills an existing customer's blank Email and Business Type from the
+     * Lead, and adds the Lead's Description (the product description) to the
+     * Account's on a new line, so nothing is lost. Other values already on
+     * the Account are kept; Business Type "Unknown" (the Account default)
+     * counts as blank. Salesforce's own conversion fills the other blank
+     * mapped fields.
      */
     private static Map<Integer, String> fillBlankDetails(
         List<Integer> pending,
@@ -313,12 +316,22 @@ public without sharing class LeadConversionTransactionService {
         Map<Integer, LeadTriggerHandler.Customer> customerByRequest
     ) {
         Map<Integer, String> failures = new Map<Integer, String>();
-        // The first Lead for an Account fills it; later ones find nothing blank.
+        // The first Lead for an Account fills its blanks; later ones find
+        // nothing blank. Every Lead's Description is added, in order.
         Map<Id, Integer> requestByAccount = new Map<Id, Integer>();
+        Map<Id, List<String>> descriptionsByAccount = new Map<Id, List<String>>();
         for (Integer i : pending) {
             LeadTriggerHandler.Customer customer = customerByRequest.get(i);
-            if (customer != null && !requestByAccount.containsKey(customer.accountId)) {
+            if (customer == null) {
+                continue;
+            }
+            if (!requestByAccount.containsKey(customer.accountId)) {
                 requestByAccount.put(customer.accountId, i);
+                descriptionsByAccount.put(customer.accountId, new List<String>());
+            }
+            String description = leadsById.get(requests[i].leadId).Description;
+            if (String.isNotBlank(description)) {
+                descriptionsByAccount.get(customer.accountId).add(description.trim());
             }
         }
         if (requestByAccount.isEmpty()) {
@@ -348,8 +361,12 @@ public without sharing class LeadConversionTransactionService {
                 changes.Business_Type__c = leadRecord.Business_Type__c;
                 changed = true;
             }
-            if (String.isBlank(accountRecord.Description) && String.isNotBlank(leadRecord.Description)) {
-                changes.Description = leadRecord.Description;
+            List<String> descriptions = descriptionsByAccount.get(accountRecord.Id);
+            if (!descriptions.isEmpty()) {
+                if (String.isNotBlank(accountRecord.Description)) {
+                    descriptions.add(0, accountRecord.Description);
+                }
+                changes.Description = String.join(descriptions, '\n');
                 changed = true;
             }
             if (changed) {

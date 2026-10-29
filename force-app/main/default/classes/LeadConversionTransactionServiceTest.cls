@@ -425,7 +425,7 @@ private class LeadConversionTransactionServiceTest {
         Assert.areEqual('Bhat Household', saved.Name, 'Name kept');
     }
 
-    /** Values already on a picked Account are never overwritten. */
+    /** Values already on a picked Account are never overwritten; the Lead's Description is added on a new line. */
     @IsTest
     static void anExistingAccountsValuesAreKept() {
         Lead buyer = enquiry('Vikram', 'Sen');
@@ -450,7 +450,38 @@ private class LeadConversionTransactionServiceTest {
         Account saved = [SELECT Email__c, Business_Type__c, Description FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE];
         Assert.areEqual('accounts@sentraders.example', saved.Email__c, 'Email kept');
         Assert.areEqual('B2B', saved.Business_Type__c, 'Business Type kept');
-        Assert.areEqual('Wholesale buyer', saved.Description, 'Description kept');
+        Assert.areEqual('Wholesale buyer\nSilver anklet', saved.Description, 'Lead Description added on a new line');
+    }
+
+    /** Two Leads converting into the same Account in one call both add their Description. */
+    @IsTest
+    static void everyLeadsDescriptionIsAdded() {
+        Lead first = enquiry('Uma', 'Rao');
+        first.Description = 'Gold chain';
+        Lead second = enquiry('Uday', 'Rao');
+        second.Description = 'Diamond ring';
+        insert new List<Lead>{ first, second };
+        Account household = new Account(Name = 'Rao Family', Description = 'Regular customer');
+        insert household;
+
+        LeadConversionTransactionService.ConvertRequest firstRequest = request(first.Id, null, bill('CTS-0031', 1000));
+        firstRequest.accountId = household.Id;
+        LeadConversionTransactionService.ConvertRequest secondRequest = request(second.Id, null, bill('CTS-0032', 2000));
+        secondRequest.accountId = household.Id;
+
+        Test.startTest();
+        List<LeadConversionTransactionService.ConvertResult> results = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ firstRequest, secondRequest }
+        );
+        Test.stopTest();
+
+        Assert.isTrue(results[0].isSuccess, 'First conversion should succeed: ' + results[0].errorMessage);
+        Assert.isTrue(results[1].isSuccess, 'Second conversion should succeed: ' + results[1].errorMessage);
+        Assert.areEqual(
+            'Regular customer\nGold chain\nDiamond ring',
+            [SELECT Description FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE].Description,
+            'Each on its own line, in order'
+        );
     }
 
     /** Staff can create a new customer even when the phone and email match one. */
