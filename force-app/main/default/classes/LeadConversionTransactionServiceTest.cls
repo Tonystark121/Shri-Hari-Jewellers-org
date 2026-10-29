@@ -324,6 +324,86 @@ private class LeadConversionTransactionServiceTest {
     }
 
     /**
+     * The new Contact gets the Lead's Date of Birth (as Birthdate),
+     * Anniversary Date and Marital Status - on a new Account and on a picked
+     * existing one, where the Account keeps its own values.
+     */
+    @IsTest
+    static void aNewContactGetsThePersonalDetails() {
+        Lead newCustomer = enquiry('Asha', 'Mehta');
+        Lead familyMember = enquiry('Rohan', 'Mehta');
+        for (Lead person : new List<Lead>{ newCustomer, familyMember }) {
+            person.Date_of_Birth__c = Date.newInstance(1990, 8, 25);
+            person.Marital_Status__c = 'Married';
+            person.Anniversary_Date__c = Date.newInstance(2015, 2, 14);
+        }
+        familyMember.Date_of_Birth__c = Date.newInstance(1988, 1, 5);
+        insert new List<Lead>{ newCustomer, familyMember };
+        Account household = new Account(Name = 'Mehta Family', Date_of_Birth__c = Date.newInstance(1960, 3, 1));
+        insert household;
+
+        LeadConversionTransactionService.ConvertRequest toHousehold = request(familyMember.Id, null, bill('CTS-0030', 2000));
+        toHousehold.accountId = household.Id;
+
+        Test.startTest();
+        List<LeadConversionTransactionService.ConvertResult> results = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{
+                request(newCustomer.Id, null, bill('CTS-0029', 1000)),
+                toHousehold
+            }
+        );
+        Test.stopTest();
+
+        for (Integer i = 0; i < results.size(); i++) {
+            Assert.isTrue(results[i].isSuccess, 'Conversion should succeed: ' + results[i].errorMessage);
+            Lead person = i == 0 ? newCustomer : familyMember;
+            Contact created = [
+                SELECT Birthdate, Anniversary_Date__c, Marital_Status__c FROM Contact WHERE Id = :results[i].contactId WITH SYSTEM_MODE
+            ];
+            Assert.areEqual(person.Date_of_Birth__c, created.Birthdate, 'Date of Birth carried over');
+            Assert.areEqual(person.Anniversary_Date__c, created.Anniversary_Date__c, 'Anniversary Date carried over');
+            Assert.areEqual('Married', created.Marital_Status__c, 'Marital Status carried over');
+        }
+        Assert.areEqual(
+            Date.newInstance(1960, 3, 1),
+            [SELECT Date_of_Birth__c FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE].Date_of_Birth__c,
+            'The existing Account keeps its value'
+        );
+    }
+
+    /** A Contact the Lead merges into (same name, phone and email) is left as it is. */
+    @IsTest
+    static void aMergedContactKeepsItsDetails() {
+        Lead returning = enquiry('Sanjay', 'Gupta');
+        returning.Date_of_Birth__c = Date.newInstance(1985, 6, 10);
+        returning.Marital_Status__c = 'Married';
+        insert returning;
+        Account household = new Account(Name = 'Gupta Household');
+        insert household;
+        Contact person = new Contact(
+            FirstName = 'Sanjay',
+            LastName = 'Gupta',
+            AccountId = household.Id,
+            Phone = returning.Phone,
+            Email = returning.Email,
+            Birthdate = Date.newInstance(1985, 6, 11)
+        );
+        Database.DMLOptions options = new Database.DMLOptions();
+        options.DuplicateRuleHeader.allowSave = true;
+        Database.insert(person, options);
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = convertOne(returning.Id, null, bill('CTS-0031', 3000));
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areEqual(person.Id, result.contactId, 'Merged into the existing Contact');
+        Contact merged = [SELECT Birthdate, Marital_Status__c FROM Contact WHERE Id = :person.Id WITH SYSTEM_MODE];
+        Assert.areEqual(Date.newInstance(1985, 6, 11), merged.Birthdate, 'Its Birthdate is kept');
+        Assert.isNull(merged.Marital_Status__c, 'Nothing is filled in');
+    }
+
+    /**
      * Points POS reports on the conversion bill come off the picked customer's
      * balance; more than they hold rejects the conversion with the reason.
      */

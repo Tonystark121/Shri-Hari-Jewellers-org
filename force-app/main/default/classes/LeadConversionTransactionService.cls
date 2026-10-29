@@ -18,7 +18,9 @@
  *      which creates a new Contact on the Account from the Lead's details -
  *      or, when a Contact there already has the Lead's name, phone and
  *      email, merges into it - keeps the Lead history and creates no
- *      Opportunity.
+ *      Opportunity. A new Contact also gets the Lead's Date of Birth
+ *      (Birthdate), Anniversary Date and Marital Status; a merged one is
+ *      left as it is.
  * Staff have already compared the matches, so the platform's duplicate
  * alerts do not stop the new Account or Contact.
  * The three steps succeed or fail together for each Lead.
@@ -297,7 +299,59 @@ public without sharing class LeadConversionTransactionService {
             result.contactId = conversion.getContactId();
             result.transactionId = bills[position].Id;
         }
+        if (!failures.isEmpty()) {
+            return failures;
+        }
 
+        // New Contacts: the Lead's personal details --------------------------
+        return fillPersonalDetails(pending, requests, leadsById, customerByRequest, results);
+    }
+
+    /**
+     * Copies the Lead's Date of Birth, Anniversary Date and Marital Status to
+     * the Contact the conversion created. Setup's Lead field mapping sends
+     * them to the Account, and a Lead field maps to one object only, so they
+     * are set here. A Contact the Lead merged into is left as it is.
+     */
+    private static Map<Integer, String> fillPersonalDetails(
+        List<Integer> pending,
+        List<ConvertRequest> requests,
+        Map<Id, Lead> leadsById,
+        Map<Integer, LeadTriggerHandler.Customer> customerByRequest,
+        List<ConvertResult> results
+    ) {
+        Map<Integer, String> failures = new Map<Integer, String>();
+        List<Contact> updates = new List<Contact>();
+        List<Integer> updatedRequests = new List<Integer>();
+        for (Integer i : pending) {
+            LeadTriggerHandler.Customer customer = customerByRequest.get(i);
+            Lead leadRecord = leadsById.get(requests[i].leadId);
+            Boolean merged = customer != null && customer.contactId != null;
+            if (merged || (leadRecord.Date_of_Birth__c == null
+                && leadRecord.Anniversary_Date__c == null
+                && String.isBlank(leadRecord.Marital_Status__c))) {
+                continue;
+            }
+            updates.add(new Contact(
+                Id = results[i].contactId,
+                Birthdate = leadRecord.Date_of_Birth__c,
+                Anniversary_Date__c = leadRecord.Anniversary_Date__c,
+                Marital_Status__c = leadRecord.Marital_Status__c
+            ));
+            updatedRequests.add(i);
+        }
+
+        if (!updates.isEmpty()) {
+            List<Database.SaveResult> saves = Database.update(updates, saveDespiteDuplicates(), AccessLevel.SYSTEM_MODE);
+            for (Integer position = 0; position < saves.size(); position++) {
+                if (!saves[position].isSuccess()) {
+                    failures.put(
+                        updatedRequests[position],
+                        'The Contact could not be updated: ' + messageFrom(saves[position].getErrors())
+                    );
+                }
+            }
+        }
         return failures;
     }
 
