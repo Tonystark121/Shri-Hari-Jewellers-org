@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Lead_Number__c</fullName>
-    <description>Unique, system-assigned number for every Lead. For a B2C Lead it is also the unique part of the auto-assigned Company, e.g. Asha Mehta - B2C-000123.</description>
+    <description>Unique, system-assigned number for every Lead. For a B2C Lead it is also the unique part of the auto-assigned Company, e.g. Asha Mehta Family (000123).</description>
     <displayFormat>{000000}</displayFormat>
     <externalId>false</externalId>
     <label>Lead Number</label>

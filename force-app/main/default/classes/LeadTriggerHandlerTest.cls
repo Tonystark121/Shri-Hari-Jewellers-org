@@ -22,7 +22,7 @@ private class LeadTriggerHandlerTest {
     // B2C Company
     // =====================================================================
 
-    /** A Lead saved without a Company is B2C and gets "<Name> - B2C-<Lead Number>". */
+    /** A Lead saved without a Company is B2C and gets "<Name> Family (<Lead Number>)". */
     @IsTest
     static void aLeadWithoutACompanyIsB2cWithAUniqueCompany() {
         Lead walkIn = new Lead(FirstName = 'Asha', LastName = 'Mehta');
@@ -33,7 +33,7 @@ private class LeadTriggerHandlerTest {
 
         Lead saved = reload(walkIn.Id);
         Assert.areEqual('B2C', saved.Business_Type__c, 'No company means B2C');
-        Assert.areEqual('Asha Mehta - B2C-' + saved.Lead_Number__c, saved.Company, 'Name, B2C and the Lead Number');
+        Assert.areEqual('Asha Mehta Family (' + saved.Lead_Number__c + ')', saved.Company, 'Name, Family and the Lead Number');
     }
 
     /** The New Lead screen's default "<Name> - B2C" is treated the same as a blank Company. */
@@ -47,7 +47,7 @@ private class LeadTriggerHandlerTest {
 
         Lead saved = reload(walkIn.Id);
         Assert.areEqual('B2C', saved.Business_Type__c, 'The default company means B2C');
-        Assert.areEqual('Ravi Shah - B2C-' + saved.Lead_Number__c, saved.Company, 'The Lead Number is added');
+        Assert.areEqual('Ravi Shah Family (' + saved.Lead_Number__c + ')', saved.Company, 'The Lead Number is added');
     }
 
     /** A Company that was typed in is kept as it is. */
@@ -94,7 +94,23 @@ private class LeadTriggerHandlerTest {
         Test.stopTest();
 
         Lead saved = reload(walkIn.Id);
-        Assert.areEqual('Neha Jain Kapoor - B2C-' + saved.Lead_Number__c, saved.Company, 'Company follows the new name');
+        Assert.areEqual('Neha Jain Kapoor Family (' + saved.Lead_Number__c + ')', saved.Company, 'Company follows the new name');
+    }
+
+    /** A Lead saved before the Family format keeps "<Name> - B2C-<Lead Number>", which still follows the name. */
+    @IsTest
+    static void anEarlierFormatCompanyFollowsANameChange() {
+        Lead walkIn = new Lead(FirstName = 'Kiran', LastName = 'Rao', Company = 'Placeholder');
+        insert walkIn;
+        Lead saved = reload(walkIn.Id);
+        // Recreate a Lead from before the change: B2C with the earlier Company.
+        update new Lead(Id = walkIn.Id, Business_Type__c = 'B2C', Company = 'Kiran Rao - B2C-' + saved.Lead_Number__c);
+
+        Test.startTest();
+        update new Lead(Id = walkIn.Id, LastName = 'Rao Menon');
+        Test.stopTest();
+
+        Assert.areEqual('Kiran Rao Menon - B2C-' + saved.Lead_Number__c, reload(walkIn.Id).Company, 'Kept in the earlier format');
     }
 
     /** No one can change a B2C Company by hand. */
@@ -269,6 +285,8 @@ private class LeadTriggerHandlerTest {
         Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta - B2C'), 'The New Lead screen default');
         Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta - B2C-000123 '), 'Stamped with the Lead Number');
         Assert.isTrue(LeadTriggerHandler.isSystemCompany('asha mehta - b2c-7'), 'Any case');
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta Family (000123)'), 'The Family format');
+        Assert.isFalse(LeadTriggerHandler.isSystemCompany('Mehta Family Jewellers'), 'Mentions Family but typed');
         Assert.isFalse(LeadTriggerHandler.isSystemCompany('Mehta Jewellers Pvt Ltd'), 'Typed by a user');
         Assert.isFalse(LeadTriggerHandler.isSystemCompany('B2C Retail - B2C Store'), 'Mentions B2C but typed');
     }

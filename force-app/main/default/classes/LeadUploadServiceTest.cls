@@ -93,7 +93,7 @@ private class LeadUploadServiceTest {
                     Anniversary_Date__c, Walk_In_Flag__c, Status
                     FROM Lead WHERE LastName = 'Mehta' WITH SYSTEM_MODE];
         Assert.areEqual('B2C', b2c.Business_Type__c, 'No company means B2C');
-        Assert.areEqual('Test Mehta - B2C-' + b2c.Lead_Number__c, b2c.Company, 'With the unique B2C company');
+        Assert.areEqual('Test Mehta Family (' + b2c.Lead_Number__c + ')', b2c.Company, 'With the unique B2C company');
         Assert.areEqual('+91 98300 12301', b2c.Phone, 'Phone saved exactly as written');
         Assert.areEqual('Gold necklace', b2c.Description, 'Product Description saved');
         Assert.areEqual('Married', b2c.Marital_Status__c, 'Picklist matched regardless of case');

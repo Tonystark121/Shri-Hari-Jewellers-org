@@ -14,7 +14,7 @@
  *     required; phone must be 10 digits (a leading +91 or 91, spaces and
  *     dashes are fine) and is saved exactly as sent;
  *   - a blank company makes the Lead B2C (LeadTriggerHandler assigns
- *     "<Name> - B2C-<Lead Number>"); a company makes it B2B. businessType in
+ *     "<Name> Family (<Lead Number>)"); a company makes it B2B. businessType in
  *     the payload is ignored;
  *   - anniversaryDate only for a Married customer, after dateOfBirth;
  *   - an existing customer (same phone or email on an Account or Contact)

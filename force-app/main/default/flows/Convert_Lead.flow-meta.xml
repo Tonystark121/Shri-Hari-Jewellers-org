@@ -9,7 +9,7 @@
         <actionName>LeadTriggerHandler</actionName>
         <actionType>apex</actionType>
         <connector>
-            <targetReference>Convert_Form</targetReference>
+            <targetReference>Set_Default_Store</targetReference>
         </connector>
         <faultConnector>
             <targetReference>Set_Fault_Error</targetReference>
@@ -48,7 +48,7 @@
         <inputParameters>
             <name>accountName</name>
             <value>
-                <elementReference>Account_Name_Input</elementReference>
+                <elementReference>Account_Name_Value</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
@@ -325,22 +325,23 @@
             <targetReference>Error_Screen</targetReference>
         </connector>
     </assignments>
-    <choices>
-        <name>Choice_Existing_Customer</name>
-        <choiceText>Add to an existing customer</choiceText>
-        <dataType>String</dataType>
-        <value>
-            <stringValue>Existing</stringValue>
-        </value>
-    </choices>
-    <choices>
-        <name>Choice_New_Customer</name>
-        <choiceText>Create a new customer</choiceText>
-        <dataType>String</dataType>
-        <value>
-            <stringValue>New</stringValue>
-        </value>
-    </choices>
+    <assignments>
+        <description>Fills the bill&apos;s Store with the Lead&apos;s Store Association; staff can change it. Runs once, so a change survives a refused save.</description>
+        <name>Set_Default_Store</name>
+        <label>Set Default Store</label>
+        <locationX>176</locationX>
+        <locationY>512</locationY>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Store__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Get_Lead.Store_Association__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Convert_Form</targetReference>
+        </connector>
+    </assignments>
     <decisions>
         <description>Copies the redemption POS reported onto the bill; voucher fields are cleared when no voucher was redeemed.</description>
         <name>Is_Voucher_Reported</name>
@@ -473,15 +474,21 @@
         <description>A new Account when nothing matches or staff chose to create one.</description>
         <name>Create_New_Account</name>
         <dataType>Boolean</dataType>
-        <expression>OR(BLANKVALUE({!Check_Customer.matchingAccountCount}, 0) = 0, {!Customer_Choice} = &quot;New&quot;)</expression>
+        <expression>OR(BLANKVALUE({!Check_Customer.matchingAccountCount}, 0) = 0, {!Create_New_Customer_Input})</expression>
     </formulas>
     <formulas>
-        <description>The Company when a user typed it; the person&apos;s name when Company is the system&apos;s &quot;&lt;Name&gt; - B2C-&lt;number&gt;&quot;.</description>
+        <description>The Account Name shown: the one under the Lead when nothing matches, else the one under Create a new customer.</description>
+        <name>Account_Name_Value</name>
+        <dataType>String</dataType>
+        <expression>IF(BLANKVALUE({!Check_Customer.matchingAccountCount}, 0) = 0, {!Account_Name_Input}, {!New_Customer_Account_Name_Input})</expression>
+    </formulas>
+    <formulas>
+        <description>The Company when a user typed it (B2B); &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot; when Company is the system&apos;s (B2C), also for Leads that still hold the earlier &quot;&lt;Name&gt; - B2C-&lt;number&gt;&quot;.</description>
         <name>Default_Account_Name</name>
         <dataType>String</dataType>
         <expression>IF(
-  OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?&quot;)),
-  TRIM(BLANKVALUE({!Get_Lead.FirstName}, &quot;&quot;) &amp; &quot; &quot; &amp; {!Get_Lead.LastName}),
+  OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* Family [(][0-9]+[)]&quot;)),
+  TRIM(BLANKVALUE({!Get_Lead.FirstName}, &quot;&quot;) &amp; &quot; &quot; &amp; {!Get_Lead.LastName}) &amp; &quot; Family (&quot; &amp; {!Get_Lead.Lead_Number__c} &amp; &quot;)&quot;,
   TRIM({!Get_Lead.Company})
 )</expression>
     </formulas>
@@ -543,6 +550,8 @@
         <queriedFields>Name</queriedFields>
         <queriedFields>FirstName</queriedFields>
         <queriedFields>LastName</queriedFields>
+        <queriedFields>Lead_Number__c</queriedFields>
+        <queriedFields>Store_Association__c</queriedFields>
         <queriedFields>Company</queriedFields>
         <queriedFields>Business_Type__c</queriedFields>
         <queriedFields>Phone</queriedFields>
@@ -622,16 +631,9 @@
                 <name>Customer_Section_Column1</name>
                 <fieldType>Region</fieldType>
                 <fields>
-                    <name>Customer_Choice</name>
-                    <choiceReferences>Choice_Existing_Customer</choiceReferences>
-                    <choiceReferences>Choice_New_Customer</choiceReferences>
-                    <dataType>String</dataType>
-                    <defaultSelectedChoiceReference>Choice_Existing_Customer</defaultSelectedChoiceReference>
-                    <fieldText>Customer Account</fieldText>
-                    <fieldType>RadioButtons</fieldType>
-                    <helpText>&lt;p&gt;Add the bill to a customer already in Salesforce, or create a new customer when this is a different person (for example a family member sharing the phone).&lt;/p&gt;</helpText>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
+                    <name>Existing_Customer_Heading</name>
+                    <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;Add to an existing customer&lt;/strong&gt;&lt;/p&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
                     <visibilityRule>
                         <conditionLogic>and</conditionLogic>
                         <conditions>
@@ -651,22 +653,15 @@
                     </defaultValue>
                     <fieldText>Account Name</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company when one was typed, otherwise the person&apos;s name. Change it if needed.&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family (&amp;lt;Lead Number&amp;gt;)&quot;. Change it if needed.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
                     <visibilityRule>
-                        <conditionLogic>or</conditionLogic>
+                        <conditionLogic>and</conditionLogic>
                         <conditions>
                             <leftValueReference>Check_Customer.matchingAccountCount</leftValueReference>
                             <operator>EqualTo</operator>
                             <rightValue>
                                 <numberValue>0.0</numberValue>
-                            </rightValue>
-                        </conditions>
-                        <conditions>
-                            <leftValueReference>Customer_Choice</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <stringValue>New</stringValue>
                             </rightValue>
                         </conditions>
                     </visibilityRule>
@@ -727,7 +722,7 @@
             <inputParameters>
                 <name>shouldDisplayLabel</name>
                 <value>
-                    <booleanValue>true</booleanValue>
+                    <booleanValue>false</booleanValue>
                 </value>
             </inputParameters>
             <inputParameters>
@@ -755,13 +750,92 @@
                     </rightValue>
                 </conditions>
                 <conditions>
-                    <leftValueReference>Customer_Choice</leftValueReference>
+                    <leftValueReference>Create_New_Customer_Input</leftValueReference>
                     <operator>EqualTo</operator>
                     <rightValue>
-                        <stringValue>Existing</stringValue>
+                        <booleanValue>false</booleanValue>
                     </rightValue>
                 </conditions>
             </visibilityRule>
+        </fields>
+        <fields>
+            <name>New_Customer_Section</name>
+            <fieldType>RegionContainer</fieldType>
+            <fields>
+                <name>New_Customer_Section_Column1</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Create_New_Customer_Input</name>
+                    <dataType>Boolean</dataType>
+                    <defaultValue>
+                        <booleanValue>false</booleanValue>
+                    </defaultValue>
+                    <fieldText>Create a new customer</fieldText>
+                    <fieldType>InputField</fieldType>
+                    <helpText>&lt;p&gt;For a different person, for example a family member sharing the phone.&lt;/p&gt;</helpText>
+                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                    <isRequired>true</isRequired>
+                    <visibilityRule>
+                        <conditionLogic>and</conditionLogic>
+                        <conditions>
+                            <leftValueReference>Check_Customer.matchingAccountCount</leftValueReference>
+                            <operator>GreaterThan</operator>
+                            <rightValue>
+                                <numberValue>0.0</numberValue>
+                            </rightValue>
+                        </conditions>
+                    </visibilityRule>
+                </fields>
+                <fields>
+                    <name>New_Customer_Account_Name_Input</name>
+                    <dataType>String</dataType>
+                    <defaultValue>
+                        <elementReference>Default_Account_Name</elementReference>
+                    </defaultValue>
+                    <fieldText>Account Name</fieldText>
+                    <fieldType>InputField</fieldType>
+                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family (&amp;lt;Lead Number&amp;gt;)&quot;. Change it if needed.&lt;/p&gt;</helpText>
+                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                    <isRequired>true</isRequired>
+                    <visibilityRule>
+                        <conditionLogic>and</conditionLogic>
+                        <conditions>
+                            <leftValueReference>Check_Customer.matchingAccountCount</leftValueReference>
+                            <operator>GreaterThan</operator>
+                            <rightValue>
+                                <numberValue>0.0</numberValue>
+                            </rightValue>
+                        </conditions>
+                        <conditions>
+                            <leftValueReference>Create_New_Customer_Input</leftValueReference>
+                            <operator>EqualTo</operator>
+                            <rightValue>
+                                <booleanValue>true</booleanValue>
+                            </rightValue>
+                        </conditions>
+                    </visibilityRule>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <fields>
+                <name>New_Customer_Section_Column2</name>
+                <fieldType>Region</fieldType>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <isRequired>false</isRequired>
+            <regionContainerType>SectionWithoutHeader</regionContainerType>
         </fields>
         <fields>
             <name>Bill_Section</name>

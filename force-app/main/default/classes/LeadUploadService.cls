@@ -12,7 +12,7 @@
  *   - picklist values must be active values; Store by Store Code, Campaign
  *     by Campaign Name;
  *   - a blank Company makes the Lead B2C (LeadTriggerHandler assigns
- *     "<Name> - B2C-<Lead Number>"); a Company makes it B2B;
+ *     "<Name> Family (<Lead Number>)"); a Company makes it B2B;
  *   - an existing customer (same phone or email on an Account or Contact)
  *     gets an enquiry Case instead of a Lead - Origin Phone, Priority
  *     Medium, owned by the account owner;

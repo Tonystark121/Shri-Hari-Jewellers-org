@@ -80,7 +80,7 @@
         </connector>
     </assignments>
     <assignments>
-        <description>Copies the Name, Phone, Address and Company inputs onto the Lead. A blank Company means B2C: the system then assigns &quot;&lt;Name&gt; - B2C-&lt;Lead Number&gt;&quot;. The phone is kept exactly as typed.</description>
+        <description>Copies the Name, Phone, Address and Company inputs onto the Lead. A blank Company means B2C: the system then assigns &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot;. The phone is kept exactly as typed.</description>
         <name>Set_Lead_Fields</name>
         <label>Set Lead Fields</label>
         <locationX>176</locationX>
@@ -377,7 +377,7 @@
             <label>Open Lead</label>
         </rules>
     </decisions>
-    <description>New button on Lead. One screen laid out like the Lead page layout (Personal Details, Lead Details, Company Information). On Save the phone and email are checked: an existing customer gets an enquiry Case instead of a Lead; an open Lead with the same phone or email is shown as a banner on the form; otherwise the Lead is created. A blank Company makes the Lead B2C and the system assigns &quot;&lt;Name&gt; - B2C-&lt;Lead Number&gt;&quot;.</description>
+    <description>New button on Lead. One screen laid out like the Lead page layout (Personal Details, Lead Details, Company Information). On Save the phone and email are checked: an existing customer gets an enquiry Case instead of a Lead; an open Lead with the same phone or email is shown as a banner on the form; otherwise the Lead is created. A blank Company makes the Lead B2C and the system assigns &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot;.</description>
     <dynamicChoiceSets>
         <name>Case_Type_Choices</name>
         <dataType>Picklist</dataType>
@@ -429,7 +429,7 @@
   IF(
     ISBLANK({!Last_Name_Input}),
     &quot;Individual customer (B2C): a unique company is assigned on save.&quot;,
-    &quot;Individual customer (B2C): saved as &quot; &amp; {!Full_Name} &amp; &quot; - B2C-&lt;Lead Number&gt;&quot;
+    &quot;Individual customer (B2C): saved as &quot; &amp; {!Full_Name} &amp; &quot; Family (&lt;Lead Number&gt;)&quot;
   ),
   &quot;Business (B2B): saved as &quot; &amp; TRIM({!Company_Input})
 )</expression>
@@ -1031,7 +1031,7 @@
                     <dataType>String</dataType>
                     <fieldText>Company</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Leave blank for an individual customer (B2C): a unique company such as Asha Mehta - B2C-000123 is assigned on save. Enter the company name for a business (B2B).&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Leave blank for an individual customer (B2C): a unique company such as Asha Mehta Family (000123) is assigned on save. Enter the company name for a business (B2B).&lt;/p&gt;</helpText>
                     <isRequired>false</isRequired>
                 </fields>
                 <fields>

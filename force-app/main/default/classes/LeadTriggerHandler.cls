@@ -11,13 +11,15 @@
  *   Company is required on Lead, but a B2C customer has none. When Company
  *   is blank (uploads, API) or still holds the New Lead screen's default
  *   "<Name> - B2C", the Lead is B2C: Business Type is set to B2C and Company
- *   becomes "<Name> - B2C-<Lead Number>", e.g. Asha Mehta - B2C-000123.
+ *   becomes "<Name> Family (<Lead Number>)", e.g. Asha Mehta Family (000123).
  *   The Lead Number only exists once the Lead is saved, so it is added in
  *   after insert. A Company that was typed in is kept as it is.
  *
  *   On a B2C Lead the Company is then maintained by the system only: it
  *   follows name changes and cannot be changed by hand. (Company is
  *   system-required, so it cannot be made read-only on the page layout.)
+ *   Leads saved before this format keep "<Name> - B2C-<Lead Number>"; it
+ *   still follows name changes in that form.
  *
  * Existing customers
  *   A Lead whose phone or email belongs to an existing customer (Account or
@@ -138,6 +140,8 @@ public without sharing class LeadTriggerHandler {
             Boolean nameChanged = leadRecord.FirstName != oldLead.FirstName || leadRecord.LastName != oldLead.LastName;
             if (nameChanged && oldLead.Company == b2cCompany(oldLead)) {
                 leadRecord.Company = b2cCompany(leadRecord);
+            } else if (nameChanged && oldLead.Company == legacyB2cCompany(oldLead)) {
+                leadRecord.Company = legacyB2cCompany(leadRecord);
             }
         }
     }
@@ -195,15 +199,16 @@ public without sharing class LeadTriggerHandler {
 
     /**
      * True when Company was filled in by the system rather than typed by a
-     * user: blank, "<Name> - B2C" or "<Name> - B2C-<Lead Number>".
+     * user: blank, "<Name> - B2C", "<Name> Family (<Lead Number>)" or the
+     * earlier "<Name> - B2C-<Lead Number>".
      */
     public static Boolean isSystemCompany(String company) {
-        return String.isBlank(company) || Pattern.matches('(?i).* - B2C(-[0-9]+)?', company.trim());
+        return String.isBlank(company)
+            || Pattern.matches('(?i).* - B2C(-[0-9]+)?|.* Family [(][0-9]+[)]', company.trim());
     }
 
-    /** "<First Name> <Last Name> - B2C" */
-    @TestVisible
-    private static String companyStem(Lead leadRecord) {
+    /** "<First Name> <Last Name>" */
+    private static String personName(Lead leadRecord) {
         List<String> parts = new List<String>();
         if (String.isNotBlank(leadRecord.FirstName)) {
             parts.add(leadRecord.FirstName.trim());
@@ -211,12 +216,26 @@ public without sharing class LeadTriggerHandler {
         if (String.isNotBlank(leadRecord.LastName)) {
             parts.add(leadRecord.LastName.trim());
         }
-        return String.join(parts, ' ') + B2C_SUFFIX;
+        return String.join(parts, ' ');
     }
 
-    /** "<First Name> <Last Name> - B2C-<Lead Number>", e.g. Asha Mehta - B2C-000123. */
+    /** "<First Name> <Last Name> - B2C": the placeholder until the Lead Number exists. */
     @TestVisible
-    private static String b2cCompany(Lead leadRecord) {
+    private static String companyStem(Lead leadRecord) {
+        return personName(leadRecord) + B2C_SUFFIX;
+    }
+
+    /**
+     * "<First Name> <Last Name> Family (<Lead Number>)", e.g. Asha Mehta
+     * Family (000123). Also the name of the Account a B2C Lead converts into.
+     */
+    public static String b2cCompany(Lead leadRecord) {
+        return personName(leadRecord) + ' Family (' + leadRecord.Lead_Number__c + ')';
+    }
+
+    /** The earlier format, "<First Name> <Last Name> - B2C-<Lead Number>", kept by Leads saved before. */
+    @TestVisible
+    private static String legacyB2cCompany(Lead leadRecord) {
         return companyStem(leadRecord) + '-' + leadRecord.Lead_Number__c;
     }
 

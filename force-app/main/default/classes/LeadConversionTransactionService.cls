@@ -8,14 +8,15 @@
  *      later), an Account that already has the Lead's phone or email (or a
  *      Contact under it that has) is used. A new Account carries the Lead's
  *      phone, email and personal details (name: the Company when a user
- *      typed it, else the person - never the Lead's "<Name> - B2C-<number>"),
+ *      typed it (B2B), else "<Name> Family (<Lead Number>)" (B2C)).
  *      An existing Account keeps every value it has; only its blank Email,
  *      Business Type ("Unknown" counts as blank) and Description (the
  *      product description) are filled from the Lead,
  *   2. save the bill (Transaction_Record__c) on that Account,
  *   3. convert the Lead into that Account with Salesforce's own conversion,
- *      which creates the Contact (or merges into the one on that Account
- *      with the same phone or email), keeps the Lead history and creates no
+ *      which creates a new Contact on the Account from the Lead's details -
+ *      or, when a Contact there already has the Lead's name, phone and
+ *      email, merges into it - keeps the Lead history and creates no
  *      Opportunity.
  * Staff have already compared the matches, so the platform's duplicate
  * alerts do not stop the new Account or Contact.
@@ -54,7 +55,7 @@ public without sharing class LeadConversionTransactionService {
         @InvocableVariable(label='Lead Id' description='The Lead that bought.' required=true)
         public Id leadId;
 
-        @InvocableVariable(label='Account Name' description='Name for a new Account. Leave blank for the person (B2C) or the company (B2B). Not used when the Lead is an existing customer.')
+        @InvocableVariable(label='Account Name' description='Name for a new Account. Leave blank for "<Name> Family (<Lead Number>)" (B2C) or the company (B2B). Not used when the Lead is an existing customer.')
         public String accountName;
 
         // Text, not Id: a screen with nothing picked sends an empty value, which an Id input rejects.
@@ -398,7 +399,8 @@ public without sharing class LeadConversionTransactionService {
     /**
      * The existing customer Account for each request: the one picked on the
      * screen, else (unless a new Account was asked for) the one the Lead's
-     * phone or email already belongs to.
+     * phone or email already belongs to. Each comes with the Contact the Lead
+     * merges into, when that Account already has the same person.
      */
     private static Map<Integer, LeadTriggerHandler.Customer> existingCustomers(
         List<Integer> pending,
@@ -410,11 +412,25 @@ public without sharing class LeadConversionTransactionService {
         List<Integer> toMatch = new List<Integer>();
         for (Integer i : pending) {
             if (isPicked(requests[i])) {
-                byRequest.put(i, pickedCustomer(pickedAccounts.get(pickedAccountId(requests[i])), leadsById.get(requests[i].leadId)));
+                Account accountRecord = pickedAccounts.get(pickedAccountId(requests[i]));
+                byRequest.put(i, customerFor(accountRecord.Id, accountRecord.Name));
             } else if (requests[i].createNewAccount != true) {
                 toMatch.add(i);
             }
         }
+
+        byRequest.putAll(matchedCustomers(toMatch, requests, leadsById));
+        findSamePerson(byRequest, requests, leadsById);
+        return byRequest;
+    }
+
+    /** The Account the Lead's phone or email already belongs to, for each request that has one. */
+    private static Map<Integer, LeadTriggerHandler.Customer> matchedCustomers(
+        List<Integer> toMatch,
+        List<ConvertRequest> requests,
+        Map<Id, Lead> leadsById
+    ) {
+        Map<Integer, LeadTriggerHandler.Customer> byRequest = new Map<Integer, LeadTriggerHandler.Customer>();
         if (toMatch.isEmpty()) {
             return byRequest;
         }
@@ -450,10 +466,94 @@ public without sharing class LeadConversionTransactionService {
             // A Contact without an Account cannot take the bill; such a
             // person is treated as a new customer.
             if (customer != null && customer.accountId != null) {
-                byRequest.put(i, customer);
+                // A copy: findSamePerson sets the Contact per Lead.
+                byRequest.put(i, customerFor(customer.accountId, customer.accountName));
             }
         }
         return byRequest;
+    }
+
+    private static LeadTriggerHandler.Customer customerFor(Id accountId, String accountName) {
+        LeadTriggerHandler.Customer customer = new LeadTriggerHandler.Customer();
+        customer.accountId = accountId;
+        customer.accountName = accountName;
+        return customer;
+    }
+
+    /**
+     * Sets the Contact the Lead merges into: one on the customer's Account
+     * with the Lead's name, phone and email. When any of them differs, the
+     * contactId stays blank and the conversion creates a new Contact on the
+     * Account from the Lead's details.
+     */
+    private static void findSamePerson(
+        Map<Integer, LeadTriggerHandler.Customer> byRequest,
+        List<ConvertRequest> requests,
+        Map<Id, Lead> leadsById
+    ) {
+        Set<Id> accountIds = new Set<Id>();
+        for (LeadTriggerHandler.Customer customer : byRequest.values()) {
+            accountIds.add(customer.accountId);
+        }
+        if (accountIds.isEmpty()) {
+            return;
+        }
+
+        Map<Id, List<Contact>> contactsByAccount = new Map<Id, List<Contact>>();
+        for (Contact contactRecord : [
+            SELECT Id, AccountId, FirstName, LastName, Phone, MobilePhone, Email
+            FROM Contact
+            WHERE AccountId IN :accountIds
+            WITH SYSTEM_MODE
+            ORDER BY LastModifiedDate DESC
+        ]) {
+            if (!contactsByAccount.containsKey(contactRecord.AccountId)) {
+                contactsByAccount.put(contactRecord.AccountId, new List<Contact>());
+            }
+            contactsByAccount.get(contactRecord.AccountId).add(contactRecord);
+        }
+
+        for (Integer i : byRequest.keySet()) {
+            LeadTriggerHandler.Customer customer = byRequest.get(i);
+            Lead leadRecord = leadsById.get(requests[i].leadId);
+            List<Contact> contacts = contactsByAccount.get(customer.accountId);
+            if (contacts == null) {
+                continue;
+            }
+            for (Contact contactRecord : contacts) {
+                if (isSamePerson(contactRecord, leadRecord)) {
+                    customer.contactId = contactRecord.Id;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Same first name, last name, phone and email (names and email ignoring
+     * case and spaces around them, phone as 10 digits on the Contact's Phone
+     * or Mobile). A value blank on both counts as the same.
+     */
+    @TestVisible
+    private static Boolean isSamePerson(Contact contactRecord, Lead leadRecord) {
+        if (!sameText(contactRecord.FirstName, leadRecord.FirstName)
+            || !sameText(contactRecord.LastName, leadRecord.LastName)
+            || !sameText(contactRecord.Email, leadRecord.Email)) {
+            return false;
+        }
+
+        String phone = LeadTriggerHandler.normalizePhone(leadRecord.Phone);
+        if (String.isBlank(phone)) {
+            return String.isBlank(contactRecord.Phone) && String.isBlank(contactRecord.MobilePhone);
+        }
+        return phone == LeadTriggerHandler.normalizePhone(contactRecord.Phone)
+            || phone == LeadTriggerHandler.normalizePhone(contactRecord.MobilePhone);
+    }
+
+    private static Boolean sameText(String first, String second) {
+        String a = String.isBlank(first) ? '' : first.trim();
+        String b = String.isBlank(second) ? '' : second.trim();
+        return a.equalsIgnoreCase(b);
     }
 
     /** True when the screen picked an existing Account (and did not ask for a new one). */
@@ -471,7 +571,7 @@ public without sharing class LeadConversionTransactionService {
         }
     }
 
-    /** The picked Accounts with their Contacts, to find the person among them. */
+    /** The picked Accounts. */
     private static Map<Id, Account> pickedAccounts(List<ConvertRequest> requests) {
         Set<Id> accountIds = new Set<Id>();
         for (ConvertRequest request : requests) {
@@ -483,39 +583,11 @@ public without sharing class LeadConversionTransactionService {
             return new Map<Id, Account>();
         }
         return new Map<Id, Account>([
-            SELECT Id, Name,
-                   (SELECT Id, Phone, MobilePhone, Email FROM Contacts ORDER BY LastModifiedDate DESC)
+            SELECT Id, Name
             FROM Account
             WHERE Id IN :accountIds
             WITH SYSTEM_MODE
         ]);
-    }
-
-    /**
-     * The picked Account, with the Contact on it that has the Lead's phone or
-     * email - the Lead merges into that Contact instead of creating a second
-     * one. Without such a Contact a new one is created on the Account.
-     */
-    private static LeadTriggerHandler.Customer pickedCustomer(Account accountRecord, Lead leadRecord) {
-        LeadTriggerHandler.Customer customer = new LeadTriggerHandler.Customer();
-        customer.accountId = accountRecord.Id;
-        customer.accountName = accountRecord.Name;
-
-        String phone = LeadTriggerHandler.normalizePhone(leadRecord.Phone);
-        Boolean hasPhone = LeadTriggerHandler.isValidPhone(phone);
-        for (Contact contactRecord : accountRecord.Contacts) {
-            Boolean samePhone = hasPhone && (
-                LeadTriggerHandler.normalizePhone(contactRecord.Phone) == phone
-                || LeadTriggerHandler.normalizePhone(contactRecord.MobilePhone) == phone
-            );
-            Boolean sameEmail = String.isNotBlank(leadRecord.Email) && String.isNotBlank(contactRecord.Email)
-                && leadRecord.Email.trim().equalsIgnoreCase(contactRecord.Email.trim());
-            if (samePhone || sameEmail) {
-                customer.contactId = contactRecord.Id;
-                break;
-            }
-        }
-        return customer;
     }
 
     // =====================================================================
@@ -545,7 +617,7 @@ public without sharing class LeadConversionTransactionService {
             return new Map<Id, Lead>();
         }
         return new Map<Id, Lead>([
-            SELECT Id, FirstName, LastName, Company, Business_Type__c, Phone, Email, IsConverted, OwnerId,
+            SELECT Id, FirstName, LastName, Company, Lead_Number__c, Business_Type__c, Phone, Email, IsConverted, OwnerId,
                    Date_of_Birth__c, Anniversary_Date__c, Marital_Status__c, Description,
                    Store_Association__c, Campaign_Attribution__c
             FROM Lead
@@ -556,8 +628,9 @@ public without sharing class LeadConversionTransactionService {
     }
 
     /**
-     * The name entered on the screen, else the Company when a user typed it,
-     * else the person's name (never the system's "<Name> - B2C-<number>").
+     * The name entered on the screen, else the Company when a user typed it
+     * (B2B), else "<Name> Family (<Lead Number>)" (B2C) - also for Leads that
+     * still hold the earlier "<Name> - B2C-<number>".
      */
     @TestVisible
     private static String accountNameFor(ConvertRequest request, Lead leadRecord) {
@@ -567,9 +640,7 @@ public without sharing class LeadConversionTransactionService {
         if (!LeadTriggerHandler.isSystemCompany(leadRecord.Company)) {
             return leadRecord.Company.trim();
         }
-        return String.isBlank(leadRecord.FirstName)
-            ? leadRecord.LastName.trim()
-            : (leadRecord.FirstName.trim() + ' ' + leadRecord.LastName.trim());
+        return LeadTriggerHandler.b2cCompany(leadRecord);
     }
 
     private static Boolean isOwnedByUser(Lead leadRecord) {

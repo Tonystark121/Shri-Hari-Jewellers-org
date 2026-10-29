@@ -110,7 +110,7 @@ private class ShreeHariLeadRestResourceTest {
             FROM Lead
             LIMIT 1
         ];
-        Assert.isTrue(saved.Company.startsWith('Ananya Sharma - B2C-'), 'A blank company makes a B2C Lead: ' + saved.Company);
+        Assert.isTrue(saved.Company.startsWith('Ananya Sharma Family ('), 'A blank company makes a B2C Lead: ' + saved.Company);
         Assert.areEqual('B2C', saved.Business_Type__c, 'B2C, as on the New Lead screen');
         Assert.areEqual(saved.Company, response.get('company'), 'The response reports the company saved');
         Assert.areEqual('+91-9830012345', saved.Phone, 'Phone is saved exactly as sent');

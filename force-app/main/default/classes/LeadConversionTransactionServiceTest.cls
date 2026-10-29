@@ -59,7 +59,7 @@ private class LeadConversionTransactionServiceTest {
     // New customer
     // =====================================================================
 
-    /** A new customer gets an Account (named after the person), a Contact and the bill, and the Lead converts. */
+    /** A new customer gets an Account (named "<Name> Family (<Lead Number>)"), a Contact and the bill, and the Lead converts. */
     @IsTest
     static void aNewCustomerGetsAnAccountContactAndBill() {
         Lead walkIn = enquiry('Asha', 'Mehta');
@@ -84,7 +84,8 @@ private class LeadConversionTransactionServiceTest {
             SELECT Name, Phone, Email__c, Business_Type__c, Date_of_Birth__c
             FROM Account WHERE Id = :result.accountId WITH SYSTEM_MODE
         ];
-        Assert.areEqual('Asha Mehta', customer.Name, 'Named after the person, not the Lead Company');
+        String leadNumber = [SELECT Lead_Number__c FROM Lead WHERE Id = :walkIn.Id WITH SYSTEM_MODE].Lead_Number__c;
+        Assert.areEqual('Asha Mehta Family (' + leadNumber + ')', customer.Name, 'Named after the family');
         Assert.areEqual(walkIn.Phone, customer.Phone, 'Phone carried over');
         Assert.areEqual(walkIn.Email, customer.Email__c, 'Email carried over');
         Assert.areEqual('B2C', customer.Business_Type__c, 'Business Type carried over');
@@ -112,22 +113,38 @@ private class LeadConversionTransactionServiceTest {
         Assert.areEqual('Agarwal Jewellers Pvt Ltd', result.accountName, 'Company name for a business');
     }
 
-    /** A B2C Lead's Account is named after the person, never the system's "<Name> - B2C-<number>" Company. */
+    /** A B2C Lead's Account takes the Lead's Company, "<Name> Family (<Lead Number>)". */
     @IsTest
-    static void aB2cAccountIsNamedAfterThePerson() {
+    static void aB2cAccountIsNamedAfterTheFamily() {
         Lead person = enquiry('Asha', 'Mehta');
         insert person;
-        Assert.isTrue(
-            [SELECT Company FROM Lead WHERE Id = :person.Id WITH SYSTEM_MODE].Company.contains(' - B2C-'),
-            'The trigger gave the Lead a system Company'
-        );
+        Lead saved = [SELECT Company, Lead_Number__c FROM Lead WHERE Id = :person.Id WITH SYSTEM_MODE];
+        Assert.areEqual('Asha Mehta Family (' + saved.Lead_Number__c + ')', saved.Company, 'The trigger gave the Lead a system Company');
 
         Test.startTest();
         LeadConversionTransactionService.ConvertResult result = convertOne(person.Id, null, bill('CTS-0015', 1000));
         Test.stopTest();
 
         Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
-        Assert.areEqual('Asha Mehta', result.accountName, 'The person, not the system Company');
+        Assert.areEqual(saved.Company, result.accountName, 'Same as the Lead Company');
+    }
+
+    /** A Lead that still holds the earlier "<Name> - B2C-<number>" Company also gets a "<Name> Family (<number>)" Account. */
+    @IsTest
+    static void anEarlierFormatLeadGetsAFamilyAccount() {
+        Lead person = enquiry('Kiran', 'Rao');
+        person.Company = 'Placeholder';
+        insert person;
+        String leadNumber = [SELECT Lead_Number__c FROM Lead WHERE Id = :person.Id WITH SYSTEM_MODE].Lead_Number__c;
+        // Recreate a Lead from before the change: B2C with the earlier Company.
+        update new Lead(Id = person.Id, Business_Type__c = 'B2C', Company = 'Kiran Rao - B2C-' + leadNumber);
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = convertOne(person.Id, null, bill('CTS-0016', 1000));
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areEqual('Kiran Rao Family (' + leadNumber + ')', result.accountName, 'The new format');
     }
 
     /** A name typed on the screen wins. */
@@ -191,14 +208,20 @@ private class LeadConversionTransactionServiceTest {
         );
     }
 
-    /** A matching Contact is reused instead of a second Contact being created. */
+    /** A Contact with the Lead's name, phone and email is reused instead of a second Contact being created. */
     @IsTest
     static void aMatchingContactIsReused() {
         Lead returning = enquiry('Sanjay', 'Gupta');
         insert returning;
         Account household = new Account(Name = 'Gupta Household');
         insert household;
-        Contact person = new Contact(LastName = 'Gupta', AccountId = household.Id, Email = returning.Email);
+        Contact person = new Contact(
+            FirstName = 'sanjay',
+            LastName = 'Gupta',
+            AccountId = household.Id,
+            Phone = '+91 ' + returning.Phone,
+            Email = returning.Email.toUpperCase()
+        );
         // The org's Contact duplicate rule alerts on the matching Lead; save anyway.
         Database.DMLOptions options = new Database.DMLOptions();
         options.DuplicateRuleHeader.allowSave = true;
@@ -213,7 +236,11 @@ private class LeadConversionTransactionServiceTest {
         Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'No second Contact');
     }
 
-    /** Of several matching customers, the one picked on the screen gets the bill, and its matching Contact is reused. */
+    /**
+     * Of several matching customers, the one picked on the screen gets the
+     * bill. Its Contact with the same phone is another person, so the Lead
+     * gets a new Contact on that Account.
+     */
     @IsTest
     static void thePickedAccountIsUsed() {
         Lead returning = enquiry('Meera', 'Iyer');
@@ -238,9 +265,62 @@ private class LeadConversionTransactionServiceTest {
         Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
         Assert.isTrue(result.isExistingCustomer, 'An existing customer');
         Assert.areEqual(picked.Id, result.accountId, 'The picked Account is used');
-        Assert.areEqual(person.Id, result.contactId, 'Its Contact with the same phone is reused');
+        Assert.areNotEqual(person.Id, result.contactId, 'The other person is not reused');
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'No new Account');
-        Assert.areEqual(1, [SELECT COUNT() FROM Contact], 'No new Contact');
+
+        Contact created = [
+            SELECT AccountId, FirstName, LastName, Phone, Email FROM Contact WHERE Id = :result.contactId WITH SYSTEM_MODE
+        ];
+        Assert.areEqual(picked.Id, created.AccountId, 'The new Contact is on the picked Account');
+        Assert.areEqual('Meera', created.FirstName, 'With the Lead name');
+        Assert.areEqual('Iyer', created.LastName, 'With the Lead name');
+        Assert.areEqual(returning.Phone, created.Phone, 'With the Lead phone');
+        Assert.areEqual(returning.Email, created.Email, 'With the Lead email');
+    }
+
+    /** Same name and phone but a different email is another person: a new Contact. */
+    @IsTest
+    static void aDifferentEmailGetsANewContact() {
+        Lead returning = enquiry('Aparna', 'Gupta');
+        insert returning;
+        Account household = new Account(Name = 'Gupta Family');
+        insert household;
+        Contact other = new Contact(
+            FirstName = 'Aparna',
+            LastName = 'Gupta',
+            AccountId = household.Id,
+            Phone = returning.Phone,
+            Email = 'someone.else@customer.example.com'
+        );
+        Database.DMLOptions options = new Database.DMLOptions();
+        options.DuplicateRuleHeader.allowSave = true;
+        Database.insert(other, options);
+
+        LeadConversionTransactionService.ConvertRequest conversionRequest = request(returning.Id, null, bill('CTS-0017', 2500));
+        conversionRequest.accountId = household.Id;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ conversionRequest }
+        )[0];
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areNotEqual(other.Id, result.contactId, 'A new Contact');
+        Assert.areEqual(2, [SELECT COUNT() FROM Contact WHERE AccountId = :household.Id], 'Both on the household');
+    }
+
+    /** A value blank on both sides counts as the same; blank on one side does not. */
+    @IsTest
+    static void tellsTheSamePerson() {
+        Lead leadRecord = new Lead(FirstName = 'Ravi', LastName = 'Shah', Phone = '98300 12345');
+        Contact samePerson = new Contact(FirstName = ' ravi ', LastName = 'SHAH', MobilePhone = '+91-9830012345');
+        Contact withEmail = new Contact(FirstName = 'Ravi', LastName = 'Shah', Phone = '9830012345', Email = 'ravi@customer.example.com');
+        Contact otherPhone = new Contact(FirstName = 'Ravi', LastName = 'Shah', Phone = '9830099999');
+
+        Assert.isTrue(LeadConversionTransactionService.isSamePerson(samePerson, leadRecord), 'Case, spaces and phone format ignored');
+        Assert.isFalse(LeadConversionTransactionService.isSamePerson(withEmail, leadRecord), 'Email only on the Contact');
+        Assert.isFalse(LeadConversionTransactionService.isSamePerson(otherPhone, leadRecord), 'Different phone');
     }
 
     /**
