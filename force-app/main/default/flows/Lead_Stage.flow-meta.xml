@@ -360,7 +360,7 @@
     </assignments>
     <choices>
         <name>Choice_None</name>
-        <choiceText>None</choiceText>
+        <choiceText>No Stage Change</choiceText>
         <dataType>String</dataType>
         <value>
             <stringValue>None</stringValue>
@@ -473,7 +473,7 @@
         <label>New Next Step</label>
         <locationX>50</locationX>
         <locationY>780</locationY>
-        <defaultConnectorLabel>None - nothing to save</defaultConnectorLabel>
+        <defaultConnectorLabel>No stage selected</defaultConnectorLabel>
         <rules>
             <name>New_To_Contacted</name>
             <conditionLogic>and</conditionLogic>
@@ -540,7 +540,7 @@
         <label>Contacted Next Step</label>
         <locationX>450</locationX>
         <locationY>780</locationY>
-        <defaultConnectorLabel>None and nothing changed</defaultConnectorLabel>
+        <defaultConnectorLabel>No stage change, nothing changed</defaultConnectorLabel>
         <rules>
             <name>Contacted_Stay</name>
             <conditionLogic>and</conditionLogic>
@@ -561,7 +561,7 @@
             <connector>
                 <targetReference>Set_Stay_Contacted</targetReference>
             </connector>
-            <label>None, details changed</label>
+            <label>No stage change, details changed</label>
         </rules>
         <rules>
             <name>Contacted_To_Unqualified</name>
@@ -614,7 +614,7 @@
         <label>Qualified Next Step</label>
         <locationX>850</locationX>
         <locationY>780</locationY>
-        <defaultConnectorLabel>None - nothing to save</defaultConnectorLabel>
+        <defaultConnectorLabel>No stage change - nothing to save</defaultConnectorLabel>
         <rules>
             <name>Qualified_To_Unqualified</name>
             <conditionLogic>and</conditionLogic>
@@ -823,14 +823,12 @@
         </fields>
         <fields>
             <name>New_Select_Stage</name>
-            <choiceReferences>Choice_None</choiceReferences>
             <choiceReferences>Choice_Contacted</choiceReferences>
             <choiceReferences>Choice_Unqualified</choiceReferences>
             <choiceReferences>Choice_Qualified</choiceReferences>
             <choiceReferences>Choice_Converted</choiceReferences>
             <dataType>String</dataType>
-            <defaultSelectedChoiceReference>Choice_None</defaultSelectedChoiceReference>
-            <fieldText>Select Stage</fieldText>
+            <fieldText>Select Next Stage</fieldText>
             <fieldType>RadioButtons</fieldType>
             <isRequired>true</isRequired>
         </fields>
@@ -868,10 +866,10 @@
                     <dataType>DateTime</dataType>
                     <fieldText>Follow-up Date and Time</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;When you will contact the customer next. It must be later than now.&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;When you will contact the customer next. It cannot be in the past.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
                     <validationRule>
-                        <errorMessage>&lt;p&gt;Follow-up Date and Time must be later than now.&lt;/p&gt;</errorMessage>
+                        <errorMessage>&lt;p&gt;Follow-up Date and Time cannot be in the past.&lt;/p&gt;</errorMessage>
                         <formulaExpression>{!New_Follow_Up} &gt; {!$Flow.CurrentDateTime}</formulaExpression>
                     </validationRule>
                 </fields>
@@ -1121,21 +1119,6 @@
                         <formulaExpression>OR(TRIM(BLANKVALUE({!Contacted_Contacted_Remark}, "")) = TRIM(BLANKVALUE({!Get_Lead.Contacted_Remark__c}, "")), AND(LEN(TRIM({!Contacted_Contacted_Remark})) &gt; 0, LEN({!Contacted_Contacted_Remark}) &lt;= 5000))</formulaExpression>
                     </validationRule>
                 </fields>
-                <fields>
-                    <name>Contacted_Follow_Up</name>
-                    <dataType>DateTime</dataType>
-                    <defaultValue>
-                        <elementReference>Get_Lead.Follow_up_Date_Time__c</elementReference>
-                    </defaultValue>
-                    <fieldText>Follow-up Date and Time</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;When you will contact the customer next. A new date must be later than now.&lt;/p&gt;</helpText>
-                    <isRequired>false</isRequired>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Follow-up Date and Time must be later than now.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>OR(BLANKVALUE({!Contacted_Follow_Up}, DATETIMEVALUE("1900-01-01 00:00:00")) = BLANKVALUE({!Get_Lead.Follow_up_Date_Time__c}, DATETIMEVALUE("1900-01-01 00:00:00")), {!Contacted_Follow_Up} &gt; {!$Flow.CurrentDateTime})</formulaExpression>
-                    </validationRule>
-                </fields>
                 <inputParameters>
                     <name>width</name>
                     <value>
@@ -1147,6 +1130,21 @@
             <fields>
                 <name>Contacted_Contacted_Fields_Column2</name>
                 <fieldType>Region</fieldType>
+                <fields>
+                    <name>Contacted_Follow_Up</name>
+                    <dataType>DateTime</dataType>
+                    <defaultValue>
+                        <elementReference>Get_Lead.Follow_up_Date_Time__c</elementReference>
+                    </defaultValue>
+                    <fieldText>Follow-up Date and Time</fieldText>
+                    <fieldType>InputField</fieldType>
+                    <helpText>&lt;p&gt;When you will contact the customer next. It cannot be in the past.&lt;/p&gt;</helpText>
+                    <isRequired>true</isRequired>
+                    <validationRule>
+                        <errorMessage>&lt;p&gt;Follow-up Date and Time cannot be in the past.&lt;/p&gt;</errorMessage>
+                        <formulaExpression>{!Contacted_Follow_Up} &gt; {!$Flow.CurrentDateTime}</formulaExpression>
+                    </validationRule>
+                </fields>
                 <inputParameters>
                     <name>width</name>
                     <value>
@@ -1176,7 +1174,7 @@
             <choiceReferences>Choice_Converted</choiceReferences>
             <dataType>String</dataType>
             <defaultSelectedChoiceReference>Choice_None</defaultSelectedChoiceReference>
-            <fieldText>Select Stage</fieldText>
+            <fieldText>Select Next Stage</fieldText>
             <fieldType>RadioButtons</fieldType>
             <isRequired>true</isRequired>
         </fields>
@@ -1475,7 +1473,7 @@
             <choiceReferences>Choice_Unqualified</choiceReferences>
             <dataType>String</dataType>
             <defaultSelectedChoiceReference>Choice_None</defaultSelectedChoiceReference>
-            <fieldText>Select Stage</fieldText>
+            <fieldText>Select Next Stage</fieldText>
             <fieldType>RadioButtons</fieldType>
             <isRequired>true</isRequired>
         </fields>

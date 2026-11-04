@@ -110,7 +110,7 @@ private class ShreeHariLeadRestResourceTest {
             FROM Lead
             LIMIT 1
         ];
-        Assert.isTrue(saved.Company.startsWith('Ananya Sharma Family ('), 'A blank company makes a B2C Lead: ' + saved.Company);
+        Assert.isTrue(saved.Company.startsWith('Ananya Sharma B2C ('), 'A blank company makes a B2C Lead: ' + saved.Company);
         Assert.areEqual('B2C', saved.Business_Type__c, 'B2C, as on the New Lead screen');
         Assert.areEqual(saved.Company, response.get('company'), 'The response reports the company saved');
         Assert.areEqual('+91-9830012345', saved.Phone, 'Phone is saved exactly as sent');
@@ -246,6 +246,36 @@ private class ShreeHariLeadRestResourceTest {
         Assert.areEqual('+91 98300 12399', enquiry.SuppliedPhone, 'Phone as sent');
         Assert.areEqual('Shopify', enquiry.Lead_Source__c, 'Lead source kept');
         Assert.isNotNull(enquiry.Store__c, 'Store kept');
+    }
+
+    @IsTest
+    static void aCustomerKnownOnlyAsAContactGetsAnAccountWithTheEnquiry() {
+        Contact person = new Contact(FirstName = 'Ananya', LastName = 'Sharma', MobilePhone = '9830012322');
+        insert person;
+
+        Map<String, Object> response = post(body(new Map<String, Object>{
+            'firstName' => 'Ananya',
+            'phone' => '+91 98300 12322',
+            'storeCode' => STORE_CODE
+        }));
+
+        Assert.areEqual(201, statusOf(response), 'Accepted, not a server error: ' + response);
+        Assert.areEqual('ENQUIRY_CREATED', response.get('action'), 'An enquiry, not a Lead');
+        Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'No Lead is created');
+
+        Account created = [SELECT Id, Name, Business_Type__c, OwnerId, Primary_Store__c FROM Account WITH SYSTEM_MODE];
+        Assert.areEqual('Ananya Sharma Family', created.Name, 'Named as on conversion');
+        Assert.areEqual('B2C', created.Business_Type__c, 'A blank company is B2C');
+        Assert.areEqual(UserInfo.getUserId(), created.OwnerId, 'Owned by the integration user');
+        Assert.isNotNull(created.Primary_Store__c, 'Primary Store from the store sent');
+        Assert.areEqual(created.Id, response.get('accountId'), 'The new Account is returned');
+        Assert.areEqual(created.Id, [SELECT AccountId FROM Contact WHERE Id = :person.Id].AccountId,
+            'The Contact is moved under it');
+
+        Id caseId = (Id) response.get('caseId');
+        Case enquiry = [SELECT AccountId, ContactId FROM Case WHERE Id = :caseId WITH SYSTEM_MODE];
+        Assert.areEqual(created.Id, enquiry.AccountId, 'The enquiry is on the new Account');
+        Assert.areEqual(person.Id, enquiry.ContactId, 'For the Contact');
     }
 
     @IsTest

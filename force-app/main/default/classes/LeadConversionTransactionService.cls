@@ -8,11 +8,13 @@
  *      later), an Account that already has the Lead's phone or email (or a
  *      Contact under it that has) is used. A new Account carries the Lead's
  *      phone, email and personal details (name: the Company when a user
- *      typed it (B2B), else "<Name> Family (<Lead Number>)" (B2C)).
+ *      typed it (B2B), else "<Name> Family" (B2C), e.g. Asha Mehta Family).
  *      An existing Account keeps every value it has; its blank Email and
  *      Business Type ("Unknown" counts as blank) are filled from the Lead,
  *      and the Lead's Description (the product description) is added to
- *      the Account's on a new line,
+ *      the Account's on a new line. A B2C Lead's name is added to a family
+ *      Account's name: "Asha Mehta Family" + Rohit Mehta becomes "Asha Mehta
+ *      & Rohit Mehta Family" (see familyAccountNameWith),
  *   2. save the bill (Transaction_Record__c) on that Account,
  *   3. convert the Lead into that Account with Salesforce's own conversion,
  *      which creates a new Contact on the Account from the Lead's details -
@@ -42,6 +44,8 @@ public without sharing class LeadConversionTransactionService {
     private static final Integer ACCOUNT_NAME_MAX_LENGTH = 255;
     /** The Account default: a placeholder, so it is replaced like a blank. */
     private static final String BUSINESS_TYPE_UNKNOWN = 'Unknown';
+    private static final String FAMILY_SUFFIX = ' Family';
+    private static final String MEMBER_SEPARATOR = ' & ';
 
     /** True only while this class converts Leads; see LeadTriggerHandler. */
     private static Boolean converting = false;
@@ -58,7 +62,7 @@ public without sharing class LeadConversionTransactionService {
         @InvocableVariable(label='Lead Id' description='The Lead that bought.' required=true)
         public Id leadId;
 
-        @InvocableVariable(label='Account Name' description='Name for a new Account. Leave blank for "<Name> Family (<Lead Number>)" (B2C) or the company (B2B). Not used when the Lead is an existing customer.')
+        @InvocableVariable(label='Account Name' description='Name for a new Account. Leave blank for "<Name> Family" (B2C) or the company (B2B). Not used when the Lead is an existing customer.')
         public String accountName;
 
         // Text, not Id: a screen with nothing picked sends an empty value, which an Id input rejects.
@@ -222,10 +226,17 @@ public without sharing class LeadConversionTransactionService {
             }
         }
 
-        // Existing customers: their blank details ------------------------------
-        failures = fillBlankDetails(pending, requests, leadsById, customerByRequest);
+        // Existing customers: their blank details and family name -----------
+        Map<Id, String> customerNames = new Map<Id, String>();
+        failures = fillBlankDetails(pending, requests, leadsById, customerByRequest, customerNames);
         if (!failures.isEmpty()) {
             return failures;
+        }
+        for (Integer i : pending) {
+            LeadTriggerHandler.Customer customer = customerByRequest.get(i);
+            if (customer != null && customerNames.containsKey(customer.accountId)) {
+                accountNameByRequest.put(i, customerNames.get(customer.accountId));
+            }
         }
 
         // Bill -----------------------------------------------------------------
@@ -362,18 +373,25 @@ public without sharing class LeadConversionTransactionService {
      * the Account are kept; Business Type "Unknown" (the Account default)
      * counts as blank. Salesforce's own conversion fills the other blank
      * mapped fields.
+     *
+     * Each B2C Lead's name is also added to a family Account's name (see
+     * familyAccountNameWith); a B2B Lead leaves the name as it is. The
+     * resulting name of every existing customer Account is put in
+     * accountNames.
      */
     private static Map<Integer, String> fillBlankDetails(
         List<Integer> pending,
         List<ConvertRequest> requests,
         Map<Id, Lead> leadsById,
-        Map<Integer, LeadTriggerHandler.Customer> customerByRequest
+        Map<Integer, LeadTriggerHandler.Customer> customerByRequest,
+        Map<Id, String> accountNames
     ) {
         Map<Integer, String> failures = new Map<Integer, String>();
         // The first Lead for an Account fills its blanks; later ones find
         // nothing blank. Every Lead's Description is added, in order.
         Map<Id, Integer> requestByAccount = new Map<Id, Integer>();
         Map<Id, List<String>> descriptionsByAccount = new Map<Id, List<String>>();
+        Map<Id, List<String>> membersByAccount = new Map<Id, List<String>>();
         for (Integer i : pending) {
             LeadTriggerHandler.Customer customer = customerByRequest.get(i);
             if (customer == null) {
@@ -382,10 +400,15 @@ public without sharing class LeadConversionTransactionService {
             if (!requestByAccount.containsKey(customer.accountId)) {
                 requestByAccount.put(customer.accountId, i);
                 descriptionsByAccount.put(customer.accountId, new List<String>());
+                membersByAccount.put(customer.accountId, new List<String>());
             }
-            String description = leadsById.get(requests[i].leadId).Description;
+            Lead leadRecord = leadsById.get(requests[i].leadId);
+            String description = leadRecord.Description;
             if (String.isNotBlank(description)) {
                 descriptionsByAccount.get(customer.accountId).add(description.trim());
+            }
+            if (LeadTriggerHandler.isSystemCompany(leadRecord.Company)) {
+                membersByAccount.get(customer.accountId).add(LeadTriggerHandler.personName(leadRecord));
             }
         }
         if (requestByAccount.isEmpty()) {
@@ -396,7 +419,7 @@ public without sharing class LeadConversionTransactionService {
         List<Account> updates = new List<Account>();
         List<Integer> updatedRequests = new List<Integer>();
         for (Account accountRecord : [
-            SELECT Id, Email__c, Business_Type__c, Description
+            SELECT Id, Name, Email__c, Business_Type__c, Description
             FROM Account
             WHERE Id IN :accountIds
             WITH SYSTEM_MODE
@@ -405,6 +428,19 @@ public without sharing class LeadConversionTransactionService {
             Lead leadRecord = leadsById.get(requests[i].leadId);
             Account changes = new Account(Id = accountRecord.Id);
             Boolean changed = false;
+
+            String name = accountRecord.Name;
+            for (String member : membersByAccount.get(accountRecord.Id)) {
+                String withMember = familyAccountNameWith(name, member);
+                if (withMember != null) {
+                    name = withMember;
+                }
+            }
+            if (!name.equals(accountRecord.Name)) {
+                changes.Name = name;
+                changed = true;
+            }
+            accountNames.put(accountRecord.Id, name);
 
             if (String.isBlank(accountRecord.Email__c) && String.isNotBlank(leadRecord.Email)) {
                 changes.Email__c = leadRecord.Email;
@@ -700,8 +736,8 @@ public without sharing class LeadConversionTransactionService {
 
     /**
      * The name entered on the screen, else the Company when a user typed it
-     * (B2B), else "<Name> Family (<Lead Number>)" (B2C) - also for Leads that
-     * still hold the earlier "<Name> - B2C-<number>".
+     * (B2B), else "<Name> Family" (B2C) - whichever format the Lead's system
+     * Company is in.
      */
     @TestVisible
     private static String accountNameFor(ConvertRequest request, Lead leadRecord) {
@@ -711,7 +747,45 @@ public without sharing class LeadConversionTransactionService {
         if (!LeadTriggerHandler.isSystemCompany(leadRecord.Company)) {
             return leadRecord.Company.trim();
         }
-        return LeadTriggerHandler.b2cCompany(leadRecord);
+        return familyAccountName(LeadTriggerHandler.personName(leadRecord));
+    }
+
+    // =====================================================================
+    // Family Account names
+    // =====================================================================
+
+    /** "<Name> Family", e.g. Asha Mehta Family: a new B2C customer's Account. */
+    public static String familyAccountName(String personName) {
+        return personName.trim() + FAMILY_SUFFIX;
+    }
+
+    /**
+     * The family Account's name with one more member, e.g. "Asha Mehta
+     * Family" + Rohit Mehta = "Asha Mehta & Rohit Mehta Family". Null - keep
+     * the name as it is - when it does not end in "Family" (a business, or a
+     * name given by hand), already holds that person's name, or would go over
+     * the 255-character limit.
+     */
+    public static String familyAccountNameWith(String accountName, String personName) {
+        if (String.isBlank(accountName) || String.isBlank(personName)) {
+            return null;
+        }
+        String trimmed = accountName.trim();
+        if (!trimmed.endsWithIgnoreCase(FAMILY_SUFFIX)) {
+            return null;
+        }
+        String members = trimmed.left(trimmed.length() - FAMILY_SUFFIX.length()).trim();
+        if (String.isBlank(members)) {
+            return null;
+        }
+        String person = personName.trim();
+        for (String member : members.split(MEMBER_SEPARATOR)) {
+            if (member.trim().equalsIgnoreCase(person)) {
+                return null;
+            }
+        }
+        String withMember = members + MEMBER_SEPARATOR + person + FAMILY_SUFFIX;
+        return withMember.length() > ACCOUNT_NAME_MAX_LENGTH ? null : withMember;
     }
 
     private static Boolean isOwnedByUser(Lead leadRecord) {

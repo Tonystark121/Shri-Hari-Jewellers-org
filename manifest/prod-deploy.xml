@@ -37,6 +37,7 @@
         <name>CompactLayout</name>
     </types>
     <types>
+        <members>Activity.Follow_up_Date_Time__c</members>
         <members>Account.AccountNumber</members>
         <members>Account.AccountSource</members>
         <members>Account.Anniversary_Date__c</members>
@@ -300,6 +301,7 @@
         <members>Convert_Lead</members>
         <members>Create_Gift_Voucher</members>
         <members>Lead_Stage</members>
+        <members>Lead_Follow_up_Task</members>
         <members>New_Lead</members>
         <members>New_Transaction</members>
         <members>Upload_Leads</members>

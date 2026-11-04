@@ -93,7 +93,7 @@ private class LeadUploadServiceTest {
                     Anniversary_Date__c, Walk_In_Flag__c, Status
                     FROM Lead WHERE LastName = 'Mehta' WITH SYSTEM_MODE];
         Assert.areEqual('B2C', b2c.Business_Type__c, 'No company means B2C');
-        Assert.areEqual('Test Mehta Family (' + b2c.Lead_Number__c + ')', b2c.Company, 'With the unique B2C company');
+        Assert.areEqual('Test Mehta B2C (' + b2c.Lead_Number__c + ')', b2c.Company, 'With the unique B2C company');
         Assert.areEqual('+91 98300 12301', b2c.Phone, 'Phone saved exactly as written');
         Assert.areEqual('Gold necklace', b2c.Description, 'Product Description saved');
         Assert.areEqual('Married', b2c.Marital_Status__c, 'Picklist matched regardless of case');
@@ -158,6 +158,34 @@ private class LeadUploadServiceTest {
         Assert.isTrue(rowOutcome[1].contains('Sharma Household'), 'Naming the customer: ' + rowOutcome[1]);
     }
 
+    @IsTest
+    static void aCustomerKnownOnlyAsAContactGetsAnAccountWithTheEnquiry() {
+        Contact person = new Contact(FirstName = 'Test', LastName = 'Sharma', MobilePhone = '9830012344',
+                                     Email = 'sharma@contact.example.com');
+        insert person;
+
+        Test.startTest();
+        LeadUploadService.UploadResult result = upload(HEADER + '\n' + row(customer('Sharma', '+91 98300 12344')));
+        Test.stopTest();
+
+        Assert.areEqual(0, result.leadsCreated, 'No Lead for an existing customer');
+        Assert.areEqual(1, result.enquiriesRaised, 'An enquiry instead');
+        Account created = [SELECT Id, Name, Business_Type__c, OwnerId, Phone, Email__c FROM Account WITH SYSTEM_MODE];
+        Assert.areEqual('Test Sharma Family', created.Name, 'Named as on conversion');
+        Assert.areEqual('B2C', created.Business_Type__c, 'A blank Company is B2C');
+        Assert.areEqual(UserInfo.getUserId(), created.OwnerId, 'Owned by the uploader');
+        Assert.areEqual('+91 98300 12344', created.Phone, 'Phone from the row, as written');
+        Assert.areEqual('sharma@contact.example.com', created.Email__c, 'Email from the Contact: none in the row');
+        Assert.areEqual(created.Id, [SELECT AccountId FROM Contact WHERE Id = :person.Id].AccountId,
+            'The Contact is moved under it');
+
+        Case enquiry = [SELECT AccountId, ContactId, OwnerId FROM Case WITH SYSTEM_MODE LIMIT 1];
+        Assert.areEqual(created.Id, enquiry.AccountId, 'The enquiry is on the new Account');
+        Assert.areEqual(person.Id, enquiry.ContactId, 'For the Contact');
+        Assert.areEqual(UserInfo.getUserId(), enquiry.OwnerId, 'With the Account owner');
+        Assert.areEqual('Enquiry Raised', outcome(resultsOf(result), 1)[0], 'Reported as an enquiry');
+    }
+
     // =====================================================================
     // Failed rows
     // =====================================================================
@@ -211,6 +239,37 @@ private class LeadUploadServiceTest {
             Assert.areEqual('Failed', rowOutcome[0], 'Row ' + (i + 1) + ' failed');
             Assert.isTrue(rowOutcome[1].contains(expectedReasons[i]), 'Row ' + (i + 1) + ' reason: ' + rowOutcome[1]);
         }
+    }
+
+    @IsTest
+    static void aConvertedStatusFailsTheRow() {
+        Map<String, String> converted = customer('Converted', '9830012331');
+        converted.put('Status', 'Converted');
+        Map<String, String> lowerCase = customer('LowerCase', '9830012332');
+        lowerCase.put('Status', 'converted');
+        Map<String, String> misspelt = customer('Misspelt', '9830012333');
+        misspelt.put('Status', 'Convert');
+        Map<String, String> contacted = customer('Contacted', '9830012334');
+        contacted.put('Status', 'contacted');
+
+        Test.startTest();
+        LeadUploadService.UploadResult result = upload(
+            HEADER + '\n' + row(converted) + '\n' + row(lowerCase) + '\n' + row(misspelt) + '\n' + row(contacted)
+        );
+        Test.stopTest();
+
+        Assert.areEqual(3, result.failedRows, 'Both Converted rows and the misspelt one fail');
+        Assert.areEqual(1, result.leadsCreated, 'The Contacted row is saved');
+        Assert.areEqual(0, [SELECT COUNT() FROM Lead WHERE Status = 'Converted'], 'No Lead saved as Converted');
+        Assert.areEqual('Contacted', [SELECT Status FROM Lead WHERE LastName = 'Contacted' WITH SYSTEM_MODE].Status,
+            'Status matched regardless of case');
+
+        List<List<String>> results = resultsOf(result);
+        Assert.areEqual(LeadUploadService.CONVERTED_STATUS_REFUSED, outcome(results, 1)[1], 'Converted refused');
+        Assert.areEqual(LeadUploadService.CONVERTED_STATUS_REFUSED, outcome(results, 2)[1], 'Regardless of case');
+        String misspeltReason = outcome(results, 3)[1];
+        Assert.isTrue(misspeltReason.contains('not a valid Status'), 'Misspelt status reported: ' + misspeltReason);
+        Assert.isFalse(misspeltReason.contains('Converted'), 'Converted is not offered as an allowed value: ' + misspeltReason);
     }
 
     @IsTest

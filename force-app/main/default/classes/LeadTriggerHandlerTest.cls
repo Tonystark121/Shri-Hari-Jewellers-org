@@ -22,7 +22,7 @@ private class LeadTriggerHandlerTest {
     // B2C Company
     // =====================================================================
 
-    /** A Lead saved without a Company is B2C and gets "<Name> Family (<Lead Number>)". */
+    /** A Lead saved without a Company is B2C and gets "<Name> B2C (<Lead Number>)". */
     @IsTest
     static void aLeadWithoutACompanyIsB2cWithAUniqueCompany() {
         Lead walkIn = new Lead(FirstName = 'Asha', LastName = 'Mehta');
@@ -33,7 +33,7 @@ private class LeadTriggerHandlerTest {
 
         Lead saved = reload(walkIn.Id);
         Assert.areEqual('B2C', saved.Business_Type__c, 'No company means B2C');
-        Assert.areEqual('Asha Mehta Family (' + saved.Lead_Number__c + ')', saved.Company, 'Name, Family and the Lead Number');
+        Assert.areEqual('Asha Mehta B2C (' + saved.Lead_Number__c + ')', saved.Company, 'Name, B2C and the Lead Number');
     }
 
     /** The New Lead screen's default "<Name> - B2C" is treated the same as a blank Company. */
@@ -47,7 +47,7 @@ private class LeadTriggerHandlerTest {
 
         Lead saved = reload(walkIn.Id);
         Assert.areEqual('B2C', saved.Business_Type__c, 'The default company means B2C');
-        Assert.areEqual('Ravi Shah Family (' + saved.Lead_Number__c + ')', saved.Company, 'The Lead Number is added');
+        Assert.areEqual('Ravi Shah B2C (' + saved.Lead_Number__c + ')', saved.Company, 'The Lead Number is added');
     }
 
     /** A Company that was typed in is kept as it is. */
@@ -94,7 +94,7 @@ private class LeadTriggerHandlerTest {
         Test.stopTest();
 
         Lead saved = reload(walkIn.Id);
-        Assert.areEqual('Neha Jain Kapoor Family (' + saved.Lead_Number__c + ')', saved.Company, 'Company follows the new name');
+        Assert.areEqual('Neha Jain Kapoor B2C (' + saved.Lead_Number__c + ')', saved.Company, 'Company follows the new name');
     }
 
     /** A Lead saved before the Family format keeps "<Name> - B2C-<Lead Number>", which still follows the name. */
@@ -111,6 +111,22 @@ private class LeadTriggerHandlerTest {
         Test.stopTest();
 
         Assert.areEqual('Kiran Rao Menon - B2C-' + saved.Lead_Number__c, reload(walkIn.Id).Company, 'Kept in the earlier format');
+    }
+
+    /** A Lead saved before the B2C format keeps "<Name> Family (<Lead Number>)", which still follows the name. */
+    @IsTest
+    static void aFamilyFormatCompanyFollowsANameChange() {
+        Lead walkIn = new Lead(FirstName = 'Meera', LastName = 'Iyer', Company = 'Placeholder');
+        insert walkIn;
+        Lead saved = reload(walkIn.Id);
+        // Recreate a Lead from before the change: B2C with the Family Company.
+        update new Lead(Id = walkIn.Id, Business_Type__c = 'B2C', Company = 'Meera Iyer Family (' + saved.Lead_Number__c + ')');
+
+        Test.startTest();
+        update new Lead(Id = walkIn.Id, LastName = 'Iyer Nair');
+        Test.stopTest();
+
+        Assert.areEqual('Meera Iyer Nair Family (' + saved.Lead_Number__c + ')', reload(walkIn.Id).Company, 'Kept in the Family format');
     }
 
     /** No one can change a B2C Company by hand. */
@@ -285,7 +301,9 @@ private class LeadTriggerHandlerTest {
         Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta - B2C'), 'The New Lead screen default');
         Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta - B2C-000123 '), 'Stamped with the Lead Number');
         Assert.isTrue(LeadTriggerHandler.isSystemCompany('asha mehta - b2c-7'), 'Any case');
-        Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta Family (000123)'), 'The Family format');
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta B2C (000123)'), 'The B2C format');
+        Assert.isTrue(LeadTriggerHandler.isSystemCompany('Asha Mehta Family (000123)'), 'The earlier Family format');
+        Assert.isFalse(LeadTriggerHandler.isSystemCompany('Mehta B2C Jewellers'), 'Mentions B2C in a typed name');
         Assert.isFalse(LeadTriggerHandler.isSystemCompany('Mehta Family Jewellers'), 'Mentions Family but typed');
         Assert.isFalse(LeadTriggerHandler.isSystemCompany('Mehta Jewellers Pvt Ltd'), 'Typed by a user');
         Assert.isFalse(LeadTriggerHandler.isSystemCompany('B2C Retail - B2C Store'), 'Mentions B2C but typed');
@@ -378,5 +396,302 @@ private class LeadTriggerHandlerTest {
         Assert.isTrue(result.isExistingCustomer, 'The customer is found');
         Assert.areEqual(household.Id, result.accountId, 'On the household Account');
         Assert.isTrue(result.isOpenLead, 'The Lead is reported too; the flow handles the customer first');
+    }
+
+    // =====================================================================
+    // Existing customer known only as a Contact: an Account is created
+    // =====================================================================
+
+    private static Contact contactWithoutAccount(String phone) {
+        Contact person = new Contact(
+            FirstName = 'Asha',
+            LastName = 'Mehta',
+            MobilePhone = phone,
+            Email = 'asha@contact.example.com',
+            Birthdate = Date.newInstance(1990, 4, 12),
+            Marital_Status__c = 'Married',
+            Anniversary_Date__c = Date.newInstance(2015, 2, 1),
+            MailingCity = 'Kolkata',
+            Description = 'Prefers gold.'
+        );
+        insert person;
+        return person;
+    }
+
+    private static LeadTriggerHandler.CheckResult checkAndCreateAccount(Lead details) {
+        LeadTriggerHandler.CheckRequest request = new LeadTriggerHandler.CheckRequest();
+        request.phone = details.Phone;
+        request.email = details.Email;
+        request.createCustomerAccount = true;
+        request.leadRecord = details;
+        return LeadTriggerHandler.check(new List<LeadTriggerHandler.CheckRequest>{ request })[0];
+    }
+
+    @IsTest
+    static void aContactWithoutAnAccountIsReportedWithoutCreatingOne() {
+        Contact person = contactWithoutAccount('9830012366');
+
+        Test.startTest();
+        LeadTriggerHandler.CheckResult result = checkOne('+91 98300 12366', null);
+        Test.stopTest();
+
+        Assert.isTrue(result.isExistingCustomer, 'The Contact is a customer');
+        Assert.areEqual(person.Id, result.contactId, 'The Contact is identified');
+        Assert.isNull(result.accountId, 'No Account yet');
+        Assert.areEqual('Asha Mehta', result.accountName, 'Named after the person');
+        Assert.areEqual(UserInfo.getUserId(), result.caseOwnerId, 'The enquiry would go to the current user');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Only checking creates nothing');
+    }
+
+    @IsTest
+    static void aContactWithoutAnAccountGetsAFamilyAccountWhenTheEnquiryIsRaised() {
+        Contact person = contactWithoutAccount('9830012366');
+        Lead details = new Lead(
+            FirstName = 'Asha',
+            LastName = 'Mehta',
+            Phone = '+91 98300 12366',
+            Company = 'Asha Mehta - B2C',
+            Description = 'Diamond earrings'
+        );
+
+        Test.startTest();
+        LeadTriggerHandler.CheckResult result = checkAndCreateAccount(details);
+        Test.stopTest();
+
+        Account created = [
+            SELECT Id, Name, Business_Type__c, OwnerId, Phone, Email__c, Date_of_Birth__c, Marital_Status__c,
+                   Anniversary_Date__c, BillingCity, Description
+            FROM Account
+        ];
+        Assert.areEqual('Asha Mehta Family', created.Name, 'Named as on conversion for B2C');
+        Assert.areEqual('B2C', created.Business_Type__c, 'B2C');
+        Assert.areEqual(UserInfo.getUserId(), created.OwnerId, 'Owned by the user raising the enquiry');
+        Assert.areEqual('+91 98300 12366', created.Phone, 'Phone from the Lead, as entered');
+        Assert.areEqual('asha@contact.example.com', created.Email__c, 'Email from the Contact: none on the Lead');
+        Assert.areEqual(Date.newInstance(1990, 4, 12), created.Date_of_Birth__c, 'Date of Birth from the Contact');
+        Assert.areEqual('Married', created.Marital_Status__c, 'Marital Status from the Contact');
+        Assert.areEqual(Date.newInstance(2015, 2, 1), created.Anniversary_Date__c, 'With its Anniversary Date');
+        Assert.areEqual('Kolkata', created.BillingCity, 'Address from the Contact: none on the Lead');
+        Assert.areEqual('Diamond earrings', created.Description, 'Description from the Lead');
+
+        Assert.areEqual(created.Id, [SELECT AccountId FROM Contact WHERE Id = :person.Id].AccountId,
+            'The Contact is moved under its new Account');
+        Assert.areEqual(created.Id, result.accountId, 'Reported with the new Account');
+        Assert.areEqual('Asha Mehta Family', result.accountName, 'And its name');
+        Assert.areEqual(person.Id, result.contactId, 'The same Contact');
+        Assert.areEqual(UserInfo.getUserId(), result.caseOwnerId, 'The enquiry goes to the Account owner');
+        Assert.areEqual(1, [SELECT COUNT() FROM Loyalty_Record__c WHERE Account__c = :created.Id],
+            'A new Account gets its Loyalty Record as usual');
+    }
+
+    @IsTest
+    static void theLeadsDetailsWinOverTheContacts() {
+        Contact person = contactWithoutAccount('9830012366');
+        Lead details = new Lead(
+            FirstName = 'Rohit',
+            LastName = 'Mehta',
+            Phone = '9830012366',
+            Email = 'rohit@lead.example.com',
+            Company = 'Mehta Jewellers',
+            Date_of_Birth__c = Date.newInstance(1988, 9, 30),
+            Marital_Status__c = 'Unmarried',
+            City = 'Howrah',
+            Website = 'https://mehta.example.com'
+        );
+
+        Test.startTest();
+        checkAndCreateAccount(details);
+        Test.stopTest();
+
+        Account created = [
+            SELECT Name, Business_Type__c, Email__c, Date_of_Birth__c, Marital_Status__c, Anniversary_Date__c,
+                   BillingCity, Website, Description
+            FROM Account
+        ];
+        Assert.areEqual('Mehta Jewellers', created.Name, 'A typed Company names the Account, as on conversion');
+        Assert.areEqual('B2B', created.Business_Type__c, 'B2B');
+        Assert.areEqual('rohit@lead.example.com', created.Email__c, 'Email from the Lead');
+        Assert.areEqual(Date.newInstance(1988, 9, 30), created.Date_of_Birth__c, 'Date of Birth from the Lead');
+        Assert.areEqual('Unmarried', created.Marital_Status__c, 'Marital Status from the Lead');
+        Assert.isNull(created.Anniversary_Date__c, 'Not the Contact\'s Anniversary Date with the Lead\'s status');
+        Assert.areEqual('Howrah', created.BillingCity, 'Address from the Lead');
+        Assert.areEqual('https://mehta.example.com', created.Website, 'Website from the Lead');
+        Assert.areEqual('Prefers gold.', created.Description, 'Description from the Contact: none on the Lead');
+    }
+
+    @IsTest
+    static void oneAccountPerContactAndExistingAccountsAreLeftAlone() {
+        Contact person = contactWithoutAccount('9830012366');
+        Account household = new Account(Name = 'Bose Household');
+        insert household;
+
+        LeadTriggerHandler.Customer first = new LeadTriggerHandler.Customer();
+        first.contactId = person.Id;
+        first.accountName = 'Asha Mehta';
+        LeadTriggerHandler.Customer second = new LeadTriggerHandler.Customer();
+        second.contactId = person.Id;
+        second.accountName = 'Asha Mehta';
+        LeadTriggerHandler.Customer withAccount = new LeadTriggerHandler.Customer();
+        withAccount.accountId = household.Id;
+        withAccount.accountName = 'Bose Household';
+
+        Test.startTest();
+        Map<Integer, String> failures = LeadTriggerHandler.createCustomerAccounts(
+            new List<Lead>{
+                new Lead(FirstName = 'Asha', LastName = 'Mehta', Phone = '9830012366'),
+                new Lead(FirstName = 'Rohit', LastName = 'Mehta', Phone = '9830012366'),
+                new Lead(LastName = 'Bose', Phone = '9830012355'),
+                new Lead(LastName = 'Nobody', Phone = '9830012311')
+            },
+            new List<LeadTriggerHandler.Customer>{ first, second, withAccount, null }
+        );
+        Test.stopTest();
+
+        Assert.isTrue(failures.isEmpty(), 'No failures: ' + failures);
+        Assert.areEqual(2, [SELECT COUNT() FROM Account], 'One new Account for the one Contact');
+        Assert.isNotNull(first.accountId, 'Given an Account');
+        Assert.areEqual(first.accountId, second.accountId, 'The same Account for the same Contact');
+        Assert.areEqual('Asha Mehta Family', first.accountName, 'Built from the first Lead');
+        Assert.areEqual(household.Id, withAccount.accountId, 'A customer with an Account keeps it');
+    }
+
+    @IsTest
+    static void aContactPlacedUnderAnAccountMeanwhileKeepsIt() {
+        Contact person = contactWithoutAccount('9830012366');
+        LeadTriggerHandler.Customer customer = new LeadTriggerHandler.Customer();
+        customer.contactId = person.Id;
+        Account household = new Account(Name = 'Mehta Household');
+        insert household;
+        update new Contact(Id = person.Id, AccountId = household.Id);
+
+        Test.startTest();
+        Map<Integer, String> failures = LeadTriggerHandler.createCustomerAccounts(
+            new List<Lead>{ new Lead(LastName = 'Mehta', Phone = '9830012366') },
+            new List<LeadTriggerHandler.Customer>{ customer }
+        );
+        Test.stopTest();
+
+        Assert.isTrue(failures.isEmpty(), 'No failures: ' + failures);
+        Assert.areEqual(household.Id, customer.accountId, 'The Account it now has');
+        Assert.areEqual('Mehta Household', customer.accountName, 'And its name');
+        Assert.areEqual(1, [SELECT COUNT() FROM Account], 'No new Account');
+    }
+
+    @IsTest
+    static void aDeletedContactIsReported() {
+        Contact person = contactWithoutAccount('9830012366');
+        LeadTriggerHandler.Customer customer = new LeadTriggerHandler.Customer();
+        customer.contactId = person.Id;
+        delete person;
+
+        Test.startTest();
+        Map<Integer, String> failures = LeadTriggerHandler.createCustomerAccounts(
+            new List<Lead>{ new Lead(LastName = 'Mehta', Phone = '9830012366') },
+            new List<LeadTriggerHandler.Customer>{ customer }
+        );
+        Test.stopTest();
+
+        Assert.areEqual('The customer\'s Contact no longer exists.', failures.get(0), 'Explained');
+        Assert.isNull(customer.accountId, 'No Account');
+        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'Nothing created');
+    }
+
+    // =====================================================================
+    // Changing a Lead's phone or email
+    // =====================================================================
+
+    /** The trigger's reason for refusing the change (it comes before any duplicate rule's). */
+    private static Database.Error onlyError(Database.SaveResult result) {
+        Assert.isFalse(result.isSuccess(), 'The change is refused');
+        return result.getErrors()[0];
+    }
+
+    @IsTest
+    static void changingThePhoneToACustomersIsRefused() {
+        insert new Account(Name = 'Sen Household', Phone = '9830012341');
+        Lead leadRecord = new Lead(LastName = 'Sen', Phone = '9830012342');
+        insert leadRecord;
+
+        Test.startTest();
+        Database.SaveResult result = Database.update(new Lead(Id = leadRecord.Id, Phone = '+91 98300 12341'), false);
+        Test.stopTest();
+
+        Database.Error error = onlyError(result);
+        Assert.areEqual(new List<String>{ 'Phone' }, error.getFields(), 'Shown on Phone');
+        Assert.areEqual(
+            'This phone belongs to an existing customer: Sen Household. Raise an enquiry (Case) for that customer instead.',
+            error.getMessage(), 'Names the customer'
+        );
+        Assert.areEqual('9830012342', reload(leadRecord.Id).Phone, 'The old phone is kept');
+    }
+
+    @IsTest
+    static void changingTheEmailToACustomerKnownOnlyAsAContactIsRefused() {
+        insert new Contact(FirstName = 'Asha', LastName = 'Mehta', Email = 'asha@contact.example.com');
+        Lead leadRecord = new Lead(LastName = 'Mehta', Phone = '9830012342', Email = 'old@lead.example.com');
+        insert leadRecord;
+
+        Test.startTest();
+        Database.SaveResult result = Database.update(
+            new Lead(Id = leadRecord.Id, Email = 'ASHA@contact.example.com'), false
+        );
+        Test.stopTest();
+
+        Database.Error error = onlyError(result);
+        Assert.areEqual(new List<String>{ 'Email' }, error.getFields(), 'Shown on Email');
+        Assert.isTrue(error.getMessage().contains('existing customer: Asha Mehta'), error.getMessage());
+    }
+
+    @IsTest
+    static void changingThePhoneToAnotherOpenLeadsIsRefusedInAnyFormat() {
+        Lead other = new Lead(LastName = 'Roy', Phone = '+91 98300 12343');
+        Lead leadRecord = new Lead(LastName = 'Das', Phone = '9830012344');
+        insert new List<Lead>{ other, leadRecord };
+
+        Test.startTest();
+        Database.SaveResult result = Database.update(new Lead(Id = leadRecord.Id, Phone = '9830012343'), false);
+        Test.stopTest();
+
+        Database.Error error = onlyError(result);
+        Assert.areEqual(new List<String>{ 'Phone' }, error.getFields(), 'Shown on Phone');
+        Assert.isTrue(error.getMessage().startsWith('A Lead with this phone already exists: Roy'), error.getMessage());
+    }
+
+    @IsTest
+    static void retypingTheSamePhoneOrEditingOtherFieldsIsNotStopped() {
+        Lead leadRecord = new Lead(LastName = 'Ghosh', Phone = '9830012345', Email = 'ghosh@lead.example.com');
+        insert leadRecord;
+        // The person became a customer after the Lead was made.
+        insert new Account(Name = 'Ghosh Household', Phone = '9830012345', Email__c = 'ghosh@lead.example.com');
+
+        Test.startTest();
+        Database.SaveResult result = Database.update(new Lead(
+            Id = leadRecord.Id,
+            Phone = '+91 98300 12345',
+            Email = 'GHOSH@lead.example.com',
+            Description = 'Silver anklets'
+        ), false);
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess(), 'The same phone and email, only written differently: ' + result.getErrors());
+        Assert.areEqual('+91 98300 12345', reload(leadRecord.Id).Phone, 'Saved as entered');
+    }
+
+    @IsTest
+    static void twoLeadsCannotTakeTheSameNewPhoneInOneSave() {
+        Lead first = new Lead(LastName = 'Pal', Phone = '9830012346');
+        Lead second = new Lead(LastName = 'Bose', Phone = '9830012347');
+        insert new List<Lead>{ first, second };
+
+        Test.startTest();
+        List<Database.SaveResult> results = Database.update(new List<Lead>{
+            new Lead(Id = first.Id, Phone = '9830012348'),
+            new Lead(Id = second.Id, Phone = '+91 98300 12348')
+        }, false);
+        Test.stopTest();
+
+        Assert.isTrue(results[0].isSuccess(), 'The first takes it: ' + results[0].getErrors());
+        Assert.areEqual('Another Lead in this save has the same phone.', onlyError(results[1]).getMessage(),
+            'The second is refused');
     }
 }

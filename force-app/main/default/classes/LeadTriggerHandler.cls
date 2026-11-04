@@ -11,29 +11,37 @@
  *   Company is required on Lead, but a B2C customer has none. When Company
  *   is blank (uploads, API) or still holds the New Lead screen's default
  *   "<Name> - B2C", the Lead is B2C: Business Type is set to B2C and Company
- *   becomes "<Name> Family (<Lead Number>)", e.g. Asha Mehta Family (000123).
+ *   becomes "<Name> B2C (<Lead Number>)", e.g. Asha Mehta B2C (000123).
  *   The Lead Number only exists once the Lead is saved, so it is added in
  *   after insert. A Company that was typed in is kept as it is.
  *
  *   On a B2C Lead the Company is then maintained by the system only: it
  *   follows name changes and cannot be changed by hand. (Company is
  *   system-required, so it cannot be made read-only on the page layout.)
- *   Leads saved before this format keep "<Name> - B2C-<Lead Number>"; it
- *   still follows name changes in that form.
+ *   Leads saved before this format keep theirs - "<Name> Family (<Lead
+ *   Number>)" or "<Name> - B2C-<Lead Number>" - and it still follows name
+ *   changes in that form.
  *
  * Existing customers
  *   A Lead whose phone or email belongs to an existing customer (Account or
  *   Contact) is not saved: an enquiry Case is raised for the customer
  *   instead. The New Lead flow, Upload Leads and the website API
  *   (ShreeHariLeadRestResource) raise the enquiry before saving; this check
- *   stops any other insert.
+ *   stops any other insert. A customer known only as a Contact (no Account)
+ *   is given an Account when its enquiry is raised (createCustomerAccounts).
  *
  * Conversion
  *   A Lead converts only together with its first bill, through
  *   LeadConversionTransactionService. Any other conversion is refused.
  *
- * Duplicate open Leads are blocked by the Lead Duplicate Check duplicate
- * rule, not here.
+ * Changing a Lead's phone or email
+ *   An edit that gives a Lead the phone or email of an existing customer or
+ *   of another open Lead is refused, with the same matching as on create
+ *   (blockTakenContactDetails). The Lead keeps its old value. Only a value
+ *   that really changed is checked.
+ *
+ * Duplicate open Leads on create are blocked by the Lead Duplicate Check
+ * duplicate rule (exact matches, create and edit), not here.
  *
  * Matching ("is this person already known?")
  *   Also used by the New Lead flow (invocable check()) and, later, by the
@@ -58,6 +66,8 @@ public without sharing class LeadTriggerHandler {
 
     @TestVisible
     private static final String BUSINESS_TYPE_B2C = 'B2C';
+
+    private static final String BUSINESS_TYPE_B2B = 'B2B';
 
     private static final String B2C_SUFFIX = ' - B2C';
 
@@ -110,6 +120,7 @@ public without sharing class LeadTriggerHandler {
     }
 
     public static void beforeUpdate(List<Lead> leads, Map<Id, Lead> oldLeads) {
+        List<Lead> contactDetailsChanged = new List<Lead>();
         for (Lead leadRecord : leads) {
             Lead oldLead = oldLeads.get(leadRecord.Id);
 
@@ -126,6 +137,10 @@ public without sharing class LeadTriggerHandler {
                 continue;
             }
 
+            if (phoneChanged(leadRecord, oldLead) || emailChanged(leadRecord, oldLead)) {
+                contactDetailsChanged.add(leadRecord);
+            }
+
             if (stampingCompany || oldLead.Business_Type__c != BUSINESS_TYPE_B2C) {
                 continue;
             }
@@ -140,10 +155,14 @@ public without sharing class LeadTriggerHandler {
             Boolean nameChanged = leadRecord.FirstName != oldLead.FirstName || leadRecord.LastName != oldLead.LastName;
             if (nameChanged && oldLead.Company == b2cCompany(oldLead)) {
                 leadRecord.Company = b2cCompany(leadRecord);
+            } else if (nameChanged && oldLead.Company == familyB2cCompany(oldLead)) {
+                leadRecord.Company = familyB2cCompany(leadRecord);
             } else if (nameChanged && oldLead.Company == legacyB2cCompany(oldLead)) {
                 leadRecord.Company = legacyB2cCompany(leadRecord);
             }
         }
+
+        blockTakenContactDetails(contactDetailsChanged, oldLeads);
     }
 
     // =====================================================================
@@ -187,6 +206,98 @@ public without sharing class LeadTriggerHandler {
         }
     }
 
+    /**
+     * A Lead's phone or email changed to one that an existing customer or
+     * another open Lead already has: the change is refused, as those details
+     * are refused on a new Lead. The Lead keeps its old value. Only a value
+     * that really changed is checked - phones as 10 digits, emails ignoring
+     * case - so retyping the same phone in another format, or editing any
+     * other field, is not stopped. Two Leads in one save cannot take the same
+     * new phone or email either.
+     */
+    private static void blockTakenContactDetails(List<Lead> leads, Map<Id, Lead> oldLeads) {
+        if (leads.isEmpty()) {
+            return;
+        }
+
+        Set<String> phones = new Set<String>();
+        Set<String> emails = new Set<String>();
+        for (Lead leadRecord : leads) {
+            Lead oldLead = oldLeads.get(leadRecord.Id);
+            if (phoneChanged(leadRecord, oldLead)) {
+                phones.add(normalizePhone(leadRecord.Phone));
+            }
+            if (emailChanged(leadRecord, oldLead)) {
+                emails.add(leadRecord.Email);
+            }
+        }
+
+        Map<String, Customer> customers = findCustomers(phones, emails);
+        Map<String, Lead> openLeads = findOpenLeads(phones, emails);
+        Map<String, Id> takenInThisSave = new Map<String, Id>();
+
+        for (Lead leadRecord : leads) {
+            Lead oldLead = oldLeads.get(leadRecord.Id);
+            if (phoneChanged(leadRecord, oldLead)) {
+                String reason = takenReason(
+                    leadRecord, phoneKey(normalizePhone(leadRecord.Phone)), 'phone', customers, openLeads, takenInThisSave
+                );
+                if (reason != null) {
+                    leadRecord.Phone.addError(reason);
+                }
+            }
+            if (emailChanged(leadRecord, oldLead)) {
+                String reason = takenReason(
+                    leadRecord, emailKey(leadRecord.Email), 'email', customers, openLeads, takenInThisSave
+                );
+                if (reason != null) {
+                    leadRecord.Email.addError(reason);
+                }
+            }
+        }
+    }
+
+    /** Why the Lead cannot take this phone or email, or null when it is free. */
+    private static String takenReason(
+        Lead leadRecord,
+        String key,
+        String label,
+        Map<String, Customer> customers,
+        Map<String, Lead> openLeads,
+        Map<String, Id> takenInThisSave
+    ) {
+        Customer customer = customers.get(key);
+        if (customer != null) {
+            return 'This ' + label + ' belongs to an existing customer: ' + customer.accountName
+                + '. Raise an enquiry (Case) for that customer instead.';
+        }
+        Lead openLead = openLeads.get(key);
+        if (openLead != null && openLead.Id != leadRecord.Id) {
+            return 'A Lead with this ' + label + ' already exists: ' + openLead.Name
+                + ' (owner ' + openLead.Owner.Name + ').';
+        }
+        if (takenInThisSave.containsKey(key) && takenInThisSave.get(key) != leadRecord.Id) {
+            return 'Another Lead in this save has the same ' + label + '.';
+        }
+        takenInThisSave.put(key, leadRecord.Id);
+        return null;
+    }
+
+    /** The phone now is a valid number that differs, as 10 digits, from before. */
+    private static Boolean phoneChanged(Lead leadRecord, Lead oldLead) {
+        String phone = normalizePhone(leadRecord.Phone);
+        return isValidPhone(phone) && phone != normalizePhone(oldLead.Phone);
+    }
+
+    /** The email now is set and differs, ignoring case, from before. */
+    private static Boolean emailChanged(Lead leadRecord, Lead oldLead) {
+        if (String.isBlank(leadRecord.Email)) {
+            return false;
+        }
+        return String.isBlank(oldLead.Email)
+            || leadRecord.Email.trim().toLowerCase() != oldLead.Email.trim().toLowerCase();
+    }
+
     // =====================================================================
     // Company
     // =====================================================================
@@ -199,16 +310,16 @@ public without sharing class LeadTriggerHandler {
 
     /**
      * True when Company was filled in by the system rather than typed by a
-     * user: blank, "<Name> - B2C", "<Name> Family (<Lead Number>)" or the
-     * earlier "<Name> - B2C-<Lead Number>".
+     * user: blank, "<Name> - B2C", "<Name> B2C (<Lead Number>)" or the
+     * earlier "<Name> Family (<Lead Number>)" and "<Name> - B2C-<Lead Number>".
      */
     public static Boolean isSystemCompany(String company) {
         return String.isBlank(company)
-            || Pattern.matches('(?i).* - B2C(-[0-9]+)?|.* Family [(][0-9]+[)]', company.trim());
+            || Pattern.matches('(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]', company.trim());
     }
 
     /** "<First Name> <Last Name>" */
-    private static String personName(Lead leadRecord) {
+    public static String personName(Lead leadRecord) {
         List<String> parts = new List<String>();
         if (String.isNotBlank(leadRecord.FirstName)) {
             parts.add(leadRecord.FirstName.trim());
@@ -225,11 +336,14 @@ public without sharing class LeadTriggerHandler {
         return personName(leadRecord) + B2C_SUFFIX;
     }
 
-    /**
-     * "<First Name> <Last Name> Family (<Lead Number>)", e.g. Asha Mehta
-     * Family (000123). Also the name of the Account a B2C Lead converts into.
-     */
+    /** "<First Name> <Last Name> B2C (<Lead Number>)", e.g. Asha Mehta B2C (000123). */
     public static String b2cCompany(Lead leadRecord) {
+        return personName(leadRecord) + ' B2C (' + leadRecord.Lead_Number__c + ')';
+    }
+
+    /** The earlier format, "<First Name> <Last Name> Family (<Lead Number>)", kept by Leads saved before. */
+    @TestVisible
+    private static String familyB2cCompany(Lead leadRecord) {
         return personName(leadRecord) + ' Family (' + leadRecord.Lead_Number__c + ')';
     }
 
@@ -438,6 +552,207 @@ public without sharing class LeadTriggerHandler {
     }
 
     // =====================================================================
+    // Existing customers: a Contact without an Account
+    // =====================================================================
+
+    /**
+     * Gives every customer that is only a Contact (no Account) an Account
+     * before its enquiry Case is raised, and moves the Contact under it, so
+     * the enquiry sits on an Account like any other.
+     *
+     * The Account is named as on conversion: the Lead's Company when one was
+     * typed (B2B), else "<Name> Family" (B2C). Every other value comes from
+     * the Lead - the details just entered - and, where the Lead has none,
+     * from the Contact. The user raising the enquiry owns the Account, so
+     * the enquiry goes to them.
+     *
+     * leads[i] holds the enquiry's details for customers[i]; a null customer
+     * or one that already has an Account is left alone. Customers are
+     * updated in place (Account Id, name and owner). A Contact found for two
+     * Leads gets one Account, built from the first Lead.
+     *
+     * Returns the reason for each position that could not be given an
+     * Account; nothing is left half done for it.
+     */
+    public static Map<Integer, String> createCustomerAccounts(List<Lead> leads, List<Customer> customers) {
+        Map<Integer, String> failures = new Map<Integer, String>();
+        Map<Id, Integer> firstPositionByContact = new Map<Id, Integer>();
+        for (Integer i = 0; i < customers.size(); i++) {
+            Customer customer = customers[i];
+            if (customer != null && customer.accountId == null && customer.contactId != null
+                && !firstPositionByContact.containsKey(customer.contactId)) {
+                firstPositionByContact.put(customer.contactId, i);
+            }
+        }
+        if (firstPositionByContact.isEmpty()) {
+            return failures;
+        }
+
+        Map<Id, Contact> contacts = new Map<Id, Contact>([
+            SELECT Id, FirstName, LastName, Phone, MobilePhone, Email, Description,
+                   Birthdate, Anniversary_Date__c, Marital_Status__c,
+                   MailingStreet, MailingCity, MailingState, MailingPostalCode, MailingCountry,
+                   AccountId, Account.Name, Account.OwnerId, Account.Owner.IsActive
+            FROM Contact
+            WHERE Id IN :firstPositionByContact.keySet()
+            WITH SYSTEM_MODE
+        ]);
+
+        // What each Contact ends up with: an Account, or the reason it has none.
+        Map<Id, Customer> outcomes = new Map<Id, Customer>();
+        Map<Id, String> reasons = new Map<Id, String>();
+        List<Id> contactIds = new List<Id>();
+        List<Account> accounts = new List<Account>();
+        for (Id contactId : firstPositionByContact.keySet()) {
+            Contact person = contacts.get(contactId);
+            if (person == null) {
+                reasons.put(contactId, 'The customer\'s Contact no longer exists.');
+            } else if (person.AccountId != null) {
+                // Placed under an Account since it was found: use that one.
+                Customer outcome = new Customer();
+                outcome.accountId = person.AccountId;
+                outcome.accountName = person.Account.Name;
+                outcome.ownerId = person.Account.Owner.IsActive ? person.Account.OwnerId : null;
+                outcomes.put(contactId, outcome);
+            } else {
+                contactIds.add(contactId);
+                accounts.add(newCustomerAccount(leads[firstPositionByContact.get(contactId)], person));
+            }
+        }
+
+        if (!accounts.isEmpty()) {
+            Database.DMLOptions options = new Database.DMLOptions();
+            options.optAllOrNone = false;
+            // The customer is already known: the platform's duplicate alerts must not stop it.
+            options.DuplicateRuleHeader.allowSave = true;
+
+            List<Database.SaveResult> accountSaves = Database.insert(accounts, options, AccessLevel.SYSTEM_MODE);
+            List<Id> linkedContactIds = new List<Id>();
+            List<Contact> links = new List<Contact>();
+            for (Integer i = 0; i < accountSaves.size(); i++) {
+                if (accountSaves[i].isSuccess()) {
+                    linkedContactIds.add(contactIds[i]);
+                    links.add(new Contact(Id = contactIds[i], AccountId = accounts[i].Id));
+                } else {
+                    reasons.put(contactIds[i], 'The customer Account could not be created: '
+                        + errorText(accountSaves[i].getErrors()));
+                }
+            }
+
+            Map<Id, Account> accountsByContact = new Map<Id, Account>();
+            for (Integer i = 0; i < contactIds.size(); i++) {
+                accountsByContact.put(contactIds[i], accounts[i]);
+            }
+
+            if (!links.isEmpty()) {
+                List<Database.SaveResult> linkSaves = Database.update(links, options, AccessLevel.SYSTEM_MODE);
+                List<Account> unlinked = new List<Account>();
+                for (Integer i = 0; i < linkSaves.size(); i++) {
+                    Id contactId = linkedContactIds[i];
+                    Account created = accountsByContact.get(contactId);
+                    if (linkSaves[i].isSuccess()) {
+                        Customer outcome = new Customer();
+                        outcome.accountId = created.Id;
+                        outcome.accountName = created.Name;
+                        outcome.ownerId = created.OwnerId;
+                        outcomes.put(contactId, outcome);
+                    } else {
+                        unlinked.add(created);
+                        reasons.put(contactId, 'The customer\'s Contact could not be moved to its new Account: '
+                            + errorText(linkSaves[i].getErrors()));
+                    }
+                }
+                // An Account its Contact could not join is taken away again,
+                // with its Loyalty Record (master-detail).
+                if (!unlinked.isEmpty()) {
+                    Database.delete(unlinked, false, AccessLevel.SYSTEM_MODE);
+                }
+            }
+        }
+
+        for (Integer i = 0; i < customers.size(); i++) {
+            Customer customer = customers[i];
+            if (customer == null || customer.accountId != null || customer.contactId == null) {
+                continue;
+            }
+            Customer outcome = outcomes.get(customer.contactId);
+            if (outcome == null) {
+                failures.put(i, reasons.get(customer.contactId));
+                continue;
+            }
+            customer.accountId = outcome.accountId;
+            customer.accountName = outcome.accountName;
+            customer.ownerId = outcome.ownerId;
+        }
+        return failures;
+    }
+
+    /**
+     * The new Account for a customer known only as a Contact: the Lead's
+     * details first, the Contact's where the Lead has none.
+     */
+    private static Account newCustomerAccount(Lead leadRecord, Contact person) {
+        Lead details = leadRecord == null ? new Lead() : leadRecord;
+        Boolean isBusiness = !isSystemCompany(details.Company);
+
+        String name = personName(String.isBlank(details.LastName)
+            ? new Lead(FirstName = person.FirstName, LastName = person.LastName)
+            : details);
+
+        Account accountRecord = new Account(
+            Name = isBusiness ? details.Company.trim() : LeadConversionTransactionService.familyAccountName(name),
+            Business_Type__c = isBusiness ? BUSINESS_TYPE_B2B : BUSINESS_TYPE_B2C,
+            OwnerId = UserInfo.getUserId(),
+            Phone = firstNotBlank(details.Phone, firstNotBlank(person.Phone, person.MobilePhone)),
+            Email__c = firstNotBlank(details.Email, person.Email),
+            Date_of_Birth__c = details.Date_of_Birth__c != null ? details.Date_of_Birth__c : person.Birthdate,
+            Primary_Store__c = details.Store_Association__c,
+            Campaign_Attribution__c = details.Campaign_Attribution__c,
+            Website = details.Website,
+            Description = firstNotBlank(details.Description, person.Description)
+        );
+
+        // Marital Status and Anniversary Date belong together: both from the
+        // Lead when it has a Marital Status, else both from the Contact.
+        if (String.isNotBlank(details.Marital_Status__c)) {
+            accountRecord.Marital_Status__c = details.Marital_Status__c;
+            accountRecord.Anniversary_Date__c = details.Anniversary_Date__c;
+        } else {
+            accountRecord.Marital_Status__c = person.Marital_Status__c;
+            accountRecord.Anniversary_Date__c = person.Anniversary_Date__c;
+        }
+
+        // The address as a whole: the Lead's when it has any part, else the Contact's.
+        if (String.isNotBlank(details.Street) || String.isNotBlank(details.City) || String.isNotBlank(details.State)
+            || String.isNotBlank(details.PostalCode) || String.isNotBlank(details.Country)) {
+            accountRecord.BillingStreet = details.Street;
+            accountRecord.BillingCity = details.City;
+            accountRecord.BillingState = details.State;
+            accountRecord.BillingPostalCode = details.PostalCode;
+            accountRecord.BillingCountry = details.Country;
+        } else {
+            accountRecord.BillingStreet = person.MailingStreet;
+            accountRecord.BillingCity = person.MailingCity;
+            accountRecord.BillingState = person.MailingState;
+            accountRecord.BillingPostalCode = person.MailingPostalCode;
+            accountRecord.BillingCountry = person.MailingCountry;
+        }
+        return accountRecord;
+    }
+
+    private static String firstNotBlank(String preferred, String fallback) {
+        return String.isNotBlank(preferred) ? preferred : fallback;
+    }
+
+    private static String errorText(List<Database.Error> errors) {
+        List<String> messages = new List<String>();
+        for (Database.Error error : errors) {
+            messages.add(error.getMessage());
+        }
+        return String.join(messages, ' ');
+    }
+
+    // =====================================================================
     // Matching: open Leads
     // =====================================================================
 
@@ -486,7 +801,16 @@ public without sharing class LeadTriggerHandler {
 
         @InvocableVariable(label='Email' description='Email as entered.')
         public String email;
+
+        @InvocableVariable(label='Create Customer Account' description='True when the enquiry is being saved: a customer known only as a Contact (no Account) is given an Account, built from Lead and the Contact, and the Contact is moved under it.')
+        public Boolean createCustomerAccount;
+
+        @InvocableVariable(label='Lead' description='The details entered for the new Lead. Used for the new Account when Create Customer Account is true.')
+        public Lead leadRecord;
     }
+
+    /** An existing customer's Contact could not be given an Account. */
+    public class CustomerAccountException extends Exception {}
 
     public class CheckResult {
         @InvocableVariable(label='Normalized Phone' description='Phone cleaned to 10 digits (spaces, dashes and a leading +91 or 91 removed).')
@@ -534,6 +858,10 @@ public without sharing class LeadTriggerHandler {
      * customer (an enquiry Case is created instead of a Lead) or an open Lead
      * (the new Lead would be a duplicate). An existing customer is checked
      * first.
+     *
+     * Called again with Create Customer Account just before the enquiry is
+     * saved: a customer known only as a Contact is then given an Account
+     * (createCustomerAccounts) and reported with it.
      */
     @InvocableMethod(
         label='Check Existing Customer or Lead'
@@ -563,6 +891,9 @@ public without sharing class LeadTriggerHandler {
         Map<String, Lead> openLeads = findOpenLeads(phones, emails);
 
         List<CheckResult> results = new List<CheckResult>();
+        List<Customer> customerOf = new List<Customer>();
+        List<Lead> accountLeads = new List<Lead>();
+        List<Customer> accountCustomers = new List<Customer>();
         for (Integer i = 0; i < requests.size(); i++) {
             CheckRequest request = requests[i];
             CheckResult result = new CheckResult();
@@ -599,11 +930,10 @@ public without sharing class LeadTriggerHandler {
             result.matchingAccountCount = matchingAccounts.size();
 
             result.isExistingCustomer = customer != null;
-            if (customer != null) {
-                result.accountId = customer.accountId;
-                result.accountName = customer.accountName;
-                result.contactId = customer.contactId;
-                result.caseOwnerId = customer.ownerId == null ? UserInfo.getUserId() : customer.ownerId;
+            customerOf.add(customer);
+            if (customer != null && request.createCustomerAccount == true) {
+                accountLeads.add(request.leadRecord);
+                accountCustomers.add(customer);
             }
 
             result.isOpenLead = openLead != null;
@@ -613,6 +943,23 @@ public without sharing class LeadTriggerHandler {
                 result.openLeadOwnerName = openLead.Owner.Name;
             }
             results.add(result);
+        }
+
+        if (!accountCustomers.isEmpty()) {
+            Map<Integer, String> failures = createCustomerAccounts(accountLeads, accountCustomers);
+            if (!failures.isEmpty()) {
+                throw new CustomerAccountException(failures.values()[0]);
+            }
+        }
+
+        for (Integer i = 0; i < results.size(); i++) {
+            Customer customer = customerOf[i];
+            if (customer != null) {
+                results[i].accountId = customer.accountId;
+                results[i].accountName = customer.accountName;
+                results[i].contactId = customer.contactId;
+                results[i].caseOwnerId = customer.ownerId == null ? UserInfo.getUserId() : customer.ownerId;
+            }
         }
         return results;
     }

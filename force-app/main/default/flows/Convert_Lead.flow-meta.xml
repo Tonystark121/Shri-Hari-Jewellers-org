@@ -483,12 +483,12 @@
         <expression>IF(BLANKVALUE({!Check_Customer.matchingAccountCount}, 0) = 0, {!Account_Name_Input}, {!New_Customer_Account_Name_Input})</expression>
     </formulas>
     <formulas>
-        <description>The Company when a user typed it (B2B); &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot; when Company is the system&apos;s (B2C), also for Leads that still hold the earlier &quot;&lt;Name&gt; - B2C-&lt;number&gt;&quot;.</description>
+        <description>The Company when a user typed it (B2B); &quot;&lt;Name&gt; Family&quot; when Company is the system&apos;s (B2C), in any of its formats: &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;, the earlier &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot; or &quot;&lt;Name&gt; - B2C-&lt;number&gt;&quot;. Same rule as LeadConversionTransactionService.</description>
         <name>Default_Account_Name</name>
         <dataType>String</dataType>
         <expression>IF(
-  OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* Family [(][0-9]+[)]&quot;)),
-  TRIM(BLANKVALUE({!Get_Lead.FirstName}, &quot;&quot;) &amp; &quot; &quot; &amp; {!Get_Lead.LastName}) &amp; &quot; Family (&quot; &amp; {!Get_Lead.Lead_Number__c} &amp; &quot;)&quot;,
+  OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]&quot;)),
+  TRIM(BLANKVALUE({!Get_Lead.FirstName}, &quot;&quot;) &amp; &quot; &quot; &amp; {!Get_Lead.LastName}) &amp; &quot; Family&quot;,
   TRIM({!Get_Lead.Company})
 )</expression>
     </formulas>
@@ -653,7 +653,7 @@
                     </defaultValue>
                     <fieldText>Account Name</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family (&amp;lt;Lead Number&amp;gt;)&quot;. Change it if needed.&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family&quot;. Change it if needed.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
                     <visibilityRule>
                         <conditionLogic>and</conditionLogic>
@@ -794,7 +794,7 @@
                     </defaultValue>
                     <fieldText>Account Name</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family (&amp;lt;Lead Number&amp;gt;)&quot;. Change it if needed.&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family&quot;. Change it if needed.&lt;/p&gt;</helpText>
                     <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
                     <isRequired>true</isRequired>
                     <visibilityRule>

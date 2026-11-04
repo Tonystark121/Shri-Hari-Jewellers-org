@@ -59,7 +59,7 @@ private class LeadConversionTransactionServiceTest {
     // New customer
     // =====================================================================
 
-    /** A new customer gets an Account (named "<Name> Family (<Lead Number>)"), a Contact and the bill, and the Lead converts. */
+    /** A new customer gets an Account (named "<Name> Family"), a Contact and the bill, and the Lead converts. */
     @IsTest
     static void aNewCustomerGetsAnAccountContactAndBill() {
         Lead walkIn = enquiry('Asha', 'Mehta');
@@ -84,8 +84,7 @@ private class LeadConversionTransactionServiceTest {
             SELECT Name, Phone, Email__c, Business_Type__c, Date_of_Birth__c
             FROM Account WHERE Id = :result.accountId WITH SYSTEM_MODE
         ];
-        String leadNumber = [SELECT Lead_Number__c FROM Lead WHERE Id = :walkIn.Id WITH SYSTEM_MODE].Lead_Number__c;
-        Assert.areEqual('Asha Mehta Family (' + leadNumber + ')', customer.Name, 'Named after the family');
+        Assert.areEqual('Asha Mehta Family', customer.Name, 'Named after the family');
         Assert.areEqual(walkIn.Phone, customer.Phone, 'Phone carried over');
         Assert.areEqual(walkIn.Email, customer.Email__c, 'Email carried over');
         Assert.areEqual('B2C', customer.Business_Type__c, 'Business Type carried over');
@@ -113,38 +112,54 @@ private class LeadConversionTransactionServiceTest {
         Assert.areEqual('Agarwal Jewellers Pvt Ltd', result.accountName, 'Company name for a business');
     }
 
-    /** A B2C Lead's Account takes the Lead's Company, "<Name> Family (<Lead Number>)". */
+    /** A B2C Lead ("<Name> B2C (<Lead Number>)") gets a "<Name> Family" Account, without the Lead Number. */
     @IsTest
     static void aB2cAccountIsNamedAfterTheFamily() {
         Lead person = enquiry('Asha', 'Mehta');
         insert person;
         Lead saved = [SELECT Company, Lead_Number__c FROM Lead WHERE Id = :person.Id WITH SYSTEM_MODE];
-        Assert.areEqual('Asha Mehta Family (' + saved.Lead_Number__c + ')', saved.Company, 'The trigger gave the Lead a system Company');
+        Assert.areEqual('Asha Mehta B2C (' + saved.Lead_Number__c + ')', saved.Company, 'The trigger gave the Lead a system Company');
 
         Test.startTest();
         LeadConversionTransactionService.ConvertResult result = convertOne(person.Id, null, bill('CTS-0015', 1000));
         Test.stopTest();
 
         Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
-        Assert.areEqual(saved.Company, result.accountName, 'Same as the Lead Company');
+        Assert.areEqual('Asha Mehta Family', result.accountName, 'Name and Family');
     }
 
-    /** A Lead that still holds the earlier "<Name> - B2C-<number>" Company also gets a "<Name> Family (<number>)" Account. */
+    /** Leads that still hold an earlier system Company also get a "<Name> Family" Account. */
     @IsTest
-    static void anEarlierFormatLeadGetsAFamilyAccount() {
-        Lead person = enquiry('Kiran', 'Rao');
-        person.Company = 'Placeholder';
-        insert person;
-        String leadNumber = [SELECT Lead_Number__c FROM Lead WHERE Id = :person.Id WITH SYSTEM_MODE].Lead_Number__c;
-        // Recreate a Lead from before the change: B2C with the earlier Company.
-        update new Lead(Id = person.Id, Business_Type__c = 'B2C', Company = 'Kiran Rao - B2C-' + leadNumber);
+    static void earlierFormatLeadsGetAFamilyAccount() {
+        Lead dashFormat = enquiry('Kiran', 'Rao');
+        dashFormat.Company = 'Placeholder';
+        Lead familyFormat = enquiry('Meera', 'Iyer');
+        familyFormat.Company = 'Placeholder';
+        insert new List<Lead>{ dashFormat, familyFormat };
+        Map<Id, Lead> saved = new Map<Id, Lead>([
+            SELECT Lead_Number__c FROM Lead WHERE Id IN (:dashFormat.Id, :familyFormat.Id) WITH SYSTEM_MODE
+        ]);
+        // Recreate Leads from before the change: B2C with the earlier Companies.
+        update new List<Lead>{
+            new Lead(Id = dashFormat.Id, Business_Type__c = 'B2C',
+                Company = 'Kiran Rao - B2C-' + saved.get(dashFormat.Id).Lead_Number__c),
+            new Lead(Id = familyFormat.Id, Business_Type__c = 'B2C',
+                Company = 'Meera Iyer Family (' + saved.get(familyFormat.Id).Lead_Number__c + ')')
+        };
 
         Test.startTest();
-        LeadConversionTransactionService.ConvertResult result = convertOne(person.Id, null, bill('CTS-0016', 1000));
+        List<LeadConversionTransactionService.ConvertResult> results = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{
+                request(dashFormat.Id, null, bill('CTS-0016', 1000)),
+                request(familyFormat.Id, null, bill('CTS-0040', 1000))
+            }
+        );
         Test.stopTest();
 
-        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
-        Assert.areEqual('Kiran Rao Family (' + leadNumber + ')', result.accountName, 'The new format');
+        Assert.isTrue(results[0].isSuccess, 'Conversion should succeed: ' + results[0].errorMessage);
+        Assert.isTrue(results[1].isSuccess, 'Conversion should succeed: ' + results[1].errorMessage);
+        Assert.areEqual('Kiran Rao Family', results[0].accountName, 'From "<Name> - B2C-<number>"');
+        Assert.areEqual('Meera Iyer Family', results[1].accountName, 'From "<Name> Family (<number>)"');
     }
 
     /** A name typed on the screen wins. */
@@ -557,11 +572,113 @@ private class LeadConversionTransactionServiceTest {
 
         Assert.isTrue(results[0].isSuccess, 'First conversion should succeed: ' + results[0].errorMessage);
         Assert.isTrue(results[1].isSuccess, 'Second conversion should succeed: ' + results[1].errorMessage);
-        Assert.areEqual(
-            'Regular customer\nGold chain\nDiamond ring',
-            [SELECT Description FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE].Description,
-            'Each on its own line, in order'
-        );
+        Account saved = [SELECT Name, Description FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE];
+        Assert.areEqual('Regular customer\nGold chain\nDiamond ring', saved.Description, 'Each on its own line, in order');
+        Assert.areEqual('Rao & Uma Rao & Uday Rao Family', saved.Name, 'Both names added to the family, in order');
+        Assert.areEqual(saved.Name, results[1].accountName, 'The result shows the new name');
+    }
+
+    // =====================================================================
+    // Family Account name
+    // =====================================================================
+
+    /** A B2C Lead merged into the family Account it was picked for adds its name. */
+    @IsTest
+    static void aMergedLeadsNameIsAddedToThePickedFamily() {
+        Lead familyMember = enquiry('Rohit', 'Mehta');
+        insert familyMember;
+        Account household = new Account(Name = 'Asha Mehta Family');
+        insert household;
+        LeadConversionTransactionService.ConvertRequest conversionRequest = request(familyMember.Id, null, bill('CTS-0041', 1500));
+        conversionRequest.accountId = household.Id;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ conversionRequest }
+        )[0];
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areEqual('Asha Mehta & Rohit Mehta Family',
+            [SELECT Name FROM Account WHERE Id = :household.Id WITH SYSTEM_MODE].Name, 'Name added before Family');
+        Assert.areEqual('Asha Mehta & Rohit Mehta Family', result.accountName, 'The result shows the new name');
+    }
+
+    /** The same happens when the family Account is found by the Lead's phone. */
+    @IsTest
+    static void aMatchedLeadsNameIsAddedToTheFamily() {
+        Lead returning = enquiry('Vikram', 'Rao');
+        insert returning;
+        Account household = new Account(Name = 'Sunita Rao Family', Phone = returning.Phone);
+        insert household;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = convertOne(returning.Id, null, bill('CTS-0042', 1500));
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areEqual(household.Id, result.accountId, 'The matched Account is used');
+        Assert.areEqual('Sunita Rao & Vikram Rao Family', result.accountName, 'Name added');
+    }
+
+    /** A person already named in the family is not added again. */
+    @IsTest
+    static void aNameAlreadyInTheFamilyIsNotAddedAgain() {
+        Lead familyMember = enquiry('Rohit', 'Mehta');
+        insert familyMember;
+        Account household = new Account(Name = 'Asha Mehta & Rohit Mehta Family');
+        insert household;
+        LeadConversionTransactionService.ConvertRequest conversionRequest = request(familyMember.Id, null, bill('CTS-0043', 1500));
+        conversionRequest.accountId = household.Id;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ conversionRequest }
+        )[0];
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areEqual('Asha Mehta & Rohit Mehta Family', result.accountName, 'Name unchanged');
+    }
+
+    /** A B2B Lead never changes the Account name, even a family one. */
+    @IsTest
+    static void aBusinessLeadLeavesTheNameAsItIs() {
+        Lead business = enquiry('Rakesh', 'Mehta');
+        business.Company = 'Mehta Jewellers';
+        business.Business_Type__c = 'B2B';
+        insert business;
+        Account household = new Account(Name = 'Asha Mehta Family');
+        insert household;
+        LeadConversionTransactionService.ConvertRequest conversionRequest = request(business.Id, null, bill('CTS-0044', 1500));
+        conversionRequest.accountId = household.Id;
+
+        Test.startTest();
+        LeadConversionTransactionService.ConvertResult result = LeadConversionTransactionService.convertWithBill(
+            new List<LeadConversionTransactionService.ConvertRequest>{ conversionRequest }
+        )[0];
+        Test.stopTest();
+
+        Assert.isTrue(result.isSuccess, 'Conversion should succeed: ' + result.errorMessage);
+        Assert.areEqual('Asha Mehta Family', result.accountName, 'Name unchanged for a business Lead');
+    }
+
+    /** The naming rule itself. */
+    @IsTest
+    static void familyNameRules() {
+        Assert.areEqual('Asha Mehta Family', LeadConversionTransactionService.familyAccountName(' Asha Mehta '), 'New family');
+        Assert.areEqual('Asha Mehta & Rohit Mehta Family',
+            LeadConversionTransactionService.familyAccountNameWith('Asha Mehta Family', 'Rohit Mehta'), 'Member added');
+        Assert.areEqual('Asha Mehta & Rohit Mehta Family',
+            LeadConversionTransactionService.familyAccountNameWith('Asha Mehta family ', 'Rohit Mehta'), 'Any case, extra spaces');
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith('Asha Mehta Family', 'asha mehta'), 'Already named, any case');
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith('Nair Household', 'Pooja Nair'), 'Not a family name');
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith('Asha Mehta Family (000123)', 'Rohit Mehta'), 'Ends with a number');
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith('Family', 'Rohit Mehta'), 'No member names');
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith(null, 'Rohit Mehta'), 'No name');
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith('Asha Mehta Family', ' '), 'No person');
+        String longFamily = 'A'.repeat(240) + ' Family';
+        Assert.isNull(LeadConversionTransactionService.familyAccountNameWith(longFamily, 'Rohit Mehta'), 'Over 255 characters');
     }
 
     /** Staff can create a new customer even when the phone and email match one. */

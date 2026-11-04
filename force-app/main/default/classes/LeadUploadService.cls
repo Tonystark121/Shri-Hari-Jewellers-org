@@ -11,11 +11,15 @@
  *     the Date of Birth;
  *   - picklist values must be active values; Store by Store Code, Campaign
  *     by Campaign Name;
+ *   - Status is New when blank; Converted fails the row, because a Lead
+ *     converts only with its first bill, through the Convert button;
  *   - a blank Company makes the Lead B2C (LeadTriggerHandler assigns
- *     "<Name> Family (<Lead Number>)"); a Company makes it B2B;
+ *     "<Name> B2C (<Lead Number>)"); a Company makes it B2B;
  *   - an existing customer (same phone or email on an Account or Contact)
  *     gets an enquiry Case instead of a Lead - Origin Phone, Priority
- *     Medium, owned by the account owner;
+ *     Medium, owned by the account owner; a customer known only as a
+ *     Contact is first given an Account, owned by the uploader
+ *     (LeadTriggerHandler.createCustomerAccounts);
  *   - an open Lead with the same phone or email, or a repeat of an earlier
  *     row in the same file, fails.
  *
@@ -48,6 +52,11 @@ public with sharing class LeadUploadService {
 
     private static final String MARRIED = 'Married';
     private static final String DEFAULT_STATUS = 'New';
+
+    @TestVisible
+    private static final String CONVERTED_STATUS_REFUSED =
+        'A Lead cannot be uploaded as Converted. It converts only with its first bill, through the Convert button. '
+        + 'Leave Status blank for New, or use another status.';
 
     private static final Pattern DATE_PATTERN = Pattern.compile('^\\d{4}-\\d{2}-\\d{2}$');
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
@@ -252,6 +261,7 @@ public with sharing class LeadUploadService {
         List<String> values;
         Lead leadRecord;
         Case enquiry;
+        LeadTriggerHandler.Customer customer;
         String customerName;
         String normalizedPhone;
         String email;
@@ -338,6 +348,7 @@ public with sharing class LeadUploadService {
             }
             if (customer != null) {
                 row.enquiry = enquiryFor(row.leadRecord, customer);
+                row.customer = customer;
                 row.customerName = customer.accountName;
             } else if (openLead != null) {
                 row.fail('A Lead with this phone or email already exists: ' + openLead.Name
@@ -367,6 +378,26 @@ public with sharing class LeadUploadService {
         }
 
         // 5. Save enquiries ------------------------------------------------
+        // A customer known only as a Contact is given an Account first.
+        List<Row> customerRows = new List<Row>();
+        List<Lead> customerLeads = new List<Lead>();
+        List<LeadTriggerHandler.Customer> rowCustomers = new List<LeadTriggerHandler.Customer>();
+        for (Row row : rows) {
+            if (row.isOpen() && row.enquiry != null) {
+                customerRows.add(row);
+                customerLeads.add(row.leadRecord);
+                rowCustomers.add(row.customer);
+            }
+        }
+        Map<Integer, String> accountFailures = LeadTriggerHandler.createCustomerAccounts(customerLeads, rowCustomers);
+        for (Integer i = 0; i < customerRows.size(); i++) {
+            if (accountFailures.containsKey(i)) {
+                customerRows[i].fail(accountFailures.get(i));
+            } else {
+                customerRows[i].enquiry.AccountId = customerRows[i].customer.accountId;
+            }
+        }
+
         List<Row> enquiryRows = new List<Row>();
         List<Case> enquiries = new List<Case>();
         for (Row row : rows) {
@@ -460,7 +491,7 @@ public with sharing class LeadUploadService {
             }
         }
 
-        String status = picklistValue(value(row, columnIndex, COL_STATUS), Lead.Status, 'Status');
+        String status = statusValue(value(row, columnIndex, COL_STATUS));
         String company = value(row, columnIndex, COL_COMPANY);
 
         Lead leadRecord = new Lead(
@@ -478,7 +509,7 @@ public with sharing class LeadUploadService {
             Description = productDescription,
             Marital_Status__c = maritalStatus,
             Anniversary_Date__c = anniversary,
-            Status = String.isBlank(status) ? DEFAULT_STATUS : status,
+            Status = status,
             LeadSource = picklistValue(value(row, columnIndex, COL_LEAD_SOURCE), Lead.LeadSource, 'Lead Source'),
             Walk_In_Flag__c = walkIn(value(row, columnIndex, COL_WALK_IN)),
             Store_Association__c = lookups.storeId(value(row, columnIndex, COL_STORE_CODE)),
@@ -631,6 +662,48 @@ public with sharing class LeadUploadService {
                 + '(Excel may have changed the format - format the column as Text.)');
         }
         return parsed;
+    }
+
+    /** Lead Status values that mean converted, read once per upload. */
+    private static Set<String> convertedStatuses {
+        get {
+            if (convertedStatuses == null) {
+                convertedStatuses = new Set<String>();
+                for (LeadStatus leadStatus : [SELECT ApiName FROM LeadStatus WHERE IsConverted = true WITH SYSTEM_MODE]) {
+                    convertedStatuses.add(leadStatus.ApiName);
+                }
+            }
+            return convertedStatuses;
+        }
+        set;
+    }
+
+    /**
+     * The row's Lead Status: New when blank, otherwise the active value
+     * matching the text (ignoring case). A converted status fails the row and
+     * is left out of the allowed values listed for a wrong one.
+     */
+    private static String statusValue(String text) {
+        if (String.isBlank(text)) {
+            return DEFAULT_STATUS;
+        }
+        List<String> allowed = new List<String>();
+        for (Schema.PicklistEntry entry : Lead.Status.getDescribe().getPicklistValues()) {
+            if (!entry.isActive()) {
+                continue;
+            }
+            Boolean isConverted = convertedStatuses.contains(entry.getValue());
+            if (entry.getValue().equalsIgnoreCase(text)) {
+                if (isConverted) {
+                    throw new RowException(CONVERTED_STATUS_REFUSED);
+                }
+                return entry.getValue();
+            }
+            if (!isConverted) {
+                allowed.add(entry.getValue());
+            }
+        }
+        throw new RowException('"' + text + '" is not a valid Status. Allowed values: ' + String.join(allowed, ', ') + '.');
     }
 
     /** The active picklist value matching the text (ignoring case), or a RowException listing the allowed values. */

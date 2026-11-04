@@ -85,3 +85,7 @@ On a converted Lead, the Lead Stage screen shows:
 followed by links to the Account and Contact.
 
 Keep the second line, shorten it to the purchase date only, or remove it?
+
+
+When we are updating a lead phone/email what happens then -> with same as existing account simply create an enquiry
+   for now we are refusing the save, and telling to create new enquiry, similar in case of duplicate lead.

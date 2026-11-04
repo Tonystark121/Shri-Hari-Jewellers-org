@@ -30,6 +30,48 @@
         <nameSegment>LeadTriggerHandler</nameSegment>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
+    <actionCalls>
+        <description>The customer is only a Contact (no Account): gives them an Account - named as on conversion, from the details entered and, where blank, the Contact&apos;s - owned by the current user, and moves the Contact under it.</description>
+        <name>Create_Customer_Account</name>
+        <label>Create Customer Account</label>
+        <locationX>440</locationX>
+        <locationY>998</locationY>
+        <actionName>LeadTriggerHandler</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Set_Enquiry_Account</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Set_Fault_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>createCustomerAccount</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>email</name>
+            <value>
+                <elementReference>Lead_Record.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>leadRecord</name>
+            <value>
+                <elementReference>Lead_Record</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>phone</name>
+            <value>
+                <elementReference>Phone_Input</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>LeadTriggerHandler</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
     <apiVersion>62.0</apiVersion>
     <assignments>
         <description>Copies the Type, Lead Source and the Subject built from the Type onto the enquiry.</description>
@@ -59,6 +101,23 @@
             </value>
         </assignmentItems>
         <connector>
+            <targetReference>Customer_Has_Account</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Puts the enquiry on the customer&apos;s new Account.</description>
+        <name>Set_Enquiry_Account</name>
+        <label>Set Enquiry Account</label>
+        <locationX>440</locationX>
+        <locationY>1106</locationY>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.AccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Create_Customer_Account.accountId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
             <targetReference>Create_Enquiry</targetReference>
         </connector>
     </assignments>
@@ -80,7 +139,7 @@
         </connector>
     </assignments>
     <assignments>
-        <description>Copies the Name, Phone, Address and Company inputs onto the Lead. A blank Company means B2C: the system then assigns &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot;. The phone is kept exactly as typed.</description>
+        <description>Copies the Name, Phone, Address and Company inputs onto the Lead. A blank Company means B2C: the system then assigns &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;. The phone is kept exactly as typed.</description>
         <name>Set_Lead_Fields</name>
         <label>Set Lead Fields</label>
         <locationX>176</locationX>
@@ -337,6 +396,32 @@
         </connector>
     </assignments>
     <decisions>
+        <description>A customer known only as a Contact gets an Account before the enquiry is saved.</description>
+        <name>Customer_Has_Account</name>
+        <label>Customer Has Account?</label>
+        <locationX>176</locationX>
+        <locationY>998</locationY>
+        <defaultConnector>
+            <targetReference>Create_Enquiry</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Has Account</defaultConnectorLabel>
+        <rules>
+            <name>Contact_Only</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Customer.accountId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Customer_Account</targetReference>
+            </connector>
+            <label>Contact Only</label>
+        </rules>
+    </decisions>
+    <decisions>
         <description>Existing customer: raise an enquiry instead of a Lead. Open Lead: back to the form with a banner. Otherwise: create the Lead.</description>
         <name>Customer_Check_Outcome</name>
         <label>Customer Check Outcome</label>
@@ -377,7 +462,7 @@
             <label>Open Lead</label>
         </rules>
     </decisions>
-    <description>New button on Lead. One screen laid out like the Lead page layout (Personal Details, Lead Details, Company Information). On Save the phone and email are checked: an existing customer gets an enquiry Case instead of a Lead; an open Lead with the same phone or email is shown as a banner on the form; otherwise the Lead is created. A blank Company makes the Lead B2C and the system assigns &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot;.</description>
+    <description>New button on Lead. One screen laid out like the Lead page layout (Personal Details, Lead Details, Company Information). On Save the phone and email are checked: an existing customer gets an enquiry Case instead of a Lead; an open Lead with the same phone or email is shown as a banner on the form; otherwise the Lead is created. A blank Company makes the Lead B2C and the system assigns &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;.</description>
     <dynamicChoiceSets>
         <name>Case_Type_Choices</name>
         <dataType>Picklist</dataType>
@@ -410,6 +495,24 @@
     </dynamicChoiceSets>
     <environments>Default</environments>
     <formulas>
+        <description>The customer&apos;s Account, or their Contact when they have no Account yet: the Raise an Enquiry banner links to it.</description>
+        <name>Customer_Record_Id</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!Check_Customer.accountId}, {!Check_Customer.contactId})</expression>
+    </formulas>
+    <formulas>
+        <description>The Account the enquiry was raised on: the customer&apos;s, or the one just created for a customer known only as a Contact.</description>
+        <name>Enquiry_Account_Id</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!Create_Customer_Account.accountId}, {!Check_Customer.accountId})</expression>
+    </formulas>
+    <formulas>
+        <description>Name of Enquiry_Account_Id.</description>
+        <name>Enquiry_Account_Name</name>
+        <dataType>String</dataType>
+        <expression>IF(ISBLANK({!Create_Customer_Account.accountId}), {!Check_Customer.accountName}, {!Create_Customer_Account.accountName})</expression>
+    </formulas>
+    <formulas>
         <name>Full_Name</name>
         <dataType>String</dataType>
         <expression>TRIM(BLANKVALUE({!First_Name_Input}, &quot;&quot;) &amp; &quot; &quot; &amp; BLANKVALUE({!Last_Name_Input}, &quot;&quot;))</expression>
@@ -429,7 +532,7 @@
   IF(
     ISBLANK({!Last_Name_Input}),
     &quot;Individual customer (B2C): a unique company is assigned on save.&quot;,
-    &quot;Individual customer (B2C): saved as &quot; &amp; {!Full_Name} &amp; &quot; Family (&lt;Lead Number&gt;)&quot;
+    &quot;Individual customer (B2C): saved as &quot; &amp; {!Full_Name} &amp; &quot; B2C (&lt;Lead Number&gt;)&quot;
   ),
   &quot;Business (B2B): saved as &quot; &amp; TRIM({!Company_Input})
 )</expression>
@@ -493,7 +596,7 @@
             <targetReference>Get_Enquiry</targetReference>
         </connector>
         <faultConnector>
-            <targetReference>Set_Fault_Error</targetReference>
+            <targetReference>Undo_Customer_Account</targetReference>
         </faultConnector>
         <inputReference>Enquiry_Case</inputReference>
     </recordCreates>
@@ -569,6 +672,16 @@
         <queriedFields>Status</queriedFields>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
+    <recordRollbacks>
+        <description>The enquiry could not be saved: a customer Account created for it is not kept.</description>
+        <name>Undo_Customer_Account</name>
+        <label>Undo Customer Account</label>
+        <locationX>704</locationX>
+        <locationY>998</locationY>
+        <connector>
+            <targetReference>Set_Fault_Error</targetReference>
+        </connector>
+    </recordRollbacks>
     <runInMode>SystemModeWithoutSharing</runInMode>
     <screens>
         <name>Enquiry_Created</name>
@@ -592,7 +705,7 @@
                 <fieldType>Region</fieldType>
                 <fields>
                     <name>Enquiry_Summary_Left</name>
-                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;ENQUIRY NUMBER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Get_Enquiry.Id}&quot; target=&quot;_blank&quot;&gt;{!Get_Enquiry.CaseNumber}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;CUSTOMER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Check_Customer.accountId}&quot; target=&quot;_blank&quot;&gt;{!Check_Customer.accountName}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;SUBJECT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Enquiry.Subject}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;ENQUIRY NUMBER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Get_Enquiry.Id}&quot; target=&quot;_blank&quot;&gt;{!Get_Enquiry.CaseNumber}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;CUSTOMER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Enquiry_Account_Id}&quot; target=&quot;_blank&quot;&gt;{!Enquiry_Account_Name}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;SUBJECT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Enquiry.Subject}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
                     <fieldType>DisplayText</fieldType>
                 </fields>
                 <inputParameters>
@@ -640,7 +753,7 @@
         </connector>
         <fields>
             <name>Existing_Customer_Banner</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(1, 118, 211);&quot;&gt;ℹ  {!Full_Name} is already a customer&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;This phone or email belongs to &lt;/span&gt;&lt;a href=&quot;/{!Check_Customer.accountId}&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;{!Check_Customer.accountName}&lt;/strong&gt;&lt;/a&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;. Instead of a duplicate Lead, raise an enquiry on their account - it goes straight to their account owner. The details you entered are already filled in below; add anything further if needed.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(1, 118, 211);&quot;&gt;ℹ  {!Full_Name} is already a customer&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;This phone or email belongs to &lt;/span&gt;&lt;a href=&quot;/{!Customer_Record_Id}&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;{!Check_Customer.accountName}&lt;/strong&gt;&lt;/a&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;. Instead of a duplicate Lead, raise an enquiry on their account - it goes straight to their account owner. The details you entered are already filled in below; add anything further if needed.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
         </fields>
         <fields>
@@ -872,20 +985,11 @@
                     </validationRule>
                 </fields>
                 <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Lead_Record.Email</objectFieldReference>
-                </fields>
-                <fields>
-                    <name>Date_of_Birth_Input</name>
-                    <dataType>Date</dataType>
-                    <fieldText>Date of Birth</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <isRequired>false</isRequired>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Date of Birth cannot be in the future.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>OR(ISBLANK({!Date_of_Birth_Input}), {!Date_of_Birth_Input} &lt;= TODAY())</formulaExpression>
-                    </validationRule>
+                    <name>Product_Description_Input</name>
+                    <fieldText>Product Description</fieldText>
+                    <fieldType>LargeTextArea</fieldType>
+                    <helpText>&lt;p&gt;What the customer is interested in, e.g. product, design, metal or budget.&lt;/p&gt;</helpText>
+                    <isRequired>true</isRequired>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -911,13 +1015,6 @@
                     <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
                     <isRequired>true</isRequired>
                     <storeOutputAutomatically>true</storeOutputAutomatically>
-                </fields>
-                <fields>
-                    <name>Product_Description_Input</name>
-                    <fieldText>Product Description</fieldText>
-                    <fieldType>LargeTextArea</fieldType>
-                    <helpText>&lt;p&gt;What the customer is interested in, e.g. product, design, metal or budget.&lt;/p&gt;</helpText>
-                    <isRequired>true</isRequired>
                 </fields>
                 <fields>
                     <name>Marital_Status_Input</name>
@@ -966,6 +1063,50 @@
             <regionContainerType>SectionWithHeader</regionContainerType>
         </fields>
         <fields>
+            <name>Personal_Details_Dates</name>
+            <fieldType>RegionContainer</fieldType>
+            <fields>
+                <name>Personal_Details_Dates_Column1</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Date_of_Birth_Input</name>
+                    <dataType>Date</dataType>
+                    <fieldText>Date of Birth</fieldText>
+                    <fieldType>InputField</fieldType>
+                    <isRequired>false</isRequired>
+                    <validationRule>
+                        <errorMessage>&lt;p&gt;Date of Birth cannot be in the future.&lt;/p&gt;</errorMessage>
+                        <formulaExpression>OR(ISBLANK({!Date_of_Birth_Input}), {!Date_of_Birth_Input} &lt;= TODAY())</formulaExpression>
+                    </validationRule>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <fields>
+                <name>Personal_Details_Dates_Column2</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <fieldType>ObjectProvided</fieldType>
+                    <isRequired>false</isRequired>
+                    <objectFieldReference>Lead_Record.Email</objectFieldReference>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <isRequired>false</isRequired>
+            <regionContainerType>SectionWithoutHeader</regionContainerType>
+        </fields>
+        <fields>
             <name>Lead_Details</name>
             <fieldText>Lead Details</fieldText>
             <fieldType>RegionContainer</fieldType>
@@ -975,7 +1116,7 @@
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
-                    <objectFieldReference>Lead_Record.Status</objectFieldReference>
+                    <objectFieldReference>Lead_Record.LeadSource</objectFieldReference>
                 </fields>
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
@@ -993,16 +1134,6 @@
             <fields>
                 <name>Lead_Details_Column2</name>
                 <fieldType>Region</fieldType>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Lead_Record.LeadSource</objectFieldReference>
-                </fields>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Lead_Record.Walk_In_Flag__c</objectFieldReference>
-                </fields>
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
@@ -1031,7 +1162,7 @@
                     <dataType>String</dataType>
                     <fieldText>Company</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Leave blank for an individual customer (B2C): a unique company such as Asha Mehta Family (000123) is assigned on save. Enter the company name for a business (B2B).&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Leave blank for an individual customer (B2C): a unique company such as Asha Mehta B2C (000123) is assigned on save. Enter the company name for a business (B2B).&lt;/p&gt;</helpText>
                     <isRequired>false</isRequired>
                 </fields>
                 <fields>

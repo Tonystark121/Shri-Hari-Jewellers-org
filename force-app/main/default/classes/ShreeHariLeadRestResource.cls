@@ -14,11 +14,13 @@
  *     required; phone must be 10 digits (a leading +91 or 91, spaces and
  *     dashes are fine) and is saved exactly as sent;
  *   - a blank company makes the Lead B2C (LeadTriggerHandler assigns
- *     "<Name> Family (<Lead Number>)"); a company makes it B2B. businessType in
+ *     "<Name> B2C (<Lead Number>)"); a company makes it B2B. businessType in
  *     the payload is ignored;
  *   - anniversaryDate only for a Married customer, after dateOfBirth;
  *   - an existing customer (same phone or email on an Account or Contact)
  *     gets an enquiry Case instead of a Lead (201, action ENQUIRY_CREATED);
+ *     a customer known only as a Contact is first given an Account, owned
+ *     by the integration user (LeadTriggerHandler.createCustomerAccounts);
  *   - an open Lead with the same phone or email is refused (409).
  * status defaults to New and qualificationNotes is saved when sent.
  *
@@ -467,7 +469,7 @@ global with sharing class ShreeHariLeadRestResource {
 
         Map<String, LeadTriggerHandler.Customer> customers = LeadTriggerHandler.findCustomers(phones, emails);
         for (String key : keys) {
-            if (customers.containsKey(key) && customers.get(key).accountId != null) {
+            if (customers.containsKey(key)) {
                 return customers.get(key);
             }
         }
@@ -493,10 +495,23 @@ global with sharing class ShreeHariLeadRestResource {
      * customer's account and owner need not be visible to the integration user.
      */
     private static Case insertEnquiry(Lead record, LeadTriggerHandler.Customer customer) {
+        Savepoint beforeEnquiry = Database.setSavepoint();
+
+        // A customer known only as a Contact is given an Account first.
+        Map<Integer, String> failures = LeadTriggerHandler.createCustomerAccounts(
+            new List<Lead>{ record },
+            new List<LeadTriggerHandler.Customer>{ customer }
+        );
+        if (!failures.isEmpty()) {
+            throw error('DML_EXCEPTION', 500, null, failures.get(0));
+        }
+
         Case enquiry = LeadUploadService.enquiryFor(record, customer);
         try {
             Database.insert(enquiry, true, AccessLevel.SYSTEM_MODE);
         } catch (DmlException e) {
+            // No new Account without its enquiry.
+            Database.rollback(beforeEnquiry);
             throw error('DML_EXCEPTION', 500, null, e.getDmlMessage(0));
         }
         return enquiry;
