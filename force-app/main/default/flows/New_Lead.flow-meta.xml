@@ -1319,6 +1319,19 @@
                         </width>
                     </styleProperties>
                 </fields>
+                <fields>
+                    <fieldType>ObjectProvided</fieldType>
+                    <isRequired>false</isRequired>
+                    <objectFieldReference>Lead_Record.WA_Opt_In__c</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
+                </fields>
                 <inputParameters>
                     <name>width</name>
                     <value>
@@ -1334,6 +1347,32 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.Store_Association__c</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
+                </fields>
+                <fields>
+                    <fieldType>ObjectProvided</fieldType>
+                    <isRequired>false</isRequired>
+                    <objectFieldReference>Lead_Record.SMS_Opt_In__c</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
+                </fields>
+                <fields>
+                    <fieldType>ObjectProvided</fieldType>
+                    <isRequired>false</isRequired>
+                    <objectFieldReference>Lead_Record.Email_Opt_In__c</objectFieldReference>
                     <styleProperties>
                         <verticalAlignment>
                             <stringValue>top</stringValue>

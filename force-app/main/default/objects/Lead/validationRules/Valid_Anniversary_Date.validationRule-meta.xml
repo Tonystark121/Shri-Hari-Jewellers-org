@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Valid_Anniversary_Date</fullName>
+    <active>true</active>
+    <description>Anniversary Date only when Marital Status is Married, not in the future and after the Date of Birth - the same rules the New Lead screen, Upload Leads and the website API apply, enforced here for Edit, inline edit and data loads too.</description>
+    <errorConditionFormula>AND(
+  NOT(ISBLANK(Anniversary_Date__c)),
+  OR(
+    NOT(ISPICKVAL(Marital_Status__c, &quot;Married&quot;)),
+    Anniversary_Date__c &gt; TODAY(),
+    AND(
+      NOT(ISBLANK(Date_of_Birth__c)),
+      Anniversary_Date__c &lt;= Date_of_Birth__c
+    )
+  )
+)</errorConditionFormula>
+    <errorDisplayField>Anniversary_Date__c</errorDisplayField>
+    <errorMessage>Anniversary Date can only be given when Marital Status is Married, must be after the Date of Birth and cannot be in the future.</errorMessage>
+</ValidationRule>

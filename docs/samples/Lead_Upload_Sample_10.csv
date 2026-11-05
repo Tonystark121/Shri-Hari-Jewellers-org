@@ -1,0 +1,11 @@
+Salutation,First Name,Last Name *,Phone *,WhatsApp Number,Email,Date of Birth (YYYY-MM-DD),Street,City,State,Postal Code,Country,Product Description *,Marital Status,Anniversary Date (YYYY-MM-DD),Status,Lead Source,Walk-In (Yes/No),Store Code,Campaign Name,Company,Industry,Title,Website
+Mrs.,Meera,Saxena,9988776601,9988776611,sample.meera.saxena@example.com,1990-04-12,12 Park Street,Kolkata,West Bengal,700016,India,"Gold plated necklace set for wedding, budget 25,000",Married,2016-02-14,,Instagram DM,No,000001,test campaign,,,,
+Mr.,Rohan,Chopra,9988776602,,,,,,,,,Kundan earrings,,,,Walk-in,Yes,000001,,,,,
+Ms.,Kavita,Malhotra,9988776603,,sample.kavita.malhotra@example.com,,45 MG Road,Bengaluru,Karnataka,560001,India,Bulk order of temple jewellery for boutique,,,,Mobile App B2B,No,,,Malhotra Boutique Pvt Ltd,Apparel,Purchase Manager,https://malhotraboutique.example.com
+Mr.,Arjun,Reddy,+91 99887 76604,+91 99887 76604,sample.arjun.reddy@example.com,1988-11-30,,Hyderabad,Telangana,500001,India,Bridal choker set,Unmarried,,,Google,No,000001,,,,,
+Ms.,Neha,Pillai,99887-76605,,sample.neha.pillai@example.com,1995-07-21,,,,,,Silver anklets,,,,Facebook,No,,test campaign,,,,
+Mr.,Vivek,Desai,5544001234,,,,,,,,,Wants to exchange old necklace,,,,JustDial,No,000001,,,,,
+Ms.,Sneha,Menon,12345,,,,,,,,,Bangles,,,,Shopify,No,,,,,,
+Mr.,Rahul,Bhatt,9988776608,,,1992-01-10,,,,,,Ring for anniversary,Unmarried,2020-05-05,,WhatsApp,No,,,,,,
+Mrs.,Pooja,Kulkarni,9988776601,,,,,,,,,Mangalsutra,,,,Instagram Comment,No,,,,,,
+Mr.,Amit,Joshi,919988776610,,sample.amit.joshi@example.com,1985-09-09,,Pune,Maharashtra,411001,India,Gold coin 10 grams,Married,2012-12-12,,YouTube,No,000001,test campaign,,,,

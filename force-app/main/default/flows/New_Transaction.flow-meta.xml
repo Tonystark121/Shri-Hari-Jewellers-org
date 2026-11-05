@@ -66,7 +66,7 @@
             <assignToReference>Transaction_Record.Points_Redeemed__c</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Points_Redeemed_Input</elementReference>
+                <elementReference>Points_To_Record</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
@@ -124,7 +124,7 @@
             <assignToReference>Transaction_Record.Points_Redeemed__c</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Points_Redeemed_Input</elementReference>
+                <elementReference>Points_To_Record</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
@@ -182,7 +182,7 @@
             <assignToReference>Transaction_Record.Points_Redeemed__c</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Points_Redeemed_Input</elementReference>
+                <elementReference>Points_To_Record</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
@@ -459,6 +459,13 @@
             <name>Fixed_Price_Voucher</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
+                <leftValueReference>Show_Loyalty_Redemption</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
                 <leftValueReference>Voucher_Used_Input</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
@@ -480,6 +487,13 @@
         <rules>
             <name>Percentage_Voucher</name>
             <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Show_Loyalty_Redemption</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
             <conditions>
                 <leftValueReference>Voucher_Used_Input</leftValueReference>
                 <operator>EqualTo</operator>
@@ -518,6 +532,13 @@
         <picklistObject>Transaction_Record__c</picklistObject>
     </dynamicChoiceSets>
     <environments>Default</environments>
+    <formulas>
+        <description>Points Redeemed for the bill: the value entered when Loyalty Redemption is shown, otherwise 0.</description>
+        <name>Points_To_Record</name>
+        <dataType>Number</dataType>
+        <expression>IF({!Show_Loyalty_Redemption}, BLANKVALUE({!Points_Redeemed_Input}, 0), 0)</expression>
+        <scale>0</scale>
+    </formulas>
     <formulas>
         <description>What the customer pays after the reported redemptions; Salesforce sets the same figure on the bill.</description>
         <name>Net_Amount_Preview</name>
@@ -1228,7 +1249,17 @@
                             <stringValue>12</stringValue>
                         </width>
                     </styleProperties>
-                </fields>
+                    <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>Show_Loyalty_Redemption</leftValueReference>
+                    <operator>EqualTo</operator>
+                    <rightValue>
+                        <booleanValue>true</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
         <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
@@ -1289,6 +1320,17 @@
         </connector>
     </start>
     <status>Active</status>
+    <variables>
+        <description>Switch for the Loyalty Redemption section: false while the loyalty module is not live. Set the default to true to show it again.</description>
+        <name>Show_Loyalty_Redemption</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
+    </variables>
     <variables>
         <description>Always blank: clears a field on the bill.</description>
         <name>Blank_Number</name>
