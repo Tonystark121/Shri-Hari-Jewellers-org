@@ -745,12 +745,14 @@ public without sharing class LeadTriggerHandler {
         Lead details = leadRecord == null ? new Lead() : leadRecord;
         Boolean isBusiness = !isSystemCompany(details.Company);
 
-        String name = personName(String.isBlank(details.LastName)
+        Lead named = String.isBlank(details.LastName)
             ? new Lead(FirstName = person.FirstName, LastName = person.LastName)
-            : details);
+            : details;
 
         Account accountRecord = new Account(
-            Name = isBusiness ? details.Company.trim() : LeadConversionTransactionService.familyAccountName(name),
+            Name = isBusiness
+                ? details.Company.trim()
+                : LeadConversionTransactionService.familyAccountName(named.FirstName, named.LastName),
             Business_Type__c = isBusiness ? BUSINESS_TYPE_B2B : BUSINESS_TYPE_B2C,
             OwnerId = UserInfo.getUserId(),
             Phone = firstNotBlank(details.Phone, firstNotBlank(person.Phone, person.MobilePhone)),

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Production deployment: Lead, Account, Contact and Case module only.
+    No loyalty, gift vouchers, New Purchase or bill trigger.
+    Read docs/Prod_Component_List_Lead_Account_Contact_Case.md first: several
+    components here need a production version, and two test classes need changes,
+    before this manifest deploys cleanly.
+    Deploy from a production-only copy of the source: a CustomObject entry brings
+    every child file in its folder, so excluded fields must not be in that copy.
+    Matching rule and duplicate rule go in a second deploy (see the document).
+-->
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>LeadConversionTransactionService</members>
+        <members>LeadConversionTransactionServiceTest</members>
+        <members>LeadTriggerHandler</members>
+        <members>LeadTriggerHandlerTest</members>
+        <members>LeadUploadService</members>
+        <members>LeadUploadServiceTest</members>
+        <members>ShreeHariLeadRestResource</members>
+        <members>ShreeHariLeadRestResourceTest</members>
+        <members>SkuSearchController</members>
+        <members>SkuSearchControllerTest</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>LeadTrigger</members>
+        <name>ApexTrigger</name>
+    </types>
+    <types>
+        <members>recordRedirect</members>
+        <members>skuSearcher</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>Convert_Lead</members>
+        <members>Lead_Follow_up_Task</members>
+        <members>Lead_Stage</members>
+        <members>New_Lead</members>
+        <members>Upload_Leads</members>
+        <name>Flow</name>
+    </types>
+    <types>
+        <members>Lead</members>
+        <members>Purchase_Line_Item__c</members>
+        <members>Store_Location__c</members>
+        <members>Transaction_Record__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Account.Anniversary_Date__c</members>
+        <members>Account.Business_Type__c</members>
+        <members>Account.CASA_ID__c</members>
+        <members>Account.Campaign_Attribution__c</members>
+        <members>Account.Customer_Tier__c</members>
+        <members>Account.Date_of_Birth__c</members>
+        <members>Account.Email_Opt_In__c</members>
+        <members>Account.Email__c</members>
+        <members>Account.Last_12M_Spend__c</members>
+        <members>Account.Marital_Status__c</members>
+        <members>Account.Primary_Store__c</members>
+        <members>Account.SMS_Opt_In__c</members>
+        <members>Account.WA_Opt_In__c</members>
+        <members>Account.WhatsApp_Number__c</members>
+        <members>Activity.Follow_up_Date_Time__c</members>
+        <members>Case.Campaign__c</members>
+        <members>Case.Lead_Source__c</members>
+        <members>Case.Store__c</members>
+        <members>Contact.Anniversary_Date__c</members>
+        <members>Contact.Marital_Status__c</members>
+        <members>Lead.Anniversary_Date__c</members>
+        <members>Lead.Business_Type__c</members>
+        <members>Lead.Campaign_Attribution__c</members>
+        <members>Lead.Contacted_Remark__c</members>
+        <members>Lead.Date_of_Birth__c</members>
+        <members>Lead.Email_Opt_In__c</members>
+        <members>Lead.Follow_up_Date_Time__c</members>
+        <members>Lead.Lead_Number__c</members>
+        <members>Lead.Marital_Status__c</members>
+        <members>Lead.Qualification_Notes__c</members>
+        <members>Lead.SMS_Opt_In__c</members>
+        <members>Lead.Store_Association__c</members>
+        <members>Lead.Unqualified_Date__c</members>
+        <members>Lead.Unqualified_Remark__c</members>
+        <members>Lead.WA_Opt_In__c</members>
+        <members>Lead.Walk_In_Flag__c</members>
+        <members>Product2.Available_Quantity__c</members>
+        <members>Purchase_Line_Item__c.Product__c</members>
+        <members>Purchase_Line_Item__c.Purchase_Record__c</members>
+        <members>Purchase_Line_Item__c.Quantity__c</members>
+        <members>Store_Location__c.Store_Code__c</members>
+        <members>Transaction_Record__c.Account__c</members>
+        <members>Transaction_Record__c.Amount__c</members>
+        <members>Transaction_Record__c.Bill_Number__c</members>
+        <members>Transaction_Record__c.POS_Reference_ID__c</members>
+        <members>Transaction_Record__c.Payment_Mode__c</members>
+        <members>Transaction_Record__c.Points_Redeemed__c</members>
+        <members>Transaction_Record__c.Store__c</members>
+        <members>Transaction_Record__c.Transaction_Date__c</members>
+        <members>Transaction_Record__c.Voucher_Code__c</members>
+        <members>Transaction_Record__c.Voucher_Discount_Percentage__c</members>
+        <members>Transaction_Record__c.Voucher_Discount__c</members>
+        <members>Transaction_Record__c.Voucher_Face_Value__c</members>
+        <members>Transaction_Record__c.Voucher_Offer_Type__c</members>
+        <members>Transaction_Record__c.Voucher_Redemption_Channel__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Lead.Phone_Must_Be_10_Digits</members>
+        <members>Lead.Valid_Anniversary_Date</members>
+        <members>Lead.WhatsApp_Must_Be_10_Digits</members>
+        <members>Purchase_Line_Item__c.Quantity_At_Least_One</members>
+        <members>Transaction_Record__c.No_Future_Transaction_Date</members>
+        <name>ValidationRule</name>
+    </types>
+    <types>
+        <members>Lead.Download_Lead_Template</members>
+        <members>Lead.New_Lead</members>
+        <members>Lead.Upload_Leads</members>
+        <name>WebLink</name>
+    </types>
+    <types>
+        <members>Lead.Convert_Lead</members>
+        <name>QuickAction</name>
+    </types>
+    <types>
+        <members>Lead.Lead_Compact_Layout</members>
+        <name>CompactLayout</name>
+    </types>
+    <types>
+        <members>Account-Account Layout</members>
+        <members>Case-Case Layout</members>
+        <members>Contact-Contact Layout</members>
+        <members>Lead-Lead Layout</members>
+        <members>Purchase_Line_Item__c-Purchase Line Item Layout</members>
+        <members>Store_Location__c-Store Location Layout</members>
+        <members>Transaction_Record__c-Transaction Record Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>Lead_Record_Page</members>
+        <members>Transaction_Record_Record_Page</members>
+        <name>FlexiPage</name>
+    </types>
+    <types>
+        <members>Store_Location__c</members>
+        <members>Transaction_Record__c</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>ShriHari</members>
+        <name>CustomApplication</name>
+    </types>
+    <types>
+        <members>Lead_Upload_Template</members>
+        <name>StaticResource</name>
+    </types>
+    <types>
+        <members>Contact-en_US</members>
+        <members>Lead-en_US</members>
+        <name>CustomObjectTranslation</name>
+    </types>
+    <types>
+        <members>CaseType</members>
+        <members>LeadSource</members>
+        <members>LeadStatus</members>
+        <name>StandardValueSet</name>
+    </types>
+    <types>
+        <members>Lead.Lead_Duplicate_Rule</members>
+        <name>MatchingRule</name>
+    </types>
+    <types>
+        <members>Lead.Lead_Duplicate_Check</members>
+        <name>DuplicateRule</name>
+    </types>
+    <types>
+        <members>LeadConvertSettings</members>
+        <name>LeadConvertSettings</name>
+    </types>
+    <types>
+        <members>ShreeHari_CRM_User</members>
+        <members>Shree_Hari_Lead_API_Access</members>
+        <name>PermissionSet</name>
+    </types>
+    <types>
+        <members>Shree_Hari_Website_API</members>
+        <name>ExternalClientApplication</name>
+    </types>
+    <types>
+        <members>Shree_Hari_Website_API_oauth</members>
+        <name>ExtlClntAppOauthSettings</name>
+    </types>
+    <version>67.0</version>
+</Package>

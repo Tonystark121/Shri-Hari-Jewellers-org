@@ -626,13 +626,6 @@
     </dynamicChoiceSets>
     <environments>Default</environments>
     <formulas>
-        <description>Points Redeemed for the bill: the value entered when Loyalty Redemption is shown, otherwise 0.</description>
-        <name>Points_To_Record</name>
-        <dataType>Number</dataType>
-        <expression>IF({!Show_Loyalty_Redemption}, BLANKVALUE({!Points_Redeemed_Input}, 0), 0)</expression>
-        <scale>0</scale>
-    </formulas>
-    <formulas>
         <description>The Account Name shown: the one under the Lead when nothing matches, else the one under Create a new customer.</description>
         <name>Account_Name_Value</name>
         <dataType>String</dataType>
@@ -650,13 +643,34 @@
         <expression>IF({!Convert.isExistingCustomer}, &quot;Existing customer - bill added to their account&quot;, &quot;New customer&quot;)</expression>
     </formulas>
     <formulas>
-        <description>The Company when a user typed it (B2B); &quot;&lt;Name&gt; Family&quot; when Company is the system&apos;s (B2C), in any of its formats: &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;, the earlier &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot; or &quot;&lt;Name&gt; - B2C-&lt;number&gt;&quot;. Same rule as LeadConversionTransactionService.</description>
+        <description>The Company when a user typed it (B2B); &quot;&lt;Surname&gt; Family (&lt;First Name&gt;)&quot; when Company is the system&apos;s (B2C), in any of its formats: &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;, the earlier &quot;&lt;Name&gt; Family (&lt;Lead Number&gt;)&quot; or &quot;&lt;Name&gt; - B2C-&lt;number&gt;&quot;. Without a First Name, a Last Name of several words is split: its last word is the surname. Same rule as LeadConversionTransactionService.familyAccountName.</description>
         <name>Default_Account_Name</name>
         <dataType>String</dataType>
         <expression>IF(
   OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]&quot;)),
-  TRIM(BLANKVALUE({!Get_Lead.FirstName}, &quot;&quot;) &amp; &quot; &quot; &amp; {!Get_Lead.LastName}) &amp; &quot; Family&quot;,
+  IF(
+    AND(ISBLANK(TRIM({!Get_Lead.FirstName})), CONTAINS(TRIM({!Get_Lead.LastName}), &quot; &quot;)),
+    TRIM(RIGHT(SUBSTITUTE(TRIM({!Get_Lead.LastName}), &quot; &quot;, &quot;                                                                                &quot;), 80)) &amp; &quot; Family (&quot; &amp;
+      TRIM(LEFT(TRIM({!Get_Lead.LastName}), LEN(TRIM({!Get_Lead.LastName})) - LEN(TRIM(RIGHT(SUBSTITUTE(TRIM({!Get_Lead.LastName}), &quot; &quot;, &quot;                                                                                &quot;), 80))))) &amp; &quot;)&quot;,
+    TRIM({!Get_Lead.LastName}) &amp; &quot; Family&quot; &amp; IF(ISBLANK(TRIM({!Get_Lead.FirstName})), &quot;&quot;, &quot; (&quot; &amp; TRIM({!Get_Lead.FirstName}) &amp; &quot;)&quot;)
+  ),
   TRIM({!Get_Lead.Company})
+)</expression>
+    </formulas>
+    <formulas>
+        <description>Record opened after conversion: the Contact for a B2C Lead, the Account for a B2B Lead. B2C = Business Type B2C, or Business Type not B2B and the Company is the system&apos;s. Same rule as LeadConversionTransactionService.businessTypeOf.</description>
+        <name>Record_To_Open</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  OR(
+    TEXT({!Get_Lead.Business_Type__c}) = &quot;B2C&quot;,
+    AND(
+      TEXT({!Get_Lead.Business_Type__c}) &lt;&gt; &quot;B2B&quot;,
+      OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]&quot;))
+    )
+  ),
+  BLANKVALUE({!Convert.contactId}, {!Convert.accountId}),
+  {!Convert.accountId}
 )</expression>
     </formulas>
     <formulas>
@@ -670,6 +684,13 @@
         <dataType>Currency</dataType>
         <expression>BLANKVALUE({!Bill_Amount_Input}, 0) - IF({!Voucher_Used_Input}, BLANKVALUE({!Voucher_Discount_Input}, 0), 0) - BLANKVALUE({!Points_Redeemed_Input}, 0)</expression>
         <scale>2</scale>
+    </formulas>
+    <formulas>
+        <description>Points Redeemed for the bill: the value entered when Loyalty Redemption is shown, otherwise 0.</description>
+        <name>Points_To_Record</name>
+        <dataType>Number</dataType>
+        <expression>IF({!Show_Loyalty_Redemption}, BLANKVALUE({!Points_Redeemed_Input}, 0), 0)</expression>
+        <scale>0</scale>
     </formulas>
     <formulas>
         <description>The bill&apos;s Purchase Date, as the Assets&apos; Purchase Date.</description>
@@ -923,7 +944,7 @@
                     </defaultValue>
                     <fieldText>Account Name</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family&quot;. Change it if needed.&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Surname&amp;gt; Family (&amp;lt;First Name&amp;gt;)&quot;. Change it if needed.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
                     <styleProperties>
                         <verticalAlignment>
@@ -1104,7 +1125,7 @@
                     </defaultValue>
                     <fieldText>Account Name</fieldText>
                     <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Name&amp;gt; Family&quot;. Change it if needed.&lt;/p&gt;</helpText>
+                    <helpText>&lt;p&gt;Filled in with the Lead&apos;s Company for a business, otherwise &quot;&amp;lt;Surname&amp;gt; Family (&amp;lt;First Name&amp;gt;)&quot;. Change it if needed.&lt;/p&gt;</helpText>
                     <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
                     <isRequired>true</isRequired>
                     <styleProperties>
@@ -1711,12 +1732,20 @@
             <inputParameters>
                 <name>recordToOpen</name>
                 <value>
-                    <elementReference>Convert.accountId</elementReference>
+                    <elementReference>Record_To_Open</elementReference>
                 </value>
             </inputParameters>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <storeOutputAutomatically>true</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>false</showFooter>
         <showHeader>false</showHeader>
@@ -1729,17 +1758,6 @@
         </connector>
     </start>
     <status>Active</status>
-    <variables>
-        <description>Switch for the Loyalty Redemption section: false while the loyalty module is not live. Set the default to true to show it again.</description>
-        <name>Show_Loyalty_Redemption</name>
-        <dataType>Boolean</dataType>
-        <isCollection>false</isCollection>
-        <isInput>false</isInput>
-        <isOutput>false</isOutput>
-        <value>
-            <booleanValue>false</booleanValue>
-        </value>
-    </variables>
     <variables>
         <description>The Assets to create.</description>
         <name>Assets</name>
@@ -1817,6 +1835,17 @@
         <isCollection>false</isCollection>
         <isInput>true</isInput>
         <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>Switch for the Loyalty Redemption section: false while the loyalty module is not live. Set the default to true to show it again.</description>
+        <name>Show_Loyalty_Redemption</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <booleanValue>false</booleanValue>
+        </value>
     </variables>
     <variables>
         <description>True after the service refused the conversion; shows its reason at the top of the form.</description>

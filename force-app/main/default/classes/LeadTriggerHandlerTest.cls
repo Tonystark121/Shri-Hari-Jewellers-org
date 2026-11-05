@@ -463,7 +463,7 @@ private class LeadTriggerHandlerTest {
                    Anniversary_Date__c, BillingCity, Description
             FROM Account
         ];
-        Assert.areEqual('Asha Mehta Family', created.Name, 'Named as on conversion for B2C');
+        Assert.areEqual('Mehta Family (Asha)', created.Name, 'Named as on conversion for B2C');
         Assert.areEqual('B2C', created.Business_Type__c, 'B2C');
         Assert.areEqual(UserInfo.getUserId(), created.OwnerId, 'Owned by the user raising the enquiry');
         Assert.areEqual('+91 98300 12366', created.Phone, 'Phone from the Lead, as entered');
@@ -477,7 +477,7 @@ private class LeadTriggerHandlerTest {
         Assert.areEqual(created.Id, [SELECT AccountId FROM Contact WHERE Id = :person.Id].AccountId,
             'The Contact is moved under its new Account');
         Assert.areEqual(created.Id, result.accountId, 'Reported with the new Account');
-        Assert.areEqual('Asha Mehta Family', result.accountName, 'And its name');
+        Assert.areEqual('Mehta Family (Asha)', result.accountName, 'And its name');
         Assert.areEqual(person.Id, result.contactId, 'The same Contact');
         Assert.areEqual(UserInfo.getUserId(), result.caseOwnerId, 'The enquiry goes to the Account owner');
         Assert.areEqual(1, [SELECT COUNT() FROM Loyalty_Record__c WHERE Account__c = :created.Id],
@@ -551,7 +551,7 @@ private class LeadTriggerHandlerTest {
         Assert.areEqual(2, [SELECT COUNT() FROM Account], 'One new Account for the one Contact');
         Assert.isNotNull(first.accountId, 'Given an Account');
         Assert.areEqual(first.accountId, second.accountId, 'The same Account for the same Contact');
-        Assert.areEqual('Asha Mehta Family', first.accountName, 'Built from the first Lead');
+        Assert.areEqual('Mehta Family (Asha)', first.accountName, 'Built from the first Lead');
         Assert.areEqual(household.Id, withAccount.accountId, 'A customer with an Account keeps it');
     }
 

@@ -89,3 +89,18 @@ Keep the second line, shorten it to the purchase date only, or remove it?
 
 When we are updating a lead phone/email what happens then -> with same as existing account simply create an enquiry
    for now we are refusing the save, and telling to create new enquiry, similar in case of duplicate lead.
+
+
+How names come out now:
+
+Situation	Before	Now
+New customer Anup Sharma	Anup Sharma Family	Sharma Family (Anup)
++ Suman Sharma	Anup Sharma & Suman Sharma Family	Sharma Family (Anup, Suman)
++ Neha Kapoor (different surname)	… & Neha Kapoor Family	Sharma Family (Anup, Suman, Neha Kapoor)
++ suman sharma again (any capitals)	unchanged	unchanged
+Full name typed in Last Name, no First Name ("Anup Sharma")	Anup Sharma Family	Sharma Family (Anup); the last word is taken as the surname
+First Name "Anup", Last Name "De Souza"	Anup De Souza Family	De Souza Family (Anup); Last Name is used as typed when First Name is filled
+Last Name only ("Ali")	Ali Family	Ali Family; adding Riya Ali later gives Ali Family (Riya)
+Old name "raj sinha & aman sinha Family" + Neha Sinha	added with "&"	rewritten as sinha Family (raj, aman, Neha)
+Old name "Asha Mehta Family (000123)" + Rohit Mehta	not merged	Mehta Family (Asha, Rohit)
+Renamed by hand (no "Family"), B2B, or a cross-type merge	unchanged	unchanged

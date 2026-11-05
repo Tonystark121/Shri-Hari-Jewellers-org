@@ -264,7 +264,7 @@ private class ShreeHariLeadRestResourceTest {
         Assert.areEqual(0, [SELECT COUNT() FROM Lead], 'No Lead is created');
 
         Account created = [SELECT Id, Name, Business_Type__c, OwnerId, Primary_Store__c FROM Account WITH SYSTEM_MODE];
-        Assert.areEqual('Ananya Sharma Family', created.Name, 'Named as on conversion');
+        Assert.areEqual('Sharma Family (Ananya)', created.Name, 'Named as on conversion');
         Assert.areEqual('B2C', created.Business_Type__c, 'A blank company is B2C');
         Assert.areEqual(UserInfo.getUserId(), created.OwnerId, 'Owned by the integration user');
         Assert.isNotNull(created.Primary_Store__c, 'Primary Store from the store sent');

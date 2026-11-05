@@ -171,7 +171,7 @@ private class LeadUploadServiceTest {
         Assert.areEqual(0, result.leadsCreated, 'No Lead for an existing customer');
         Assert.areEqual(1, result.enquiriesRaised, 'An enquiry instead');
         Account created = [SELECT Id, Name, Business_Type__c, OwnerId, Phone, Email__c FROM Account WITH SYSTEM_MODE];
-        Assert.areEqual('Test Sharma Family', created.Name, 'Named as on conversion');
+        Assert.areEqual('Sharma Family (Test)', created.Name, 'Named as on conversion');
         Assert.areEqual('B2C', created.Business_Type__c, 'A blank Company is B2C');
         Assert.areEqual(UserInfo.getUserId(), created.OwnerId, 'Owned by the uploader');
         Assert.areEqual('+91 98300 12344', created.Phone, 'Phone from the row, as written');

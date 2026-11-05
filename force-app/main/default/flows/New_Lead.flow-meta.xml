@@ -194,7 +194,7 @@
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Enquiry_Form</targetReference>
+            <targetReference>Matched_Account_Found</targetReference>
         </connector>
     </assignments>
     <assignments>
@@ -416,6 +416,32 @@
         </connector>
     </assignments>
     <decisions>
+        <description>The customer found by the check: an Account (with its Contacts), or a Contact with no Account yet.</description>
+        <name>Matched_Account_Found</name>
+        <label>Matched Account Found?</label>
+        <locationX>600</locationX>
+        <locationY>674</locationY>
+        <defaultConnector>
+            <targetReference>Get_Matched_Contact</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Contact Only</defaultConnectorLabel>
+        <rules>
+            <name>Account_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Customer.accountId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Matched_Account</targetReference>
+            </connector>
+            <label>Account Found</label>
+        </rules>
+    </decisions>
+    <decisions>
         <description>Existing customer: raise an enquiry instead of a Lead. Open Lead: back to the form with a banner. Otherwise: create the Lead.</description>
         <name>Customer_Check_Outcome</name>
         <label>Customer Check Outcome</label>
@@ -519,12 +545,6 @@
     </dynamicChoiceSets>
     <environments>Default</environments>
     <formulas>
-        <description>Lead Source saved on the enquiry: the one chosen on the enquiry screen, or the Lead form&apos;s when left blank.</description>
-        <name>Enquiry_Lead_Source_Value</name>
-        <dataType>String</dataType>
-        <expression>BLANKVALUE({!Enquiry_Lead_Source_Input}, TEXT({!Lead_Record.LeadSource}))</expression>
-    </formulas>
-    <formulas>
         <description>Anniversary Date is saved only for a Married customer; the field is hidden otherwise.</description>
         <name>Anniversary_To_Save</name>
         <dataType>Date</dataType>
@@ -587,6 +607,12 @@
         <expression>IF(ISBLANK({!Create_Customer_Account.accountId}), {!Check_Customer.accountName}, {!Create_Customer_Account.accountName})</expression>
     </formulas>
     <formulas>
+        <description>Lead Source saved on the enquiry: the one chosen on the enquiry screen, or the Lead form&apos;s when left blank.</description>
+        <name>Enquiry_Lead_Source_Value</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!Enquiry_Lead_Source_Input}, TEXT({!Lead_Record.LeadSource}))</expression>
+    </formulas>
+    <formulas>
         <name>Enquiry_Subject</name>
         <dataType>String</dataType>
         <expression>IF({!Case_Type_Input} = &quot;Service Enquiry&quot;, &quot;Enquiry&quot;, BLANKVALUE({!Case_Type_Input}, &quot;Enquiry&quot;)) &amp; &quot; from &quot; &amp; {!Full_Name}</expression>
@@ -643,6 +669,92 @@
         </faultConnector>
         <inputReference>Lead_Record</inputReference>
     </recordCreates>
+    <recordLookups>
+        <description>The matched customer&apos;s Account, shown on the enquiry screen.</description>
+        <name>Get_Matched_Account</name>
+        <label>Get Matched Account</label>
+        <locationX>600</locationX>
+        <locationY>782</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Account_Contacts</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Check_Customer.accountId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Name</queriedFields>
+        <queriedFields>Business_Type__c</queriedFields>
+        <queriedFields>Phone</queriedFields>
+        <queriedFields>WhatsApp_Number__c</queriedFields>
+        <queriedFields>Email__c</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>The matched Account&apos;s Contacts, oldest first.</description>
+        <name>Get_Account_Contacts</name>
+        <label>Get Account Contacts</label>
+        <locationX>600</locationX>
+        <locationY>890</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Enquiry_Form</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Check_Customer.accountId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Contact</object>
+        <outputReference>Matched_Contacts</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Name</queriedFields>
+        <queriedFields>Phone</queriedFields>
+        <queriedFields>MobilePhone</queriedFields>
+        <queriedFields>Email</queriedFields>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Asc</sortOrder>
+    </recordLookups>
+    <recordLookups>
+        <description>The matched Contact, when it has no Account yet.</description>
+        <name>Get_Matched_Contact</name>
+        <label>Get Matched Contact</label>
+        <locationX>820</locationX>
+        <locationY>782</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Enquiry_Form</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Check_Customer.contactId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Contact</object>
+        <outputReference>Matched_Contacts</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Name</queriedFields>
+        <queriedFields>Phone</queriedFields>
+        <queriedFields>MobilePhone</queriedFields>
+        <queriedFields>Email</queriedFields>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Asc</sortOrder>
+    </recordLookups>
     <recordLookups>
         <description>The saved Lead read back, for the Company and Lead Number the system assigned.</description>
         <name>Get_Created_Lead</name>
@@ -741,6 +853,14 @@
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <storeOutputAutomatically>true</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>false</showFooter>
         <showHeader>false</showHeader>
@@ -759,7 +879,7 @@
         </connector>
         <fields>
             <name>Existing_Customer_Banner</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(1, 118, 211);&quot;&gt;ℹ  {!Full_Name} is already a customer&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;This phone or email belongs to &lt;/span&gt;&lt;a href=&quot;/{!Customer_Record_Id}&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;{!Check_Customer.accountName}&lt;/strong&gt;&lt;/a&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;. Instead of a duplicate Lead, raise an enquiry on their account - it goes straight to their account owner. The details you entered are already filled in below; add anything further if needed.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(1, 118, 211);&quot;&gt;ℹ  {!Full_Name} is already a customer&lt;/strong&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
             <styleProperties>
                 <verticalAlignment>
@@ -769,6 +889,103 @@
                     <stringValue>12</stringValue>
                 </width>
             </styleProperties>
+        </fields>
+        <fields>
+            <name>Matched_Account_Section</name>
+            <fieldText>Customer Account</fieldText>
+            <fieldType>RegionContainer</fieldType>
+            <fields>
+                <name>Matched_Account_Column1</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Matched_Account_Column1_Details</name>
+                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;Account Name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;&lt;a href=&quot;/{!Check_Customer.accountId}&quot; target=&quot;_blank&quot;&gt;{!Get_Matched_Account.Name}&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;Business Type&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;{!Get_Matched_Account.Business_Type__c}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;Email&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;{!Get_Matched_Account.Email__c}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <fields>
+                <name>Matched_Account_Column2</name>
+                <fieldType>Region</fieldType>
+                <fields>
+                    <name>Matched_Account_Column2_Details</name>
+                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;Phone&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;{!Get_Matched_Account.Phone}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;WhatsApp Number&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;{!Get_Matched_Account.WhatsApp_Number__c}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
+                    <fieldType>DisplayText</fieldType>
+                </fields>
+                <inputParameters>
+                    <name>width</name>
+                    <value>
+                        <stringValue>6</stringValue>
+                    </value>
+                </inputParameters>
+                <isRequired>false</isRequired>
+            </fields>
+            <isRequired>false</isRequired>
+            <regionContainerType>SectionWithHeader</regionContainerType>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>Check_Customer.accountId</leftValueReference>
+                    <operator>IsNull</operator>
+                    <rightValue>
+                        <booleanValue>false</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>Matched_Contacts_Table</name>
+            <dataTypeMappings>
+                <typeName>T</typeName>
+                <typeValue>Contact</typeValue>
+            </dataTypeMappings>
+            <extensionName>flowruntime:datatable</extensionName>
+            <fieldType>ComponentInstance</fieldType>
+            <inputParameters>
+                <name>label</name>
+                <value>
+                    <stringValue>Contacts</stringValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>selectionMode</name>
+                <value>
+                    <stringValue>NO_SELECTION</stringValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>minRowSelection</name>
+                <value>
+                    <numberValue>0.0</numberValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>shouldDisplayLabel</name>
+                <value>
+                    <booleanValue>true</booleanValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>tableData</name>
+                <value>
+                    <elementReference>Matched_Contacts</elementReference>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>columns</name>
+                <value>
+                    <stringValue>[{&quot;apiName&quot;:&quot;Name&quot;,&quot;guid&quot;:&quot;column-name&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:0,&quot;label&quot;:&quot;Name&quot;,&quot;type&quot;:&quot;text&quot;},{&quot;apiName&quot;:&quot;Phone&quot;,&quot;guid&quot;:&quot;column-phone&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:1,&quot;label&quot;:&quot;Phone&quot;,&quot;type&quot;:&quot;phone&quot;},{&quot;apiName&quot;:&quot;MobilePhone&quot;,&quot;guid&quot;:&quot;column-mobilephone&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:2,&quot;label&quot;:&quot;WhatsApp Number&quot;,&quot;type&quot;:&quot;phone&quot;},{&quot;apiName&quot;:&quot;Email&quot;,&quot;guid&quot;:&quot;column-email&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:3,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;}]</stringValue>
+                </value>
+            </inputParameters>
+            <inputsOnNextNavToAssocScrn>ResetValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <storeOutputAutomatically>true</storeOutputAutomatically>
         </fields>
         <fields>
             <name>Enquiry_Section</name>
@@ -957,6 +1174,14 @@
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <storeOutputAutomatically>true</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>false</showFooter>
         <showHeader>false</showHeader>
@@ -1520,6 +1745,15 @@
         </connector>
     </start>
     <status>Active</status>
+    <variables>
+        <description>Contacts of the matched customer, shown on the enquiry screen.</description>
+        <name>Matched_Contacts</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Contact</objectType>
+    </variables>
     <variables>
         <description>The enquiry Case raised for an existing customer.</description>
         <name>Enquiry_Case</name>

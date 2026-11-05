@@ -17,8 +17,8 @@
  *      (the product description) is added to
  *      the Account's on a new line. The Lead's name is added to the
  *      Account's name when both have the same Business Type: a B2C Lead to a
- *      B2C family Account - "Asha Mehta Family" + Rohit Mehta becomes "Asha
- *      Mehta & Rohit Mehta Family" (familyAccountNameWith) - and a B2B Lead
+ *      B2C family Account - "Mehta Family (Asha)" + Rohit Mehta becomes
+ *      "Mehta Family (Asha, Rohit)" (familyAccountNameWith) - and a B2B Lead
  *      to a B2B Account - "test user" + Rakesh Jain becomes "test user &
  *      Rakesh Jain" (businessAccountNameWith). Across types, or when the
  *      Account's Business Type is blank or Unknown, the name is kept,
@@ -447,7 +447,7 @@ public without sharing class LeadConversionTransactionService {
                 String leadType = businessTypeOf(member);
                 String withMember;
                 if (leadType == BUSINESS_TYPE_B2C && accountType == BUSINESS_TYPE_B2C) {
-                    withMember = familyAccountNameWith(name, LeadTriggerHandler.personName(member));
+                    withMember = familyAccountNameWith(name, member.FirstName, member.LastName);
                 } else if (leadType == BUSINESS_TYPE_B2B && accountType == BUSINESS_TYPE_B2B) {
                     withMember = businessAccountNameWith(name, LeadTriggerHandler.personName(member));
                 }
@@ -783,45 +783,79 @@ public without sharing class LeadConversionTransactionService {
         if (!LeadTriggerHandler.isSystemCompany(leadRecord.Company)) {
             return leadRecord.Company.trim();
         }
-        return familyAccountName(LeadTriggerHandler.personName(leadRecord));
+        return familyAccountName(leadRecord.FirstName, leadRecord.LastName);
     }
 
     // =====================================================================
     // Family Account names
     // =====================================================================
 
-    /** "<Name> Family", e.g. Asha Mehta Family: a new B2C customer's Account. */
-    public static String familyAccountName(String personName) {
-        return personName.trim() + FAMILY_SUFFIX;
+    /** "<Surname> Family" with an optional "(<members>)" list, any case. */
+    private static final Pattern FAMILY_NAME = Pattern.compile('(?i)(.+?) Family(?: \\((.*)\\))?');
+
+    /** "Sharma Family (Anup)": a new B2C customer's Account; "Ali Family" without a first name. */
+    public static String familyAccountName(String firstName, String lastName) {
+        return familyAccountNameWith(null, firstName, lastName);
     }
 
     /**
-     * The family Account's name with one more member, e.g. "Asha Mehta
-     * Family" + Rohit Mehta = "Asha Mehta & Rohit Mehta Family". Null - keep
-     * the name as it is - when it does not end in "Family" (a business, or a
-     * name given by hand), already holds that person's name, or would go over
-     * the 255-character limit.
+     * The family Account's name with one more member. The surname is said
+     * once and members are listed by first name: "Sharma Family (Anup)" +
+     * Suman Sharma = "Sharma Family (Anup, Suman)"; a member with another
+     * surname is listed in full ("..., Neha Kapoor"). Older names - "Asha
+     * Mehta & Rohit Mehta Family", "Asha Mehta Family (000123)" - are
+     * rewritten in this form. Null - keep the name as it is - when it is not
+     * a family name (a business, or a name given by hand), already lists the
+     * person, or would go over the 255-character limit.
      */
-    public static String familyAccountNameWith(String accountName, String personName) {
-        if (String.isBlank(accountName) || String.isBlank(personName)) {
-            return null;
-        }
-        String trimmed = accountName.trim();
-        if (!trimmed.endsWithIgnoreCase(FAMILY_SUFFIX)) {
-            return null;
-        }
-        String members = trimmed.left(trimmed.length() - FAMILY_SUFFIX.length()).trim();
-        if (String.isBlank(members)) {
-            return null;
-        }
-        String person = personName.trim();
-        for (String member : members.split(MEMBER_SEPARATOR)) {
-            if (member.trim().equalsIgnoreCase(person)) {
+    public static String familyAccountNameWith(String accountName, String firstName, String lastName) {
+        String surname;
+        List<String> members = new List<String>();
+        if (accountName != null) {
+            Matcher family = FAMILY_NAME.matcher(accountName.normalizeSpace());
+            if (!family.matches()) {
                 return null;
             }
+            String listed = family.group(2);
+            if (listed != null && !listed.isNumeric()) {
+                surname = family.group(1);
+                members.addAll(listed.split(', '));
+            } else {
+                for (String older : family.group(1).split(MEMBER_SEPARATOR)) {
+                    surname = addFamilyMember(surname, members, null, older);
+                }
+            }
         }
-        String withMember = members + MEMBER_SEPARATOR + person + FAMILY_SUFFIX;
-        return withMember.length() > ACCOUNT_NAME_MAX_LENGTH ? null : withMember;
+        surname = addFamilyMember(surname, members, firstName, lastName);
+        String name = surname + FAMILY_SUFFIX + (members.isEmpty() ? '' : ' (' + String.join(members, ', ') + ')');
+        return name == accountName || name.length() > ACCOUNT_NAME_MAX_LENGTH ? null : name;
+    }
+
+    /**
+     * Adds a person to a family's members and returns the family's surname -
+     * the first person's. Without a First Name, a Last Name of several words
+     * ("Anup Sharma") is split: its last word is the surname.
+     */
+    private static String addFamilyMember(String surname, List<String> members, String firstName, String lastName) {
+        String first = firstName == null ? '' : firstName.normalizeSpace();
+        String last = lastName == null ? '' : lastName.normalizeSpace();
+        if (String.isBlank(first) && last.contains(' ')) {
+            first = last.substringBeforeLast(' ');
+            last = last.substringAfterLast(' ');
+        }
+        if (surname == null) {
+            surname = last;
+        }
+        String member = last.equalsIgnoreCase(surname) ? first : (first + ' ' + last).trim();
+        for (String listed : members) {
+            if (listed.equalsIgnoreCase(member)) {
+                return surname;
+            }
+        }
+        if (String.isNotBlank(member)) {
+            members.add(member);
+        }
+        return surname;
     }
 
     /**
