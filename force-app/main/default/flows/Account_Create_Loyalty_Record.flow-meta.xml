@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
-    <description>When an Account (household) is created, creates its Loyalty Record with a zero balance. CASA Loyalty ID and Tier on the Loyalty Record are formulas over the Account, so they show the Account's values without being copied; Last Transaction Date stays blank until the first bill earns points; Total Points Expired is a roll-up. LoyaltyEngine uses this record from the first bill on (it only creates one itself when a household has none).</description>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>When an Account (household) is created, creates its Loyalty Record with a zero balance. CASA Loyalty ID and Tier on the Loyalty Record are formulas over the Account, so they show the Account&apos;s values without being copied; Last Transaction Date stays blank until the first bill earns points; Total Points Expired is a roll-up. LoyaltyEngine uses this record from the first bill on (it only creates one itself when a household has none).</description>
     <environments>Default</environments>
     <interviewLabel>Account: Create Loyalty Record {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Account: Create Loyalty Record</label>

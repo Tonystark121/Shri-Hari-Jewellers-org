@@ -1,0 +1,116 @@
+<template>
+    <div class="slds-form-element">
+        <lightning-input
+            type="search"
+            label={label}
+            placeholder="Type a product name or SKU to see matching products"
+            value={searchTerm}
+            onchange={handleSearchChange}
+            is-loading={isSearching}
+        ></lightning-input>
+
+        <template lwc:if={showResults}>
+        <div class="results slds-box slds-box_xx-small slds-m-top_xx-small">
+            <template lwc:if={hasResults}>
+                <ul class="slds-has-dividers_bottom-space" role="listbox" aria-multiselectable="true">
+                    <template for:each={results} for:item="product">
+                        <li key={product.Id} class={product.rowClass}>
+                            <div class="slds-media slds-media_center">
+                                <div class="slds-media__figure">
+                                    <lightning-input
+                                        type="checkbox"
+                                        label={product.Name}
+                                        variant="label-hidden"
+                                        checked={product.isChecked}
+                                        disabled={product.isPicked}
+                                        data-id={product.Id}
+                                        onchange={handleCheck}
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-media__body">
+                                    <div class="slds-truncate"><strong>{product.Name}</strong></div>
+                                    <div class="slds-text-color_weak slds-text-body_small slds-truncate">
+                                        {product.ProductCode} · In stock: {product.stockLabel}
+                                    </div>
+                                </div>
+                                <template lwc:if={product.isPicked}>
+                                    <div class="slds-media__figure slds-media__figure_reverse">
+                                        <lightning-badge label="Added"></lightning-badge>
+                                    </div>
+                                </template>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+            <template lwc:elseif={searched}>
+                <p class="slds-p-around_x-small slds-text-color_weak">{noResultsMessage}</p>
+            </template>
+        </div>
+        </template>
+
+        <template lwc:if={showAddBar}>
+        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-top_x-small">
+            <div class="slds-text-body_small slds-text-color_weak">{checkedSummary}</div>
+            <lightning-button
+                variant="brand"
+                label={addSelectedLabel}
+                icon-name="utility:add"
+                disabled={noneChecked}
+                onclick={handleAddSelected}
+            ></lightning-button>
+        </div>
+        </template>
+
+        <template lwc:if={hasItems}>
+            <div class="slds-text-title_caps slds-m-top_medium slds-m-bottom_xx-small">{selectedHeading}</div>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered" aria-label="Selected products">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col"><div class="slds-truncate">Product</div></th>
+                        <th scope="col"><div class="slds-truncate">SKU</div></th>
+                        <th scope="col"><div class="slds-truncate">In Stock</div></th>
+                        <th scope="col" class="quantity-column"><div class="slds-truncate">Quantity</div></th>
+                        <th scope="col" class="action-column"><span class="slds-assistive-text">Remove</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={items} for:item="item">
+                        <tr key={item.productId}>
+                            <td><div class="slds-truncate" title={item.name}>{item.name}</div></td>
+                            <td><div class="slds-truncate">{item.sku}</div></td>
+                            <td><div class="slds-truncate">{item.stockLabel}</div></td>
+                            <td>
+                                <lightning-input
+                                    type="number"
+                                    label="Quantity"
+                                    variant="label-hidden"
+                                    min="1"
+                                    step="1"
+                                    required
+                                    value={item.quantity}
+                                    data-id={item.productId}
+                                    onchange={handleQuantityChange}
+                                ></lightning-input>
+                            </td>
+                            <td>
+                                <lightning-button-icon
+                                    icon-name="utility:delete"
+                                    variant="bare"
+                                    alternative-text="Remove"
+                                    title="Remove"
+                                    data-id={item.productId}
+                                    onclick={handleRemove}
+                                ></lightning-button-icon>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </template>
+
+        <template lwc:if={errorMessage}>
+            <div class="slds-form-element__help slds-text-color_error slds-m-top_xx-small">{errorMessage}</div>
+        </template>
+    </div>
+</template>

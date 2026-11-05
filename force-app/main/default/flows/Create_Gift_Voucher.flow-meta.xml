@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Flow xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
         <description>Random default Voucher Code prefix (no Account Ids passed).</description>
         <name>Get_Default_Voucher_Code</name>
@@ -55,99 +55,7 @@
         </outputParameters>
     </actionCalls>
     <apiVersion>62.0</apiVersion>
-    <assignments>
-        <description>Fixed Price: the offer amount goes to Face Value, Discount Percentage is blank. Also empties the collection so a retry after Previous starts clean.</description>
-        <name>Set_Fixed_Price_Values</name>
-        <label>Set Fixed Price Values</label>
-        <locationX>50</locationX>
-        <locationY>854</locationY>
-        <assignmentItems>
-            <assignToReference>Face_Value_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Offer_Amount_Value</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Discount_Percentage_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Blank_Number</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Vouchers_To_Create</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Empty_Voucher_List</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Minimum_Amount_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Blank_Number</elementReference>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Has_Minimum_Amount</targetReference>
-        </connector>
-    </assignments>
-    <assignments>
-        <description>Percentage: the percentage goes to Discount Percentage, Face Value is blank. Also empties the collection so a retry after Previous starts clean.</description>
-        <name>Set_Percentage_Values</name>
-        <label>Set Percentage Values</label>
-        <locationX>314</locationX>
-        <locationY>854</locationY>
-        <assignmentItems>
-            <assignToReference>Discount_Percentage_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Discount_Percentage_Value</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Face_Value_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Blank_Number</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Vouchers_To_Create</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Empty_Voucher_List</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Minimum_Amount_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Blank_Number</elementReference>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Has_Minimum_Amount</targetReference>
-        </connector>
-    </assignments>
-    <assignments>
-        <description>A Min Amount was entered: save it. Left blank, Minimum Amount stays blank (the voucher then applies to bills of Max Amount or more).</description>
-        <name>Set_Minimum_Amount</name>
-        <label>Set Minimum Amount</label>
-        <locationX>50</locationX>
-        <locationY>1094</locationY>
-        <assignmentItems>
-            <assignToReference>Minimum_Amount_To_Save</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Minimum_Amount_Value</elementReference>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Loop_Prepared_Vouchers</targetReference>
-        </connector>
-    </assignments>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <assignments>
         <description>Completes one prepared voucher (Account and unique code already set) and adds it to the collection created after the loop.</description>
         <name>Build_Voucher</name>
@@ -193,7 +101,7 @@
             <assignToReference>Voucher_Record.Minimum_Amount__c</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Minimum_Amount_To_Save</elementReference>
+                <elementReference>Minimum_Amount_Value</elementReference>
             </value>
         </assignmentItems>
         <assignmentItems>
@@ -251,31 +159,68 @@
             <targetReference>Create_Vouchers</targetReference>
         </connector>
     </assignments>
-    <decisions>
-        <name>Has_Minimum_Amount</name>
-        <label>Has Minimum Amount?</label>
-        <locationX>176</locationX>
-        <locationY>974</locationY>
-        <defaultConnector>
+    <assignments>
+        <description>Fixed Price: the offer amount goes to Face Value, Discount Percentage is blank. Also empties the collection so a retry after Previous starts clean.</description>
+        <name>Set_Fixed_Price_Values</name>
+        <label>Set Fixed Price Values</label>
+        <locationX>50</locationX>
+        <locationY>854</locationY>
+        <assignmentItems>
+            <assignToReference>Face_Value_To_Save</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Offer_Amount_Value</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Discount_Percentage_To_Save</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Blank_Number</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Vouchers_To_Create</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Empty_Voucher_List</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
             <targetReference>Loop_Prepared_Vouchers</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>No Minimum</defaultConnectorLabel>
-        <rules>
-            <name>Minimum_Given</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>Min_Amount</leftValueReference>
-                <operator>IsBlank</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>Set_Minimum_Amount</targetReference>
-            </connector>
-            <label>Minimum Given</label>
-        </rules>
-    </decisions>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Percentage: the percentage goes to Discount Percentage, Face Value is blank. Also empties the collection so a retry after Previous starts clean.</description>
+        <name>Set_Percentage_Values</name>
+        <label>Set Percentage Values</label>
+        <locationX>314</locationX>
+        <locationY>854</locationY>
+        <assignmentItems>
+            <assignToReference>Discount_Percentage_To_Save</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Discount_Percentage_Value</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Face_Value_To_Save</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Blank_Number</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Vouchers_To_Create</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Empty_Voucher_List</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Prepared_Vouchers</targetReference>
+        </connector>
+    </assignments>
     <decisions>
         <name>Which_Offer_Type</name>
         <label>Which Offer Type?</label>
@@ -316,7 +261,7 @@
         <scale>2</scale>
     </formulas>
     <formulas>
-        <description>Entered Min Amount as a number. Only used when Min Amount is not blank.</description>
+        <description>Blank minimum means 0.</description>
         <name>Minimum_Amount_Value</name>
         <dataType>Currency</dataType>
         <expression>IF(ISBLANK({!Min_Amount}), 0, VALUE({!Min_Amount}))</expression>
@@ -336,11 +281,7 @@
   {!Offer_Type} = &quot;Fixed Price&quot;,
   &quot;₹&quot; &amp; TEXT({!Offer_Amount_Value}) &amp; &quot; off&quot;,
   TEXT({!Discount_Percentage_Value}) &amp; &quot;% off&quot;
-) &amp; IF(
-  OR(ISBLANK({!Min_Amount}), {!Minimum_Amount_Value} = 0),
-  &quot; on bills of ₹&quot; &amp; TEXT({!Maximum_Amount_Value}) &amp; &quot; or more&quot;,
-  &quot; on bills from ₹&quot; &amp; TEXT({!Minimum_Amount_Value}) &amp; &quot; to ₹&quot; &amp; TEXT({!Maximum_Amount_Value})
-)</expression>
+) &amp; &quot; on bills from ₹&quot; &amp; TEXT({!Minimum_Amount_Value}) &amp; &quot; to ₹&quot; &amp; TEXT({!Maximum_Amount_Value})</expression>
     </formulas>
     <interviewLabel>Create Gift Voucher {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Create Gift Voucher</label>
@@ -403,6 +344,14 @@
             <name>Error_Message</name>
             <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(186, 5, 23);&quot;&gt;The gift vouchers could not be created&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;No voucher was saved. Click &lt;strong&gt;Previous&lt;/strong&gt; to change the details and save again, or share the message below with your administrator.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;{!$Flow.FaultMessage}&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
@@ -476,7 +425,14 @@
                 <assignToReference>Selected_Account_Count</assignToReference>
                 <name>selectedCount</name>
             </outputParameters>
-            <storeOutputAutomatically>false</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
@@ -554,7 +510,14 @@
                 <assignToReference>Discount_Percentage</assignToReference>
                 <name>discountPercentage</name>
             </outputParameters>
-            <storeOutputAutomatically>false</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
@@ -571,6 +534,14 @@
             <name>Success_Message</name>
             <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(46, 132, 74);&quot;&gt;✔ Gift vouchers created&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;{!Vouchers_Created}&lt;/strong&gt; gift voucher(s) were created, one for each selected customer.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Voucher codes:&lt;/strong&gt; {!Voucher_Code}-XXXX (each customer has their own ending)&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Offer:&lt;/strong&gt; {!Offer_Summary}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; {!Expiry_Date}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Status:&lt;/strong&gt; Active&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
@@ -664,7 +635,14 @@
                 <assignToReference>Issued_By</assignToReference>
                 <name>issuedBy</name>
             </outputParameters>
-            <storeOutputAutomatically>false</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
@@ -746,15 +724,6 @@
         <isCollection>false</isCollection>
         <isInput>false</isInput>
         <isOutput>false</isOutput>
-    </variables>
-    <variables>
-        <description>Minimum Amount saved on the vouchers: blank unless a Min Amount was entered.</description>
-        <name>Minimum_Amount_To_Save</name>
-        <dataType>Currency</dataType>
-        <isCollection>false</isCollection>
-        <isInput>false</isInput>
-        <isOutput>false</isOutput>
-        <scale>2</scale>
     </variables>
     <variables>
         <name>Offer_Amount</name>

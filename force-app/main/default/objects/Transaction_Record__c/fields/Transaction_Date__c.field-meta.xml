@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Transaction_Date__c</fullName>
     <description>Date and time the sale took place at the POS.</description>
-    <label>Transaction Date</label>
+    <label>Purchase Date</label>
     <required>true</required>
     <trackTrending>false</trackTrending>
     <type>DateTime</type>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>WhatsApp_Must_Be_10_Digits</fullName>
+    <active>true</active>
+    <description>WhatsApp Number (the standard Mobile field) is optional; when given it must be 10 digits once spaces, dashes, brackets, dots and a leading +91 or 91 are ignored, as for Phone. It is saved as entered.</description>
+    <errorConditionFormula>AND(
+  NOT(ISBLANK(MobilePhone)),
+  NOT(REGEX(
+    SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(MobilePhone, &quot; &quot;, &quot;&quot;), &quot;-&quot;, &quot;&quot;), &quot;(&quot;, &quot;&quot;), &quot;)&quot;, &quot;&quot;), &quot;.&quot;, &quot;&quot;),
+    &quot;(\\+?91)?[0-9]{10}&quot;
+  ))
+)</errorConditionFormula>
+    <errorDisplayField>MobilePhone</errorDisplayField>
+    <errorMessage>WhatsApp Number must be a 10-digit number, optionally starting with +91 or 91.</errorMessage>
+</ValidationRule>

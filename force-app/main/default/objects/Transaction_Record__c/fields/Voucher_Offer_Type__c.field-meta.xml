@@ -2,7 +2,6 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Voucher_Offer_Type__c</fullName>
     <description>Offer type of the gift voucher redeemed on this bill, as reported by POS. Required when Voucher Code is filled in.</description>
-    <externalId>false</externalId>
     <label>Voucher Offer Type</label>
     <required>false</required>
     <trackTrending>false</trackTrending>

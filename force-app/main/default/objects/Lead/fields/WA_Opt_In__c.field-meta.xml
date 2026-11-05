@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>WA_Opt_In__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>WhatsApp consent captured on the lead. Same API name as Account.WA_Opt_In__c so it can be mapped on lead conversion.</description>
+    <inlineHelpText>Tick only when the customer has given consent to be contacted on WhatsApp.</inlineHelpText>
+    <label>WA Opt In</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

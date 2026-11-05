@@ -5,7 +5,7 @@
     <description>Store where the purchase was made. Resolved from the store code in the POS payload.</description>
     <label>Store</label>
     <referenceTo>Store_Location__c</referenceTo>
-    <relationshipLabel>Transaction Records</relationshipLabel>
+    <relationshipLabel>Purchase Records</relationshipLabel>
     <relationshipName>Transaction_Records</relationshipName>
     <required>false</required>
     <trackTrending>false</trackTrending>

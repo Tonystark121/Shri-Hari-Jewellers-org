@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
-    <description>When a Contacted Lead gets a new Follow-up Date and Time, marks every open Task on the Lead as Completed and creates a new "Follow-up Call" Task due on the follow-up date, with a reminder at the follow-up time and the Contacted Remark as its comments.</description>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>When a Contacted Lead gets a new Follow-up Date and Time, marks every open Task on the Lead as Completed and creates a new &quot;Follow-up Call&quot; Task due on the follow-up date, with a reminder at the follow-up time and the Contacted Remark as its comments.</description>
     <environments>Default</environments>
     <formulas>
         <description>Task Due Date is a Date field, so it takes the date part of the follow-up.</description>

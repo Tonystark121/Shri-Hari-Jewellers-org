@@ -442,4 +442,43 @@ private class ShreeHariLeadRestResourceTest {
     static void rejectsEmptyBody() {
         assertBadRequest(post(null), 'INVALID_JSON', null);
     }
+
+    // =====================================================================
+    // WhatsApp Number
+    // =====================================================================
+
+    @IsTest
+    static void savesTheWhatsAppNumberAsSent() {
+        Map<String, Object> response = post(body(new Map<String, Object>{ 'whatsappNumber' => '+91 98000 44001' }));
+
+        Assert.areEqual(201, statusOf(response), 'Created: ' + response);
+        Id leadId = (Id) response.get('leadId');
+        Assert.areEqual('+91 98000 44001', [SELECT MobilePhone FROM Lead WHERE Id = :leadId WITH SYSTEM_MODE].MobilePhone, 'Saved as sent');
+    }
+
+    @IsTest
+    static void rejectsAWhatsAppNumberThatIsNotTenDigits() {
+        assertBadRequest(post(body(new Map<String, Object>{ 'whatsappNumber' => '12345' })), 'INVALID_PHONE', 'whatsappNumber');
+    }
+
+    @IsTest
+    static void raisesAnEnquiryWhenTheWhatsAppNumberIsACustomers() {
+        Account household = new Account(Name = 'Bera Household', Phone = '9800044002');
+        insert household;
+
+        Map<String, Object> response = post(body(new Map<String, Object>{ 'whatsappNumber' => '98000 44002' }));
+
+        Assert.areEqual(201, statusOf(response), 'Accepted: ' + response);
+        Assert.areEqual('ENQUIRY_CREATED', response.get('action'), 'An enquiry, not a Lead');
+        Assert.areEqual(household.Id, response.get('accountId'), 'On the customer');
+    }
+
+    @IsTest
+    static void refusesAnOpenLeadWithTheSameNumberAsWhatsApp() {
+        insert new Lead(LastName = 'Existing', Phone = '9800044003', MobilePhone = '9800044004');
+
+        Map<String, Object> response = post(body(new Map<String, Object>{ 'phone' => '+91 98000 44004' }));
+
+        Assert.areEqual(409, statusOf(response), 'Phone = an open Lead\'s WhatsApp Number: ' + response);
+    }
 }

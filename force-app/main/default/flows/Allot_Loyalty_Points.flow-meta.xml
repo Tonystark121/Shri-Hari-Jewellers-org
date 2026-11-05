@@ -55,6 +55,7 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
     <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <assignments>
         <description>An unexpected failure, shown on the Error screen.</description>
         <name>Set_Fault_Error</name>
@@ -120,7 +121,7 @@
         <description>The points in words, for the success screen.</description>
         <name>Allotment_Summary</name>
         <dataType>String</dataType>
-        <expression>IF({!Offer_Type} = "Percentage", {!Discount_Percentage} &amp; "% of Last 12 Month Spend", {!Offer_Amount} &amp; " points per customer")</expression>
+        <expression>IF({!Offer_Type} = &quot;Percentage&quot;, {!Discount_Percentage} &amp; &quot;% of Last 12 Month Spend&quot;, {!Offer_Amount} &amp; &quot; points per customer&quot;)</expression>
     </formulas>
     <formulas>
         <description>The % as a number (the screen keeps it as text).</description>
@@ -159,24 +160,24 @@
     <processType>Flow</processType>
     <runInMode>DefaultMode</runInMode>
     <screens>
-        <name>Points_Specification</name>
-        <label>Points</label>
+        <name>Allotment_Details</name>
+        <label>Allotment Details</label>
         <locationX>176</locationX>
-        <locationY>158</locationY>
-        <allowBack>false</allowBack>
+        <locationY>374</locationY>
+        <allowBack>true</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <connector>
-            <targetReference>Customer_Selection</targetReference>
+            <targetReference>Allot_Points</targetReference>
         </connector>
         <fields>
-            <name>Points_Specification_Component</name>
+            <name>Allotment_Details_Component</name>
             <extensionName>c:dynamicFieldSelection</extensionName>
             <fieldType>ComponentInstance</fieldType>
             <inputParameters>
                 <name>screenMode</name>
                 <value>
-                    <stringValue>pointsSpecification</stringValue>
+                    <stringValue>pointsDetails</stringValue>
                 </value>
             </inputParameters>
             <inputParameters>
@@ -203,22 +204,44 @@
                     <elementReference>Discount_Percentage</elementReference>
                 </value>
             </inputParameters>
+            <inputParameters>
+                <name>selectedRecordIds</name>
+                <value>
+                    <elementReference>Selected_Account_Ids</elementReference>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>expiryDate</name>
+                <value>
+                    <elementReference>Expiry_Date</elementReference>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>reason</name>
+                <value>
+                    <elementReference>Reason</elementReference>
+                </value>
+            </inputParameters>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <outputParameters>
-                <assignToReference>Offer_Type</assignToReference>
-                <name>offerType</name>
+                <assignToReference>Expiry_Date</assignToReference>
+                <name>expiryDate</name>
             </outputParameters>
             <outputParameters>
-                <assignToReference>Offer_Amount</assignToReference>
-                <name>offerAmount</name>
+                <assignToReference>Reason</assignToReference>
+                <name>reason</name>
             </outputParameters>
-            <outputParameters>
-                <assignToReference>Discount_Percentage</assignToReference>
-                <name>discountPercentage</name>
-            </outputParameters>
-            <storeOutputAutomatically>false</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
+        <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
@@ -297,30 +320,61 @@
                 <assignToReference>Selected_Account_Count</assignToReference>
                 <name>selectedCount</name>
             </outputParameters>
-            <storeOutputAutomatically>false</storeOutputAutomatically>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
     <screens>
-        <name>Allotment_Details</name>
-        <label>Allotment Details</label>
+        <name>Error_Screen</name>
+        <label>Error</label>
         <locationX>176</locationX>
-        <locationY>374</locationY>
+        <locationY>698</locationY>
         <allowBack>true</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
+        <fields>
+            <name>Error_Message</name>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(186, 5, 23);&quot;&gt;The points could not be allotted&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;No points were given. Click &lt;strong&gt;Previous&lt;/strong&gt; to change the details and save again, or share the message below with your administrator.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;{!Error_Text}&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Points_Specification</name>
+        <label>Points</label>
+        <locationX>176</locationX>
+        <locationY>158</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
         <connector>
-            <targetReference>Allot_Points</targetReference>
+            <targetReference>Customer_Selection</targetReference>
         </connector>
         <fields>
-            <name>Allotment_Details_Component</name>
+            <name>Points_Specification_Component</name>
             <extensionName>c:dynamicFieldSelection</extensionName>
             <fieldType>ComponentInstance</fieldType>
             <inputParameters>
                 <name>screenMode</name>
                 <value>
-                    <stringValue>pointsDetails</stringValue>
+                    <stringValue>pointsSpecification</stringValue>
                 </value>
             </inputParameters>
             <inputParameters>
@@ -347,37 +401,29 @@
                     <elementReference>Discount_Percentage</elementReference>
                 </value>
             </inputParameters>
-            <inputParameters>
-                <name>selectedRecordIds</name>
-                <value>
-                    <elementReference>Selected_Account_Ids</elementReference>
-                </value>
-            </inputParameters>
-            <inputParameters>
-                <name>expiryDate</name>
-                <value>
-                    <elementReference>Expiry_Date</elementReference>
-                </value>
-            </inputParameters>
-            <inputParameters>
-                <name>reason</name>
-                <value>
-                    <elementReference>Reason</elementReference>
-                </value>
-            </inputParameters>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <outputParameters>
-                <assignToReference>Expiry_Date</assignToReference>
-                <name>expiryDate</name>
+                <assignToReference>Offer_Type</assignToReference>
+                <name>offerType</name>
             </outputParameters>
             <outputParameters>
-                <assignToReference>Reason</assignToReference>
-                <name>reason</name>
+                <assignToReference>Offer_Amount</assignToReference>
+                <name>offerAmount</name>
             </outputParameters>
-            <storeOutputAutomatically>false</storeOutputAutomatically>
+            <outputParameters>
+                <assignToReference>Discount_Percentage</assignToReference>
+                <name>discountPercentage</name>
+            </outputParameters>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
-        <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
@@ -391,13 +437,29 @@
         <allowPause>false</allowPause>
         <fields>
             <name>Success_Message</name>
-            <fieldText>&lt;p&gt;&lt;strong style="font-size: 18px; color: rgb(46, 132, 74);"&gt;✔ Loyalty points allotted&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;{!Allot_Points.totalPoints}&lt;/strong&gt; points were given to &lt;strong&gt;{!Allot_Points.customersGiven}&lt;/strong&gt; customer(s).&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Points:&lt;/strong&gt; {!Allotment_Summary}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; {!Expiry_Date}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Reason:&lt;/strong&gt; {!Reason}&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(46, 132, 74);&quot;&gt;✔ Loyalty points allotted&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;{!Allot_Points.totalPoints}&lt;/strong&gt; points were given to &lt;strong&gt;{!Allot_Points.customersGiven}&lt;/strong&gt; customer(s).&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Points:&lt;/strong&gt; {!Allotment_Summary}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Expiry Date:&lt;/strong&gt; {!Expiry_Date}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Reason:&lt;/strong&gt; {!Reason}&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <name>Skipped_Message</name>
-            <fieldText>&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(68, 68, 68);"&gt;&lt;strong&gt;{!Allot_Points.customersSkipped}&lt;/strong&gt; customer(s) got no points: their % of Last 12 Month Spend came to less than 10 points.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;&lt;strong&gt;{!Allot_Points.customersSkipped}&lt;/strong&gt; customer(s) got no points: their % of Last 12 Month Spend came to less than 10 points.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
             <visibilityRule>
                 <conditionLogic>and</conditionLogic>
                 <conditions>
@@ -410,22 +472,6 @@
             </visibilityRule>
         </fields>
         <nextOrFinishButtonLabel>Done</nextOrFinishButtonLabel>
-        <showFooter>true</showFooter>
-        <showHeader>true</showHeader>
-    </screens>
-    <screens>
-        <name>Error_Screen</name>
-        <label>Error</label>
-        <locationX>176</locationX>
-        <locationY>698</locationY>
-        <allowBack>true</allowBack>
-        <allowFinish>true</allowFinish>
-        <allowPause>false</allowPause>
-        <fields>
-            <name>Error_Message</name>
-            <fieldText>&lt;p&gt;&lt;strong style="font-size: 18px; color: rgb(186, 5, 23);"&gt;The points could not be allotted&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;No points were given. Click &lt;strong&gt;Previous&lt;/strong&gt; to change the details and save again, or share the message below with your administrator.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(68, 68, 68);"&gt;{!Error_Text}&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>

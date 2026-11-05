@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Purchase_Record__c</fullName>
+    <description>The bill this item is on.</description>
+    <label>Purchase Record</label>
+    <referenceTo>Transaction_Record__c</referenceTo>
+    <relationshipLabel>Purchase Line Items</relationshipLabel>
+    <relationshipName>Purchase_Line_Items</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -209,6 +209,10 @@
         <customTabListAdditionalFields>CASES.SUBJECT</customTabListAdditionalFields>
         <customTabListAdditionalFields>CASES.CREATED_DATE</customTabListAdditionalFields>
         <customTabListAdditionalFields>CASES.PRIORITY</customTabListAdditionalFields>
+        <excludedStandardButtons>PrintableListView</excludedStandardButtons>
+        <excludedStandardButtons>MassAddToActionableList</excludedStandardButtons>
+        <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
+        <excludedStandardButtons>SendToGrid</excludedStandardButtons>
         <lookupDialogsAdditionalFields>CASES.CASE_NUMBER</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>CASES.SUBJECT</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>NAME</lookupDialogsAdditionalFields>

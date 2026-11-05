@@ -3,7 +3,7 @@
     <fullName>Transaction_Record__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
     <description>Sales transaction that generated this loyalty event, if any.</description>
-    <label>Transaction Record</label>
+    <label>Purchase Record</label>
     <referenceTo>Transaction_Record__c</referenceTo>
     <relationshipLabel>Loyalty Transactions</relationshipLabel>
     <relationshipName>Loyalty_Transactions</relationshipName>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>SMS_Opt_In__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>SMS consent. Must be true before any marketing SMS is sent to this record.</description>
+    <inlineHelpText>Tick only when the customer has given consent to be contacted by SMS.</inlineHelpText>
+    <label>SMS Opt In</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

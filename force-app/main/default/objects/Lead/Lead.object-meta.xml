@@ -265,12 +265,30 @@
         <customTabListAdditionalFields>FULL_NAME</customTabListAdditionalFields>
         <customTabListAdditionalFields>LEAD.COMPANY</customTabListAdditionalFields>
         <customTabListAdditionalFields>LEAD.PHONE</customTabListAdditionalFields>
-        <excludedStandardButtons>New</excludedStandardButtons>
         <excludedStandardButtons>OpenListInQuip</excludedStandardButtons>
         <excludedStandardButtons>NewFromDocument</excludedStandardButtons>
+        <excludedStandardButtons>ImeDistributionAction</excludedStandardButtons>
+        <excludedStandardButtons>New</excludedStandardButtons>
+        <excludedStandardButtons>IntelligenceView</excludedStandardButtons>
+        <excludedStandardButtons>MassCancelSdrOutreach</excludedStandardButtons>
+        <excludedStandardButtons>MassActivateEinsteinSdr</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeStatus</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>AddToCampaign</excludedStandardButtons>
+        <excludedStandardButtons>Import</excludedStandardButtons>
+        <excludedStandardButtons>MassAddToCampaign</excludedStandardButtons>
+        <excludedStandardButtons>MassAccept</excludedStandardButtons>
         <excludedStandardButtons>MassChangeStatus</excludedStandardButtons>
+        <excludedStandardButtons>MassChangeOwner</excludedStandardButtons>
         <excludedStandardButtons>MassCreateCallList</excludedStandardButtons>
+        <excludedStandardButtons>SendListEmailAction</excludedStandardButtons>
         <excludedStandardButtons>PrintableListView</excludedStandardButtons>
+        <excludedStandardButtons>MassAddToActionableList</excludedStandardButtons>
+        <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
+        <excludedStandardButtons>DiscoModalMassAction</excludedStandardButtons>
+        <excludedStandardButtons>PartnerDiscoModalMassAction</excludedStandardButtons>
+        <excludedStandardButtons>SendToGrid</excludedStandardButtons>
         <listViewButtons>New_Lead</listViewButtons>
         <listViewButtons>Download_Lead_Template</listViewButtons>
         <listViewButtons>Upload_Leads</listViewButtons>

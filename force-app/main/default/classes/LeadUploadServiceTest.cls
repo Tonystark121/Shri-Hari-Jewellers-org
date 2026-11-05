@@ -7,7 +7,7 @@ private class LeadUploadServiceTest {
 
     /** The template header row (Lead_Upload_Template static resource). */
     private static final String HEADER =
-        'Salutation,First Name,Last Name *,Phone *,Email,Date of Birth (YYYY-MM-DD),Street,City,State,Postal Code,Country,'
+        'Salutation,First Name,Last Name *,Phone *,WhatsApp Number,Email,Date of Birth (YYYY-MM-DD),Street,City,State,Postal Code,Country,'
         + 'Product Description *,Marital Status,Anniversary Date (YYYY-MM-DD),Status,Lead Source,Walk-In (Yes/No),'
         + 'Store Code,Campaign Name,Company,Industry,Title,Website';
 
@@ -18,7 +18,7 @@ private class LeadUploadServiceTest {
     /** One template row; blank cells for everything not given. */
     private static String row(Map<String, String> cells) {
         List<String> columns = new List<String>{
-            'Salutation', 'First Name', 'Last Name', 'Phone', 'Email', 'Date of Birth', 'Street', 'City', 'State',
+            'Salutation', 'First Name', 'Last Name', 'Phone', 'WhatsApp Number', 'Email', 'Date of Birth', 'Street', 'City', 'State',
             'Postal Code', 'Country', 'Product Description', 'Marital Status', 'Anniversary Date', 'Status',
             'Lead Source', 'Walk-In', 'Store Code', 'Campaign Name', 'Company', 'Industry', 'Title', 'Website'
         };
@@ -379,5 +379,35 @@ private class LeadUploadServiceTest {
         } catch (Exception e) {
             Assert.isTrue(e.getMessage().contains('YYYY-MM-DD'), e.getMessage());
         }
+    }
+
+    // =====================================================================
+    // WhatsApp Number
+    // =====================================================================
+
+    @IsTest
+    static void theWhatsAppNumberIsSavedCheckedAndMatched() {
+        insert new Account(Name = 'Mitra Household', WhatsApp_Number__c = '9830033001');
+        Map<String, String> saved = customer('Ray', '9830033002');
+        saved.put('WhatsApp Number', '+91 98300 33003');
+        Map<String, String> invalid = customer('Bad', '9830033004');
+        invalid.put('WhatsApp Number', '12345');
+        Map<String, String> customerByWhatsApp = customer('Mitra', '9830033005');
+        customerByWhatsApp.put('WhatsApp Number', '98300-33001');
+        Map<String, String> sameAsEarlierRow = customer('Repeat', '9830033003');
+
+        Test.startTest();
+        LeadUploadService.UploadResult result = upload(HEADER + '\n' + row(saved) + '\n' + row(invalid)
+            + '\n' + row(customerByWhatsApp) + '\n' + row(sameAsEarlierRow));
+        Test.stopTest();
+
+        List<List<String>> results = resultsOf(result);
+        Assert.areEqual('Lead Created', outcome(results, 1)[0], 'Row 1: ' + outcome(results, 1));
+        Assert.areEqual('+91 98300 33003', [SELECT MobilePhone FROM Lead WHERE LastName = 'Ray' WITH SYSTEM_MODE].MobilePhone, 'Saved as written');
+        Assert.areEqual('Failed', outcome(results, 2)[0], 'Invalid WhatsApp Number');
+        Assert.isTrue(outcome(results, 2)[1].contains('WhatsApp Number must be a 10-digit number'), outcome(results, 2)[1]);
+        Assert.areEqual('Enquiry Raised', outcome(results, 3)[0], 'WhatsApp = a customer\'s WhatsApp Number: ' + outcome(results, 3));
+        Assert.areEqual('Failed', outcome(results, 4)[0], 'Phone = an earlier row\'s WhatsApp Number');
+        Assert.isTrue(outcome(results, 4)[1].startsWith('Same phone, WhatsApp number or email as row'), outcome(results, 4)[1]);
     }
 }

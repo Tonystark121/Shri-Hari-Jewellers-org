@@ -268,9 +268,16 @@
         <excludedStandardButtons>OpenListInQuip</excludedStandardButtons>
         <excludedStandardButtons>DataDotComGetAccountsMultiAddAction</excludedStandardButtons>
         <excludedStandardButtons>DiscoveryGetAccountsAction</excludedStandardButtons>
+        <excludedStandardButtons>MassCreateCallList</excludedStandardButtons>
         <excludedStandardButtons>PrintableListView</excludedStandardButtons>
         <excludedStandardButtons>SendBulkMessageAction</excludedStandardButtons>
-        <excludedStandardButtons>MassCreateCallList</excludedStandardButtons>
+        <excludedStandardButtons>MassAddToActionableList</excludedStandardButtons>
+        <excludedStandardButtons>NavigateToAccountDiscoveryDashboard</excludedStandardButtons>
+        <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
+        <excludedStandardButtons>MassEvalAccForResearchStudy</excludedStandardButtons>
+        <excludedStandardButtons>DiscoModalMassAction</excludedStandardButtons>
+        <excludedStandardButtons>PartnerDiscoModalMassAction</excludedStandardButtons>
+        <excludedStandardButtons>SendToGrid</excludedStandardButtons>
         <lookupDialogsAdditionalFields>ACCOUNT.NAME</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>ACCOUNT.SITE</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>CORE.USERS.ALIAS</lookupDialogsAdditionalFields>

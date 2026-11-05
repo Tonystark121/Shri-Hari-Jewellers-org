@@ -12,16 +12,19 @@
  * Leads are created the same way as on the New Lead screen:
  *   - lastName, phone, description (product description) and leadSource are
  *     required; phone must be 10 digits (a leading +91 or 91, spaces and
- *     dashes are fine) and is saved exactly as sent;
+ *     dashes are fine) and is saved exactly as sent; whatsappNumber is
+ *     optional and follows the same rule;
  *   - a blank company makes the Lead B2C (LeadTriggerHandler assigns
  *     "<Name> B2C (<Lead Number>)"); a company makes it B2B. businessType in
  *     the payload is ignored;
  *   - anniversaryDate only for a Married customer, after dateOfBirth;
- *   - an existing customer (same phone or email on an Account or Contact)
- *     gets an enquiry Case instead of a Lead (201, action ENQUIRY_CREATED);
+ *   - an existing customer (same phone, WhatsApp number or email on an
+ *     Account or Contact) gets an enquiry Case instead of a Lead (201,
+ *     action ENQUIRY_CREATED);
  *     a customer known only as a Contact is first given an Account, owned
  *     by the integration user (LeadTriggerHandler.createCustomerAccounts);
- *   - an open Lead with the same phone or email is refused (409).
+ *   - an open Lead with the same phone, WhatsApp number or email is refused
+ *     (409).
  * status defaults to New and qualificationNotes is saved when sent.
  *
  * Everything else the endpoint needs lives in this one class:
@@ -195,6 +198,14 @@ global with sharing class ShreeHariLeadRestResource {
                 '\'' + p.phone + '\' is not a valid phone. Send a 10-digit number, optionally starting with +91 or 91.'
             );
         }
+        if (p.whatsappNumber != null
+            && !LeadTriggerHandler.isValidPhone(LeadTriggerHandler.normalizePhone(p.whatsappNumber))) {
+            throw badRequest(
+                'INVALID_PHONE',
+                'whatsappNumber',
+                '\'' + p.whatsappNumber + '\' is not a valid WhatsApp number. Send a 10-digit number, optionally starting with +91 or 91.'
+            );
+        }
 
         // Picklists --------------------------------------------------------
         validatePicklist(Lead.LeadSource, 'leadSource', p.leadSource);
@@ -246,6 +257,7 @@ global with sharing class ShreeHariLeadRestResource {
         checkLength(Lead.FirstName, 'firstName', p.firstName);
         checkLength(Lead.Company, 'company', p.company);
         checkLength(Lead.Phone, 'phone', p.phone);
+        checkLength(Lead.MobilePhone, 'whatsappNumber', p.whatsappNumber);
         checkLength(Lead.Email, 'email', p.email);
         checkLength(Lead.Website, 'website', p.website);
         checkLength(Lead.Street, 'street', p.street);
@@ -372,6 +384,10 @@ global with sharing class ShreeHariLeadRestResource {
         record.Anniversary_Date__c = parseDate('anniversaryDate', p.anniversaryDate);
 
         record.Phone = p.phone;
+        // Set only when sent, so a payload without it never writes the field.
+        if (p.whatsappNumber != null) {
+            record.MobilePhone = p.whatsappNumber;
+        }
         record.Email = p.email;
         record.Website = p.website;
 
@@ -452,20 +468,17 @@ global with sharing class ShreeHariLeadRestResource {
     // =====================================================================
 
     /**
-     * The existing customer this phone or email belongs to (an enquiry is
-     * raised for them instead of a Lead), or null for a new customer. An open
-     * Lead with the same phone or email is refused, as on the New Lead screen.
-     * Phones are compared as 10 digits, so +91-98300 12345 and 9830012345
-     * match.
+     * The existing customer this phone, WhatsApp number or email belongs to
+     * (an enquiry is raised for them instead of a Lead), or null for a new
+     * customer. An open Lead with the same phone, WhatsApp number or email is
+     * refused, as on the New Lead screen. Phones are compared as 10 digits, so
+     * +91-98300 12345 and 9830012345 match, and each of the person's numbers
+     * against every stored phone and WhatsApp number.
      */
     private static LeadTriggerHandler.Customer existingCustomerOrLead(Lead record) {
-        String phone = LeadTriggerHandler.normalizePhone(record.Phone);
-        Set<String> phones = new Set<String>{ phone };
+        Set<String> phones = new Set<String>(LeadTriggerHandler.phonesOf(record));
         Set<String> emails = String.isBlank(record.Email) ? new Set<String>() : new Set<String>{ record.Email };
-        List<String> keys = new List<String>{ LeadTriggerHandler.phoneKey(phone) };
-        if (String.isNotBlank(record.Email)) {
-            keys.add(LeadTriggerHandler.emailKey(record.Email));
-        }
+        List<String> keys = LeadTriggerHandler.matchKeysOf(record);
 
         Map<String, LeadTriggerHandler.Customer> customers = LeadTriggerHandler.findCustomers(phones, emails);
         for (String key : keys) {
@@ -482,7 +495,7 @@ global with sharing class ShreeHariLeadRestResource {
                     'DUPLICATE_DETECTED',
                     409,
                     null,
-                    'A Lead with this phone or email already exists: ' + openLead.Name + ' (' + openLead.Id + ').'
+                    'A Lead with this phone, WhatsApp number or email already exists: ' + openLead.Name + ' (' + openLead.Id + ').'
                 );
             }
         }
@@ -697,6 +710,7 @@ global with sharing class ShreeHariLeadRestResource {
         public String anniversaryDate;
         // Contact details
         public String phone;
+        public String whatsappNumber;
         public String email;
         public String website;
         // Address
@@ -733,6 +747,7 @@ global with sharing class ShreeHariLeadRestResource {
             maritalStatus = clean(maritalStatus);
             anniversaryDate = clean(anniversaryDate);
             phone = clean(phone);
+            whatsappNumber = clean(whatsappNumber);
             email = clean(email);
             website = clean(website);
             street = clean(street);

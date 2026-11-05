@@ -1,6 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Shows the required-fields message on Bill Details.</description>
+        <name>Flag_Missing_Details</name>
+        <label>Flag Missing Details</label>
+        <locationX>440</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>Show_Missing_Details</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Bill_Details</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Copies the bill inputs onto the bill record and clears the missing-customer banner. The redemption is copied next.</description>
+        <name>Set_Bill_Fields</name>
+        <label>Set Bill Fields</label>
+        <locationX>176</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Bill_Number__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Bill_Number_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Amount__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Bill_Amount_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Transaction_Date__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Transaction_Date_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Show_Missing_Details</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Is_Voucher_Reported</targetReference>
+        </connector>
+    </assignments>
     <assignments>
         <name>Set_Fixed_Voucher</name>
         <label>Set Fixed Price Voucher</label>
@@ -53,64 +109,6 @@
             <operator>Assign</operator>
             <value>
                 <elementReference>Blank_Number</elementReference>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Create_Transaction</targetReference>
-        </connector>
-    </assignments>
-    <assignments>
-        <name>Set_Percentage_Voucher</name>
-        <label>Set Percentage Voucher</label>
-        <locationX>176</locationX>
-        <locationY>998</locationY>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Points_Redeemed__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Points_Redeemed_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Voucher_Code__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Voucher_Code_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Voucher_Offer_Type__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Voucher_Offer_Type_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Voucher_Discount__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Voucher_Discount_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Voucher_Redemption_Channel__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Voucher_Channel_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Voucher_Face_Value__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Blank_Number</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Transaction_Record.Voucher_Discount_Percentage__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Voucher_Percentage_Input</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -176,39 +174,277 @@
         </connector>
     </assignments>
     <assignments>
-        <description>Amount is entered in a standard currency input (Currency record fields are not supported on flow screens), so it is copied into the bill here.</description>
-        <name>Set_Bill_Amount</name>
-        <label>Set Bill Amount</label>
+        <name>Set_Percentage_Voucher</name>
+        <label>Set Percentage Voucher</label>
         <locationX>176</locationX>
-        <locationY>242</locationY>
+        <locationY>998</locationY>
         <assignmentItems>
-            <assignToReference>Transaction_Record.Amount__c</assignToReference>
+            <assignToReference>Transaction_Record.Points_Redeemed__c</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference>Bill_Amount</elementReference>
+                <elementReference>Points_Redeemed_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Voucher_Code__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Voucher_Code_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Voucher_Offer_Type__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Voucher_Offer_Type_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Voucher_Discount__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Voucher_Discount_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Voucher_Redemption_Channel__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Voucher_Channel_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Voucher_Face_Value__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Blank_Number</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Voucher_Discount_Percentage__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Voucher_Percentage_Input</elementReference>
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Are_Bill_Details_Complete</targetReference>
+            <targetReference>Create_Transaction</targetReference>
         </connector>
     </assignments>
     <assignments>
-        <description>Shows the required-fields message on Bill Details.</description>
-        <name>Flag_Missing_Details</name>
-        <label>Flag Missing Details</label>
+        <description>Starts the product lists empty, so a second Save after an error does not add the products twice.</description>
+        <name>Clear_Products</name>
+        <label>Clear Products</label>
         <locationX>440</locationX>
-        <locationY>350</locationY>
+        <locationY>890</locationY>
         <assignmentItems>
-            <assignToReference>Show_Missing_Details</assignToReference>
+            <assignToReference>Line_Items</assignToReference>
             <operator>Assign</operator>
             <value>
-                <booleanValue>true</booleanValue>
+                <elementReference>No_Line_Items</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Assets</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>No_Assets</elementReference>
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Bill_Details</targetReference>
+            <targetReference>Loop_Selected_Products</targetReference>
         </connector>
     </assignments>
+    <assignments>
+        <description>One Purchase Line Item on the bill and one Asset on the customer for the product: Product and Quantity from SKU Searcher.</description>
+        <name>Add_Line_Item_And_Asset</name>
+        <label>Add Line Item and Asset</label>
+        <locationX>704</locationX>
+        <locationY>1106</locationY>
+        <assignmentItems>
+            <assignToReference>Line_Item.Purchase_Record__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Transaction_Record.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Line_Item.Product__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Current_Product.Product2Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Line_Item.Quantity__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Current_Product.Quantity</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Line_Items</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Line_Item</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>New_Asset.Name</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Current_Product.Name</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>New_Asset.Product2Id</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Current_Product.Product2Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>New_Asset.Quantity</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Current_Product.Quantity</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>New_Asset.AccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Transaction_Record.Account__c</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>New_Asset.PurchaseDate</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Purchase_Date_Value</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>New_Asset.Status</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Purchased</stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Assets</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>New_Asset</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_Selected_Products</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Why the bill could not be saved, for the Error screen.</description>
+        <name>Set_Save_Error</name>
+        <label>Set Save Error</label>
+        <locationX>968</locationX>
+        <locationY>566</locationY>
+        <assignmentItems>
+            <assignToReference>Error_Text</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Error_Screen</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Why the products could not be saved; the bill is then rolled back too, so nothing is half saved.</description>
+        <name>Set_Product_Save_Error</name>
+        <label>Set Product Save Error</label>
+        <locationX>968</locationX>
+        <locationY>1214</locationY>
+        <assignmentItems>
+            <assignToReference>Error_Text</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Roll_Back_Purchase</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>The rolled-back bill no longer exists: its Id is cleared so Save creates it again.</description>
+        <name>Clear_Bill_Id</name>
+        <label>Clear Bill Id</label>
+        <locationX>968</locationX>
+        <locationY>1430</locationY>
+        <assignmentItems>
+            <assignToReference>Transaction_Record.Id</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Blank_Text</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Error_Screen</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>Products picked in SKU Searcher are saved as Purchase Line Items and Assets.</description>
+        <name>Has_Products</name>
+        <label>Has Products?</label>
+        <locationX>176</locationX>
+        <locationY>782</locationY>
+        <defaultConnector>
+            <targetReference>Get_Saved_Transaction</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Products</defaultConnectorLabel>
+        <rules>
+            <name>Products_Picked</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>SKU_Searcher.selectedItems</leftValueReference>
+                <operator>IsEmpty</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Clear_Products</targetReference>
+            </connector>
+            <label>Products Picked</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>The customer is required on the bill; Bill Number, Bill Amount and Purchase Date are checked on the screen.</description>
+        <name>Are_Bill_Details_Complete</name>
+        <label>Is Customer Picked?</label>
+        <locationX>176</locationX>
+        <locationY>242</locationY>
+        <defaultConnector>
+            <targetReference>Set_Bill_Fields</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Customer Picked</defaultConnectorLabel>
+        <rules>
+            <name>Customer_Missing</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Transaction_Record.Account__c</leftValueReference>
+                <operator>IsBlank</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Flag_Missing_Details</targetReference>
+            </connector>
+            <label>Customer Missing</label>
+        </rules>
+    </decisions>
     <decisions>
         <description>Copies the redemption POS reported onto the bill; voucher fields are cleared when no voucher was redeemed.</description>
         <name>Is_Voucher_Reported</name>
@@ -264,64 +500,20 @@
             <label>Percentage Voucher</label>
         </rules>
     </decisions>
-    <decisions>
-        <description>Bill Number and Transaction Date are required on the page layout but not at field level, so the flow checks them.</description>
-        <name>Are_Bill_Details_Complete</name>
-        <label>Are Bill Details Complete?</label>
-        <locationX>176</locationX>
-        <locationY>350</locationY>
-        <defaultConnector>
-            <targetReference>Redemptions</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>Complete</defaultConnectorLabel>
-        <rules>
-            <name>Details_Missing</name>
-            <conditionLogic>or</conditionLogic>
-            <conditions>
-                <leftValueReference>Transaction_Record.Bill_Number__c</leftValueReference>
-                <operator>IsBlank</operator>
-                <rightValue>
-                    <booleanValue>true</booleanValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>Transaction_Record.Transaction_Date__c</leftValueReference>
-                <operator>IsNull</operator>
-                <rightValue>
-                    <booleanValue>true</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>Flag_Missing_Details</targetReference>
-            </connector>
-            <label>Details Missing</label>
-        </rules>
-        <rules>
-            <name>Future_Transaction_Date</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>Is_Future_Bill_Date</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>true</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>Bill_Details</targetReference>
-            </connector>
-            <label>Future Transaction Date</label>
-        </rules>
-    </decisions>
-    <description>Creates a Transaction Record (bill). Screen 1: bill details. Then the customer's gift vouchers that are valid for this bill are fetched (Active, not expired on the bill date, bill amount within the voucher's range). Screen 2: Redeem Points or Redeem Gift Voucher (only one); a voucher is picked from the list, then the Redemption Channel. On Save the bill is created; the trigger re-checks the voucher, applies the discount, redeems points and marks the voucher Redeemed. Launched from the New list button on Transaction Record.</description>
+    <description>Creates a Purchase Record (bill) for an existing customer. One screen laid out like the Convert screen: Customer, Bill, Product Purchase Details (SKU Searcher) and Loyalty Redemption. On Save the bill is created (the trigger checks the redemption, applies the discount and redeems points), then one Purchase Line Item on the bill and one Asset on the customer per product picked; if the products cannot be saved the bill is rolled back too. Launched from the New Purchase list button on Purchase Record.</description>
     <dynamicChoiceSets>
         <name>Voucher_Channel_Choices</name>
         <dataType>Picklist</dataType>
+        <displayField xsi:nil="true"/>
+        <object xsi:nil="true"/>
         <picklistField>Voucher_Redemption_Channel__c</picklistField>
         <picklistObject>Transaction_Record__c</picklistObject>
     </dynamicChoiceSets>
     <dynamicChoiceSets>
         <name>Voucher_Offer_Type_Choices</name>
         <dataType>Picklist</dataType>
+        <displayField xsi:nil="true"/>
+        <object xsi:nil="true"/>
         <picklistField>Voucher_Offer_Type__c</picklistField>
         <picklistObject>Transaction_Record__c</picklistObject>
     </dynamicChoiceSets>
@@ -330,17 +522,33 @@
         <description>What the customer pays after the reported redemptions; Salesforce sets the same figure on the bill.</description>
         <name>Net_Amount_Preview</name>
         <dataType>Currency</dataType>
-        <expression>BLANKVALUE({!Bill_Amount}, 0) - IF({!Voucher_Used_Input}, BLANKVALUE({!Voucher_Discount_Input}, 0), 0) - BLANKVALUE({!Points_Redeemed_Input}, 0)</expression>
+        <expression>BLANKVALUE({!Bill_Amount_Input}, 0) - IF({!Voucher_Used_Input}, BLANKVALUE({!Voucher_Discount_Input}, 0), 0) - BLANKVALUE({!Points_Redeemed_Input}, 0)</expression>
         <scale>2</scale>
     </formulas>
     <formulas>
-        <description>True when the bill is dated after today. Same rule as the No_Future_Transaction_Date validation rule on Transaction Record, checked here so the user is told on the Bill Details screen instead of at save.</description>
-        <name>Is_Future_Bill_Date</name>
-        <dataType>Boolean</dataType>
-        <expression>DATEVALUE({!Transaction_Record.Transaction_Date__c}) &gt; DATEVALUE({!$Flow.CurrentDateTime})</expression>
+        <description>The bill&apos;s Purchase Date, as the Assets&apos; Purchase Date.</description>
+        <name>Purchase_Date_Value</name>
+        <dataType>Date</dataType>
+        <expression>DATEVALUE({!Transaction_Date_Input})</expression>
     </formulas>
-    <interviewLabel>New Transaction {!$Flow.CurrentDateTime}</interviewLabel>
-    <label>New Transaction</label>
+    <interviewLabel>New Purchase {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>New Purchase</label>
+    <loops>
+        <description>Each product picked in SKU Searcher.</description>
+        <name>Loop_Selected_Products</name>
+        <label>Loop Selected Products</label>
+        <locationX>440</locationX>
+        <locationY>998</locationY>
+        <assignNextValueToReference>Current_Product</assignNextValueToReference>
+        <collectionReference>SKU_Searcher.selectedItems</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Add_Line_Item_And_Asset</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Create_Purchase_Line_Items</targetReference>
+        </noMoreValuesConnector>
+    </loops>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
@@ -366,12 +574,40 @@
         <locationX>176</locationX>
         <locationY>1106</locationY>
         <connector>
+            <targetReference>Has_Products</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Set_Save_Error</targetReference>
+        </faultConnector>
+        <inputReference>Transaction_Record</inputReference>
+    </recordCreates>
+    <recordCreates>
+        <description>The bill&apos;s Purchase Line Items: Product and Quantity of each product picked.</description>
+        <name>Create_Purchase_Line_Items</name>
+        <label>Create Purchase Line Items</label>
+        <locationX>440</locationX>
+        <locationY>1214</locationY>
+        <connector>
+            <targetReference>Create_Assets</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Set_Product_Save_Error</targetReference>
+        </faultConnector>
+        <inputReference>Line_Items</inputReference>
+    </recordCreates>
+    <recordCreates>
+        <description>The customer&apos;s Assets: each product picked with its Quantity.</description>
+        <name>Create_Assets</name>
+        <label>Create Assets</label>
+        <locationX>440</locationX>
+        <locationY>1322</locationY>
+        <connector>
             <targetReference>Get_Saved_Transaction</targetReference>
         </connector>
         <faultConnector>
-            <targetReference>Error_Screen</targetReference>
+            <targetReference>Set_Product_Save_Error</targetReference>
         </faultConnector>
-        <inputReference>Transaction_Record</inputReference>
+        <inputReference>Assets</inputReference>
     </recordCreates>
     <recordLookups>
         <description>Reads back the figures the system set on save: Voucher Discount, Points Redeemed and Net Amount.</description>
@@ -394,7 +630,6 @@
                 <elementReference>Transaction_Record.Id</elementReference>
             </value>
         </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Transaction_Record__c</object>
         <outputReference>Saved_Transaction</outputReference>
         <queriedFields>Id</queriedFields>
@@ -405,27 +640,41 @@
         <queriedFields>Points_Redeemed__c</queriedFields>
         <queriedFields>Net_Amount__c</queriedFields>
     </recordLookups>
+    <recordRollbacks>
+        <description>Undoes the bill when its products could not be saved, so nothing is half saved.</description>
+        <name>Roll_Back_Purchase</name>
+        <label>Roll Back Purchase</label>
+        <locationX>968</locationX>
+        <locationY>1322</locationY>
+        <connector>
+            <targetReference>Clear_Bill_Id</targetReference>
+        </connector>
+    </recordRollbacks>
     <runInMode>DefaultMode</runInMode>
     <screens>
+        <description>One screen laid out like the Convert screen: the customer, then the Bill, Product Purchase Details and Loyalty Redemption sections of the Convert screen.</description>
         <name>Bill_Details</name>
-        <label>Bill Details</label>
+        <label>New Purchase</label>
         <locationX>176</locationX>
         <locationY>134</locationY>
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <connector>
-            <targetReference>Set_Bill_Amount</targetReference>
+            <targetReference>Are_Bill_Details_Complete</targetReference>
         </connector>
         <fields>
-            <name>Bill_Details_Header</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(1, 118, 211);&quot;&gt;① Bill Details&lt;/strong&gt;&lt;span style=&quot;color: rgb(201, 201, 201);&quot;&gt;  ────────  ② Redemptions&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 18px;&quot;&gt;Bill Details&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(92, 92, 92);&quot;&gt;Enter the bill as printed by the POS. Redemptions (points or gift voucher) come on the next screen.&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
             <name>Missing_Details_Message</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(186, 5, 23);&quot;&gt;⚠ Bill Number and Transaction Date are required.&lt;/strong&gt;&lt;span style=&quot;color: rgb(186, 5, 23);&quot;&gt; Fill them in to continue.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(186, 5, 23);&quot;&gt;⚠ Customer is required.&lt;/strong&gt;&lt;span style=&quot;color: rgb(186, 5, 23);&quot;&gt; Select the customer to continue.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
             <visibilityRule>
                 <conditionLogic>and</conditionLogic>
                 <conditions>
@@ -438,23 +687,8 @@
             </visibilityRule>
         </fields>
         <fields>
-            <name>Future_Date_Message</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;color: rgb(186, 5, 23);&quot;&gt;⚠ Transaction Date cannot be in the future.&lt;/strong&gt;&lt;span style=&quot;color: rgb(186, 5, 23);&quot;&gt; Enter today&apos;s date or an earlier one to continue.&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-            <visibilityRule>
-                <conditionLogic>and</conditionLogic>
-                <conditions>
-                    <leftValueReference>Is_Future_Bill_Date</leftValueReference>
-                    <operator>EqualTo</operator>
-                    <rightValue>
-                        <booleanValue>true</booleanValue>
-                    </rightValue>
-                </conditions>
-            </visibilityRule>
-        </fields>
-        <fields>
             <name>Customer_Section</name>
-            <fieldText>Customer and Bill</fieldText>
+            <fieldText>Customer</fieldText>
             <fieldType>RegionContainer</fieldType>
             <fields>
                 <name>Customer_Section_Column1</name>
@@ -463,20 +697,14 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Transaction_Record.Account__c</objectFieldReference>
-                </fields>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.Bill_Number__c</objectFieldReference>
-                </fields>
-                <fields>
-                    <name>Bill_Amount</name>
-                    <dataType>Currency</dataType>
-                    <fieldText>Amount</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Total bill value before any redemption.&lt;/p&gt;</helpText>
-                    <isRequired>true</isRequired>
-                    <scale>2</scale>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -489,21 +717,6 @@
             <fields>
                 <name>Customer_Section_Column2</name>
                 <fieldType>Region</fieldType>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.Transaction_Date__c</objectFieldReference>
-                </fields>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.Store__c</objectFieldReference>
-                </fields>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
-                    <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.POS_Reference_ID__c</objectFieldReference>
-                </fields>
                 <inputParameters>
                     <name>width</name>
                     <value>
@@ -514,51 +727,509 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
-            <name>Purchase_Section</name>
-            <fieldText>Purchase Details</fieldText>
-            <fieldType>RegionContainer</fieldType>
-            <fields>
-                <name>Purchase_Section_Column1</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
+                    <name>Bill_Section</name>
+                    <fieldText>Bill</fieldText>
+                    <fieldType>RegionContainer</fieldType>
+                    <fields>
+                        <name>Bill_Section_Column1</name>
+                        <fieldType>Region</fieldType>
+                        <fields>
+                            <name>Bill_Number_Input</name>
+                            <dataType>String</dataType>
+                            <fieldText>Bill Number</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <helpText>&lt;p&gt;As printed on the POS bill. Each bill number can be used once.&lt;/p&gt;</helpText>
+                            <isRequired>true</isRequired>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <fields>
+                            <name>Bill_Amount_Input</name>
+                            <dataType>Currency</dataType>
+                            <fieldText>Bill Amount (including the GST)</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <helpText>&lt;p&gt;Total bill value.&lt;/p&gt;</helpText>
+                            <isRequired>true</isRequired>
+                            <scale>2</scale>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Bill Amount must be greater than 0.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>{!Bill_Amount_Input} &gt; 0</formulaExpression>
+                            </validationRule>
+                        </fields>
+                        <fields>
+                            <name>Transaction_Date_Input</name>
+                            <dataType>DateTime</dataType>
+                            <defaultValue>
+                                <elementReference>$Flow.CurrentDateTime</elementReference>
+                            </defaultValue>
+                            <fieldText>Purchase Date</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <isRequired>true</isRequired>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Purchase Date cannot be in the future.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>DATEVALUE({!Transaction_Date_Input}) &lt;= DATEVALUE({!$Flow.CurrentDateTime})</formulaExpression>
+                            </validationRule>
+                        </fields>
+                        <inputParameters>
+                            <name>width</name>
+                            <value>
+                                <stringValue>6</stringValue>
+                            </value>
+                        </inputParameters>
+                        <isRequired>false</isRequired>
+                    </fields>
+                    <fields>
+                        <name>Bill_Section_Column2</name>
+                        <fieldType>Region</fieldType>
+                        <fields>
+                            <fieldType>ObjectProvided</fieldType>
+                            <isRequired>false</isRequired>
+                            <objectFieldReference>Transaction_Record.Store__c</objectFieldReference>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <fields>
+                            <fieldType>ObjectProvided</fieldType>
+                            <isRequired>false</isRequired>
+                            <objectFieldReference>Transaction_Record.POS_Reference_ID__c</objectFieldReference>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <fields>
+                            <fieldType>ObjectProvided</fieldType>
+                            <isRequired>false</isRequired>
+                            <objectFieldReference>Transaction_Record.Payment_Mode__c</objectFieldReference>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <inputParameters>
+                            <name>width</name>
+                            <value>
+                                <stringValue>6</stringValue>
+                            </value>
+                        </inputParameters>
+                        <isRequired>false</isRequired>
+                    </fields>
                     <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.Metal_Type__c</objectFieldReference>
+                    <regionContainerType>SectionWithHeader</regionContainerType>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
+        <fields>
+                    <name>Purchase_Section</name>
+                    <fieldText>Product Purchase Details</fieldText>
+                    <fieldType>RegionContainer</fieldType>
+                    <fields>
+                        <name>Purchase_Section_Column1</name>
+                        <fieldType>Region</fieldType>
+                        <fields>
+                            <name>SKU_Searcher</name>
+                            <extensionName>c:skuSearcher</extensionName>
+                            <fieldType>ComponentInstance</fieldType>
+                            <inputParameters>
+                                <name>label</name>
+                                <value>
+                                    <stringValue>SKU Searcher</stringValue>
+                                </value>
+                            </inputParameters>
+                            <inputParameters>
+                                <name>required</name>
+                                <value>
+                                    <booleanValue>false</booleanValue>
+                                </value>
+                            </inputParameters>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <storeOutputAutomatically>true</storeOutputAutomatically>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <inputParameters>
+                            <name>width</name>
+                            <value>
+                                <stringValue>12</stringValue>
+                            </value>
+                        </inputParameters>
+                        <isRequired>false</isRequired>
+                    </fields>
                     <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.Payment_Mode__c</objectFieldReference>
+                    <regionContainerType>SectionWithHeader</regionContainerType>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <fields>
-                <name>Purchase_Section_Column2</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <fieldType>ObjectProvided</fieldType>
+        <fields>
+                    <name>Redemption_Section</name>
+                    <fieldText>Loyalty Redemption</fieldText>
+                    <fieldType>RegionContainer</fieldType>
+                    <fields>
+                        <name>Redemption_Section_Column1</name>
+                        <fieldType>Region</fieldType>
+                        <fields>
+                            <name>Redemption_Intro</name>
+                            <fieldText>&lt;p&gt;&lt;span style=&quot;color: rgb(112, 110, 107);&quot;&gt;Record what was redeemed at the POS. Salesforce deducts the points from the customer&amp;apos;s balance and marks the voucher Redeemed; nothing is decided here.&lt;/span&gt;&lt;/p&gt;</fieldText>
+                            <fieldType>DisplayText</fieldType>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <fields>
+                            <name>Points_Redeemed_Input</name>
+                            <dataType>Number</dataType>
+                            <defaultValue>
+                                <numberValue>0.0</numberValue>
+                            </defaultValue>
+                            <fieldText>Points Redeemed</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <helpText>&lt;p&gt;Loyalty points the customer spent on this bill, as printed on the POS bill. 0 when none.&lt;/p&gt;</helpText>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <scale>0</scale>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Points Redeemed must be a whole number of 0 or more, and not more than the bill after the voucher discount.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>AND({!Points_Redeemed_Input} &gt;= 0, {!Points_Redeemed_Input} = FLOOR({!Points_Redeemed_Input}), {!Points_Redeemed_Input} &lt;= {!Bill_Amount_Input} - IF({!Voucher_Used_Input}, BLANKVALUE({!Voucher_Discount_Input}, 0), 0))</formulaExpression>
+                            </validationRule>
+                        </fields>
+                        <fields>
+                            <name>Voucher_Used_Input</name>
+                            <dataType>Boolean</dataType>
+                            <defaultValue>
+                                <booleanValue>false</booleanValue>
+                            </defaultValue>
+                            <fieldText>A gift voucher was redeemed on this bill</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <fields>
+                            <name>Net_Amount_Text</name>
+                            <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;NET AMOUNT - POINTS ARE EARNED ON THIS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 16px;&quot;&gt;{!Net_Amount_Preview}&lt;/strong&gt;&lt;/p&gt;</fieldText>
+                            <fieldType>DisplayText</fieldType>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                        </fields>
+                        <inputParameters>
+                            <name>width</name>
+                            <value>
+                                <stringValue>6</stringValue>
+                            </value>
+                        </inputParameters>
+                        <isRequired>false</isRequired>
+                    </fields>
+                    <fields>
+                        <name>Redemption_Section_Column2</name>
+                        <fieldType>Region</fieldType>
+                        <fields>
+                            <name>Voucher_Code_Input</name>
+                            <dataType>String</dataType>
+                            <fieldText>Voucher Code</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <helpText>&lt;p&gt;As printed on the POS bill. It must be an Active voucher of this customer.&lt;/p&gt;</helpText>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Enter the Voucher Code.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>LEN(TRIM({!Voucher_Code_Input})) &gt; 0</formulaExpression>
+                            </validationRule>
+                            <visibilityRule>
+                                <conditionLogic>and</conditionLogic>
+                                <conditions>
+                                    <leftValueReference>Voucher_Used_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <booleanValue>true</booleanValue>
+                                    </rightValue>
+                                </conditions>
+                            </visibilityRule>
+                        </fields>
+                        <fields>
+                            <name>Voucher_Offer_Type_Input</name>
+                            <choiceReferences>Voucher_Offer_Type_Choices</choiceReferences>
+                            <dataType>String</dataType>
+                            <fieldText>Voucher Offer Type</fieldText>
+                            <fieldType>DropdownBox</fieldType>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <visibilityRule>
+                                <conditionLogic>and</conditionLogic>
+                                <conditions>
+                                    <leftValueReference>Voucher_Used_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <booleanValue>true</booleanValue>
+                                    </rightValue>
+                                </conditions>
+                            </visibilityRule>
+                        </fields>
+                        <fields>
+                            <name>Voucher_Face_Value_Input</name>
+                            <dataType>Currency</dataType>
+                            <fieldText>Voucher Face Value</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <scale>2</scale>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Voucher Face Value must be more than 0.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>{!Voucher_Face_Value_Input} &gt; 0</formulaExpression>
+                            </validationRule>
+                            <visibilityRule>
+                                <conditionLogic>and</conditionLogic>
+                                <conditions>
+                                    <leftValueReference>Voucher_Used_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <booleanValue>true</booleanValue>
+                                    </rightValue>
+                                </conditions>
+                                <conditions>
+                                    <leftValueReference>Voucher_Offer_Type_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <stringValue>Fixed Price</stringValue>
+                                    </rightValue>
+                                </conditions>
+                            </visibilityRule>
+                        </fields>
+                        <fields>
+                            <name>Voucher_Percentage_Input</name>
+                            <dataType>Number</dataType>
+                            <fieldText>Voucher Discount Percentage</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <helpText>&lt;p&gt;Percentage off, e.g. 10 for 10%.&lt;/p&gt;</helpText>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <scale>2</scale>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Voucher Discount Percentage must be more than 0 and at most 100.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>AND({!Voucher_Percentage_Input} &gt; 0, {!Voucher_Percentage_Input} &lt;= 100)</formulaExpression>
+                            </validationRule>
+                            <visibilityRule>
+                                <conditionLogic>and</conditionLogic>
+                                <conditions>
+                                    <leftValueReference>Voucher_Used_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <booleanValue>true</booleanValue>
+                                    </rightValue>
+                                </conditions>
+                                <conditions>
+                                    <leftValueReference>Voucher_Offer_Type_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <stringValue>Percentage</stringValue>
+                                    </rightValue>
+                                </conditions>
+                            </visibilityRule>
+                        </fields>
+                        <fields>
+                            <name>Voucher_Discount_Input</name>
+                            <dataType>Currency</dataType>
+                            <fieldText>Voucher Discount</fieldText>
+                            <fieldType>InputField</fieldType>
+                            <helpText>&lt;p&gt;Rupees the voucher took off the bill, as printed on the POS bill.&lt;/p&gt;</helpText>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <scale>2</scale>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <validationRule>
+                                <errorMessage>&lt;p&gt;Voucher Discount must be more than 0 and not more than the bill Amount.&lt;/p&gt;</errorMessage>
+                                <formulaExpression>AND({!Voucher_Discount_Input} &gt; 0, {!Voucher_Discount_Input} &lt;= {!Bill_Amount_Input})</formulaExpression>
+                            </validationRule>
+                            <visibilityRule>
+                                <conditionLogic>and</conditionLogic>
+                                <conditions>
+                                    <leftValueReference>Voucher_Used_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <booleanValue>true</booleanValue>
+                                    </rightValue>
+                                </conditions>
+                            </visibilityRule>
+                        </fields>
+                        <fields>
+                            <name>Voucher_Channel_Input</name>
+                            <choiceReferences>Voucher_Channel_Choices</choiceReferences>
+                            <dataType>String</dataType>
+                            <defaultValue>
+                                <stringValue>POS</stringValue>
+                            </defaultValue>
+                            <fieldText>Voucher Redemption Channel</fieldText>
+                            <fieldType>DropdownBox</fieldType>
+                            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+                            <isRequired>true</isRequired>
+                            <styleProperties>
+                                <verticalAlignment>
+                                    <stringValue>top</stringValue>
+                                </verticalAlignment>
+                                <width>
+                                    <stringValue>12</stringValue>
+                                </width>
+                            </styleProperties>
+                            <visibilityRule>
+                                <conditionLogic>and</conditionLogic>
+                                <conditions>
+                                    <leftValueReference>Voucher_Used_Input</leftValueReference>
+                                    <operator>EqualTo</operator>
+                                    <rightValue>
+                                        <booleanValue>true</booleanValue>
+                                    </rightValue>
+                                </conditions>
+                            </visibilityRule>
+                        </fields>
+                        <inputParameters>
+                            <name>width</name>
+                            <value>
+                                <stringValue>6</stringValue>
+                            </value>
+                        </inputParameters>
+                        <isRequired>false</isRequired>
+                    </fields>
                     <isRequired>false</isRequired>
-                    <objectFieldReference>Transaction_Record.SKU_Details__c</objectFieldReference>
+                    <regionContainerType>SectionWithHeader</regionContainerType>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <isRequired>false</isRequired>
-            <regionContainerType>SectionWithHeader</regionContainerType>
-        </fields>
+        <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
@@ -572,251 +1243,23 @@
         <allowPause>false</allowPause>
         <fields>
             <name>Error_Message</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(186, 5, 23);&quot;&gt;The transaction could not be saved&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Nothing was saved. Click &lt;strong&gt;Previous&lt;/strong&gt; to correct the details and save again, or share the message below with your administrator.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;{!$Flow.FaultMessage}&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(186, 5, 23);&quot;&gt;The purchase could not be saved&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Nothing was saved. Click &lt;strong&gt;Previous&lt;/strong&gt; to correct the details and save again, or share the message below with your administrator.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;{!Error_Text}&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
-        <showFooter>true</showFooter>
-        <showHeader>true</showHeader>
-    </screens>
-    <screens>
-        <name>Redemptions</name>
-        <label>Redemption at POS</label>
-        <locationX>176</locationX>
-        <locationY>674</locationY>
-        <allowBack>true</allowBack>
-        <allowFinish>true</allowFinish>
-        <allowPause>false</allowPause>
-        <connector>
-            <targetReference>Is_Voucher_Reported</targetReference>
-        </connector>
-        <fields>
-            <name>Redemptions_Header</name>
-            <fieldText>&lt;p&gt;&lt;span style="color: rgb(46, 132, 74);"&gt;✔ Bill Details&lt;/span&gt;&lt;span style="color: rgb(201, 201, 201);"&gt;  ────────  &lt;/span&gt;&lt;strong style="color: rgb(1, 118, 211);"&gt;② Redemption at POS&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: rgb(92, 92, 92);"&gt;Bill Amount: ₹{!Bill_Amount}.&lt;/span&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <fields>
-            <name>Redemption_Section</name>
-            <fieldText>Redemption at POS</fieldText>
-            <fieldType>RegionContainer</fieldType>
-            <fields>
-                <name>Redemption_Section_Column1</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Redemption_Intro</name>
-                    <fieldText>&lt;p&gt;&lt;span style="color: rgb(112, 110, 107);"&gt;Record what was redeemed at the POS. Salesforce deducts the points from the customer&amp;apos;s balance and marks the voucher Redeemed; nothing is decided here.&lt;/span&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <fields>
-                    <name>Points_Redeemed_Input</name>
-                    <dataType>Number</dataType>
-                    <defaultValue>
-                        <numberValue>0.0</numberValue>
-                    </defaultValue>
-                    <fieldText>Points Redeemed</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Loyalty points the customer spent on this bill, as printed on the POS bill. 0 when none.&lt;/p&gt;</helpText>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <scale>0</scale>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Points Redeemed must be a whole number of 0 or more, and not more than the bill after the voucher discount.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>AND({!Points_Redeemed_Input} &gt;= 0, {!Points_Redeemed_Input} = FLOOR({!Points_Redeemed_Input}), {!Points_Redeemed_Input} &lt;= {!Bill_Amount} - IF({!Voucher_Used_Input}, BLANKVALUE({!Voucher_Discount_Input}, 0), 0))</formulaExpression>
-                    </validationRule>
-                </fields>
-                <fields>
-                    <name>Voucher_Used_Input</name>
-                    <dataType>Boolean</dataType>
-                    <defaultValue>
-                        <booleanValue>false</booleanValue>
-                    </defaultValue>
-                    <fieldText>A gift voucher was redeemed on this bill</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                </fields>
-                <fields>
-                    <name>Net_Amount_Text</name>
-                    <fieldText>&lt;p&gt;&lt;span style="font-size: 11px; color: rgb(112, 110, 107);"&gt;NET AMOUNT - POINTS ARE EARNED ON THIS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style="font-size: 16px;"&gt;{!Net_Amount_Preview}&lt;/strong&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <fields>
-                <name>Redemption_Section_Column2</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Voucher_Code_Input</name>
-                    <dataType>String</dataType>
-                    <fieldText>Voucher Code</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;As printed on the POS bill. It must be an Active voucher of this customer.&lt;/p&gt;</helpText>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Enter the Voucher Code.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>LEN(TRIM({!Voucher_Code_Input})) &gt; 0</formulaExpression>
-                    </validationRule>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Voucher_Used_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <fields>
-                    <name>Voucher_Offer_Type_Input</name>
-                    <choiceReferences>Voucher_Offer_Type_Choices</choiceReferences>
-                    <dataType>String</dataType>
-                    <fieldText>Voucher Offer Type</fieldText>
-                    <fieldType>DropdownBox</fieldType>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Voucher_Used_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <fields>
-                    <name>Voucher_Face_Value_Input</name>
-                    <dataType>Currency</dataType>
-                    <fieldText>Voucher Face Value</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <scale>2</scale>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Voucher Face Value must be more than 0.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>{!Voucher_Face_Value_Input} &gt; 0</formulaExpression>
-                    </validationRule>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Voucher_Used_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                        <conditions>
-                            <leftValueReference>Voucher_Offer_Type_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <stringValue>Fixed Price</stringValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <fields>
-                    <name>Voucher_Percentage_Input</name>
-                    <dataType>Number</dataType>
-                    <fieldText>Voucher Discount Percentage</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Percentage off, e.g. 10 for 10%.&lt;/p&gt;</helpText>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <scale>2</scale>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Voucher Discount Percentage must be more than 0 and at most 100.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>AND({!Voucher_Percentage_Input} &gt; 0, {!Voucher_Percentage_Input} &lt;= 100)</formulaExpression>
-                    </validationRule>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Voucher_Used_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                        <conditions>
-                            <leftValueReference>Voucher_Offer_Type_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <stringValue>Percentage</stringValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <fields>
-                    <name>Voucher_Discount_Input</name>
-                    <dataType>Currency</dataType>
-                    <fieldText>Voucher Discount</fieldText>
-                    <fieldType>InputField</fieldType>
-                    <helpText>&lt;p&gt;Rupees the voucher took off the bill, as printed on the POS bill.&lt;/p&gt;</helpText>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <scale>2</scale>
-                    <validationRule>
-                        <errorMessage>&lt;p&gt;Voucher Discount must be more than 0 and not more than the bill Amount.&lt;/p&gt;</errorMessage>
-                        <formulaExpression>AND({!Voucher_Discount_Input} &gt; 0, {!Voucher_Discount_Input} &lt;= {!Bill_Amount})</formulaExpression>
-                    </validationRule>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Voucher_Used_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <fields>
-                    <name>Voucher_Channel_Input</name>
-                    <choiceReferences>Voucher_Channel_Choices</choiceReferences>
-                    <dataType>String</dataType>
-                    <defaultValue>
-                        <stringValue>POS</stringValue>
-                    </defaultValue>
-                    <fieldText>Voucher Redemption Channel</fieldText>
-                    <fieldType>DropdownBox</fieldType>
-                    <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-                    <isRequired>true</isRequired>
-                    <visibilityRule>
-                        <conditionLogic>and</conditionLogic>
-                        <conditions>
-                            <leftValueReference>Voucher_Used_Input</leftValueReference>
-                            <operator>EqualTo</operator>
-                            <rightValue>
-                                <booleanValue>true</booleanValue>
-                            </rightValue>
-                        </conditions>
-                    </visibilityRule>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <isRequired>false</isRequired>
-            <regionContainerType>SectionWithHeader</regionContainerType>
-        </fields>
-        <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
     <screens>
         <name>Success_Screen</name>
-        <label>Transaction Saved</label>
+        <label>Purchase Saved</label>
         <locationX>176</locationX>
         <locationY>1322</locationY>
         <allowBack>false</allowBack>
@@ -824,8 +1267,16 @@
         <allowPause>false</allowPause>
         <fields>
             <name>Success_Message</name>
-            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(46, 132, 74);&quot;&gt;✔ Transaction saved&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Transaction:&lt;/strong&gt; &lt;a href=&quot;/{!Saved_Transaction.Id}&quot; target=&quot;_blank&quot;&gt;{!Saved_Transaction.Name}&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Bill Amount:&lt;/strong&gt; ₹{!Saved_Transaction.Amount__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Voucher Discount:&lt;/strong&gt; ₹{!Saved_Transaction.Voucher_Discount__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Points Redeemed:&lt;/strong&gt; {!Saved_Transaction.Points_Redeemed__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Net Amount:&lt;/strong&gt; ₹{!Saved_Transaction.Net_Amount__c}&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 18px; color: rgb(46, 132, 74);&quot;&gt;✔ Purchase saved&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Purchase:&lt;/strong&gt; &lt;a href=&quot;/{!Saved_Transaction.Id}&quot; target=&quot;_blank&quot;&gt;{!Saved_Transaction.Name}&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Bill Amount:&lt;/strong&gt; ₹{!Saved_Transaction.Amount__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Voucher Discount:&lt;/strong&gt; ₹{!Saved_Transaction.Voucher_Discount__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Points Redeemed:&lt;/strong&gt; {!Saved_Transaction.Points_Redeemed__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Net Amount:&lt;/strong&gt; ₹{!Saved_Transaction.Net_Amount__c}&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
@@ -865,7 +1316,7 @@
         <objectType>Transaction_Record__c</objectType>
     </variables>
     <variables>
-        <description>True after Bill Details was submitted without Bill Number or Transaction Date.</description>
+        <description>True after Bill Details was submitted without Bill Number or Purchase Date.</description>
         <name>Show_Missing_Details</name>
         <dataType>Boolean</dataType>
         <isCollection>false</isCollection>
@@ -876,12 +1327,83 @@
         </value>
     </variables>
     <variables>
-        <description>The bill being entered: filled on Bill Details, redemption fields set after Redemptions, then created.</description>
+        <description>The bill being entered: Store, POS Reference ID, Payment Mode and Customer filled on the screen, bill and redemption inputs copied on Save, then created.</description>
         <name>Transaction_Record</name>
         <dataType>SObject</dataType>
         <isCollection>false</isCollection>
         <isInput>false</isInput>
         <isOutput>false</isOutput>
         <objectType>Transaction_Record__c</objectType>
+    </variables>
+    <variables>
+        <description>The Assets to create.</description>
+        <name>Assets</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Asset</objectType>
+    </variables>
+    <variables>
+        <description>The product the loop is on.</description>
+        <name>Current_Product</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Asset</objectType>
+    </variables>
+    <variables>
+        <description>Why the purchase could not be saved, shown on the Error screen.</description>
+        <name>Error_Text</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>The Purchase Line Item being built.</description>
+        <name>Line_Item</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Purchase_Line_Item__c</objectType>
+    </variables>
+    <variables>
+        <description>The Purchase Line Items to create.</description>
+        <name>Line_Items</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Purchase_Line_Item__c</objectType>
+    </variables>
+    <variables>
+        <description>The Asset being built.</description>
+        <name>New_Asset</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Asset</objectType>
+    </variables>
+    <variables>
+        <description>Always empty: clears Assets.</description>
+        <name>No_Assets</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Asset</objectType>
+    </variables>
+    <variables>
+        <description>Always empty: clears Line Items.</description>
+        <name>No_Line_Items</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Purchase_Line_Item__c</objectType>
     </variables>
 </Flow>

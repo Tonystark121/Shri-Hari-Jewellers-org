@@ -46,9 +46,14 @@
  * Matching ("is this person already known?")
  *   Also used by the New Lead flow (invocable check()) and, later, by the
  *   website API and Lead conversion:
- *     - existing customer: an Account whose Phone or Email matches, or a
- *       Contact whose Phone, Mobile or Email matches;
- *     - open Lead: an unconverted Lead whose Phone or Email matches.
+ *     - existing customer: an Account whose Phone, WhatsApp Number or Email
+ *       matches, or a Contact whose Phone, WhatsApp Number (MobilePhone) or
+ *       Email matches;
+ *     - open Lead: an unconverted Lead whose Phone, WhatsApp Number
+ *       (MobilePhone) or Email matches.
+ *   A person's Phone and WhatsApp Number are both their numbers, so each is
+ *   matched against every stored number: a WhatsApp Number saved as another
+ *   record's Phone is the same person.
  *   Phones are compared as 10 digits: normalizePhone() removes spaces,
  *   dashes, brackets, dots and a leading +91 or 91 for comparing only. Stored
  *   phones can be in any format (e.g. +91-9830012345), so they are found by
@@ -137,7 +142,7 @@ public without sharing class LeadTriggerHandler {
                 continue;
             }
 
-            if (phoneChanged(leadRecord, oldLead) || emailChanged(leadRecord, oldLead)) {
+            if (phoneChanged(leadRecord, oldLead) || whatsAppChanged(leadRecord, oldLead) || emailChanged(leadRecord, oldLead)) {
                 contactDetailsChanged.add(leadRecord);
             }
 
@@ -174,10 +179,7 @@ public without sharing class LeadTriggerHandler {
         Set<String> emails = new Set<String>();
 
         for (Lead leadRecord : leads) {
-            String phone = normalizePhone(leadRecord.Phone);
-            if (isValidPhone(phone)) {
-                phones.add(phone);
-            }
+            phones.addAll(phonesOf(leadRecord));
             if (String.isNotBlank(leadRecord.Email)) {
                 emails.add(leadRecord.Email);
             }
@@ -190,20 +192,45 @@ public without sharing class LeadTriggerHandler {
 
         for (Lead leadRecord : leads) {
             Customer customer;
-            String phone = normalizePhone(leadRecord.Phone);
-            if (isValidPhone(phone)) {
-                customer = customers.get(phoneKey(phone));
-            }
-            if (customer == null && String.isNotBlank(leadRecord.Email)) {
-                customer = customers.get(emailKey(leadRecord.Email));
+            for (String key : matchKeysOf(leadRecord)) {
+                if (customer == null && customers.containsKey(key)) {
+                    customer = customers.get(key);
+                }
             }
             if (customer != null) {
                 leadRecord.addError(
-                    'An existing customer has this phone or email: ' + customer.accountName
+                    'An existing customer has this phone, WhatsApp number or email: ' + customer.accountName
                     + '. Raise an enquiry (Case) for that customer instead of creating a Lead.'
                 );
             }
         }
+    }
+
+    /**
+     * The Lead's Phone and WhatsApp Number (MobilePhone) as 10 digits, the
+     * valid ones only. Both are the person's numbers, so each is matched
+     * against every stored number.
+     */
+    public static List<String> phonesOf(Lead leadRecord) {
+        List<String> phones = new List<String>();
+        for (String phone : new List<String>{ normalizePhone(leadRecord.Phone), normalizePhone(leadRecord.MobilePhone) }) {
+            if (isValidPhone(phone) && !phones.contains(phone)) {
+                phones.add(phone);
+            }
+        }
+        return phones;
+    }
+
+    /** phoneKey() of the Lead's Phone and WhatsApp Number, then emailKey() of its Email. */
+    public static List<String> matchKeysOf(Lead leadRecord) {
+        List<String> keys = new List<String>();
+        for (String phone : phonesOf(leadRecord)) {
+            keys.add(phoneKey(phone));
+        }
+        if (String.isNotBlank(leadRecord.Email)) {
+            keys.add(emailKey(leadRecord.Email));
+        }
+        return keys;
     }
 
     /**
@@ -227,6 +254,9 @@ public without sharing class LeadTriggerHandler {
             if (phoneChanged(leadRecord, oldLead)) {
                 phones.add(normalizePhone(leadRecord.Phone));
             }
+            if (whatsAppChanged(leadRecord, oldLead)) {
+                phones.add(normalizePhone(leadRecord.MobilePhone));
+            }
             if (emailChanged(leadRecord, oldLead)) {
                 emails.add(leadRecord.Email);
             }
@@ -244,6 +274,14 @@ public without sharing class LeadTriggerHandler {
                 );
                 if (reason != null) {
                     leadRecord.Phone.addError(reason);
+                }
+            }
+            if (whatsAppChanged(leadRecord, oldLead)) {
+                String reason = takenReason(
+                    leadRecord, phoneKey(normalizePhone(leadRecord.MobilePhone)), 'WhatsApp number', customers, openLeads, takenInThisSave
+                );
+                if (reason != null) {
+                    leadRecord.MobilePhone.addError(reason);
                 }
             }
             if (emailChanged(leadRecord, oldLead)) {
@@ -285,8 +323,17 @@ public without sharing class LeadTriggerHandler {
 
     /** The phone now is a valid number that differs, as 10 digits, from before. */
     private static Boolean phoneChanged(Lead leadRecord, Lead oldLead) {
-        String phone = normalizePhone(leadRecord.Phone);
-        return isValidPhone(phone) && phone != normalizePhone(oldLead.Phone);
+        return numberChanged(leadRecord.Phone, oldLead.Phone);
+    }
+
+    /** The WhatsApp Number (MobilePhone) now is a valid number that differs, as 10 digits, from before. */
+    private static Boolean whatsAppChanged(Lead leadRecord, Lead oldLead) {
+        return numberChanged(leadRecord.MobilePhone, oldLead.MobilePhone);
+    }
+
+    private static Boolean numberChanged(String now, String before) {
+        String phone = normalizePhone(now);
+        return isValidPhone(phone) && phone != normalizePhone(before);
     }
 
     /** The email now is set and differs, ignoring case, from before. */
@@ -470,9 +517,10 @@ public without sharing class LeadTriggerHandler {
         }
 
         for (Account accountRecord : [
-            SELECT Id, Name, Phone, Email__c, OwnerId, Owner.IsActive
+            SELECT Id, Name, Phone, WhatsApp_Number__c, Email__c, OwnerId, Owner.IsActive
             FROM Account
             WHERE Phone IN :phoneForms
+               OR WhatsApp_Number__c IN :phoneForms
                OR Email__c IN :lowerEmails
             WITH SYSTEM_MODE
             ORDER BY LastModifiedDate DESC
@@ -483,6 +531,7 @@ public without sharing class LeadTriggerHandler {
             customer.ownerId = accountRecord.Owner.IsActive ? accountRecord.OwnerId : null;
 
             putIfAbsent(customers, phoneMatchKey(accountRecord.Phone, normalizedPhones), customer);
+            putIfAbsent(customers, phoneMatchKey(accountRecord.WhatsApp_Number__c, normalizedPhones), customer);
             if (String.isNotBlank(accountRecord.Email__c) && lowerEmails.contains(accountRecord.Email__c.toLowerCase())) {
                 putIfAbsent(customers, emailKey(accountRecord.Email__c), customer);
             }
@@ -520,12 +569,13 @@ public without sharing class LeadTriggerHandler {
             addKey(keysByAccountId, contactRecord.AccountId, emailMatchKey(contactRecord.Email, lowerEmails));
         }
         for (Account accountRecord : [
-            SELECT Id, Phone, Email__c
+            SELECT Id, Phone, WhatsApp_Number__c, Email__c
             FROM Account
-            WHERE Phone IN :phoneForms OR Email__c IN :lowerEmails
+            WHERE Phone IN :phoneForms OR WhatsApp_Number__c IN :phoneForms OR Email__c IN :lowerEmails
             WITH SYSTEM_MODE
         ]) {
             addKey(keysByAccountId, accountRecord.Id, phoneMatchKey(accountRecord.Phone, normalizedPhones));
+            addKey(keysByAccountId, accountRecord.Id, phoneMatchKey(accountRecord.WhatsApp_Number__c, normalizedPhones));
             addKey(keysByAccountId, accountRecord.Id, emailMatchKey(accountRecord.Email__c, lowerEmails));
         }
 
@@ -535,7 +585,7 @@ public without sharing class LeadTriggerHandler {
 
         Set<Id> accountIds = keysByAccountId.keySet();
         for (Account accountRecord : [
-            SELECT Id, Name, Phone, Email__c, Customer_Tier__c, Last_12M_Spend__c, CASA_ID__c
+            SELECT Id, Name, Phone, WhatsApp_Number__c, Email__c, Customer_Tier__c, Last_12M_Spend__c, CASA_ID__c
             FROM Account
             WHERE Id IN :accountIds
             WITH SYSTEM_MODE
@@ -704,6 +754,7 @@ public without sharing class LeadTriggerHandler {
             Business_Type__c = isBusiness ? BUSINESS_TYPE_B2B : BUSINESS_TYPE_B2C,
             OwnerId = UserInfo.getUserId(),
             Phone = firstNotBlank(details.Phone, firstNotBlank(person.Phone, person.MobilePhone)),
+            WhatsApp_Number__c = firstNotBlank(details.MobilePhone, person.MobilePhone),
             Email__c = firstNotBlank(details.Email, person.Email),
             Date_of_Birth__c = details.Date_of_Birth__c != null ? details.Date_of_Birth__c : person.Birthdate,
             Primary_Store__c = details.Store_Association__c,
@@ -770,16 +821,19 @@ public without sharing class LeadTriggerHandler {
         }
 
         for (Lead leadRecord : [
-            SELECT Id, Name, Phone, Email, Owner.Name
+            SELECT Id, Name, Phone, MobilePhone, Email, Owner.Name
             FROM Lead
             WHERE IsConverted = false
-              AND (Phone IN :phoneForms OR Email IN :lowerEmails)
+              AND (Phone IN :phoneForms OR MobilePhone IN :phoneForms OR Email IN :lowerEmails)
+              AND status != 'Unqualified' AND Status != 'Converted'
             WITH SYSTEM_MODE
             ORDER BY LastModifiedDate DESC
         ]) {
-            String phoneKey = phoneMatchKey(leadRecord.Phone, normalizedPhones);
-            if (phoneKey != null && !leads.containsKey(phoneKey)) {
-                leads.put(phoneKey, leadRecord);
+            for (String storedPhone : new List<String>{ leadRecord.Phone, leadRecord.MobilePhone }) {
+                String phoneKey = phoneMatchKey(storedPhone, normalizedPhones);
+                if (phoneKey != null && !leads.containsKey(phoneKey)) {
+                    leads.put(phoneKey, leadRecord);
+                }
             }
             if (String.isNotBlank(leadRecord.Email) && lowerEmails.contains(leadRecord.Email.toLowerCase())) {
                 String key = emailKey(leadRecord.Email);
@@ -801,6 +855,9 @@ public without sharing class LeadTriggerHandler {
 
         @InvocableVariable(label='Email' description='Email as entered.')
         public String email;
+
+        @InvocableVariable(label='WhatsApp Number' description='WhatsApp Number as entered. Matched like Phone, against every stored phone and WhatsApp number.')
+        public String whatsApp;
 
         @InvocableVariable(label='Create Customer Account' description='True when the enquiry is being saved: a customer known only as a Contact (no Account) is given an Account, built from Lead and the Contact, and the Contact is moved under it.')
         public Boolean createCustomerAccount;
@@ -865,7 +922,7 @@ public without sharing class LeadTriggerHandler {
      */
     @InvocableMethod(
         label='Check Existing Customer or Lead'
-        description='Cleans the phone to 10 digits and finds an existing customer (Account or Contact) or an open Lead with the same phone or email.'
+        description='Cleans the phone to 10 digits and finds an existing customer (Account or Contact) or an open Lead with the same phone, WhatsApp number or email.'
         category='Lead'
     )
     public static List<CheckResult> check(List<CheckRequest> requests) {
@@ -878,6 +935,10 @@ public without sharing class LeadTriggerHandler {
             normalizedPhones.add(normalized);
             if (isValidPhone(normalized)) {
                 phones.add(normalized);
+            }
+            String whatsApp = normalizePhone(request.whatsApp);
+            if (isValidPhone(whatsApp)) {
+                phones.add(whatsApp);
             }
             if (String.isNotBlank(request.email)) {
                 emails.add(request.email);
@@ -903,6 +964,10 @@ public without sharing class LeadTriggerHandler {
             List<String> keys = new List<String>();
             if (isValidPhone(result.normalizedPhone)) {
                 keys.add(phoneKey(result.normalizedPhone));
+            }
+            String whatsApp = normalizePhone(request.whatsApp);
+            if (isValidPhone(whatsApp)) {
+                keys.add(phoneKey(whatsApp));
             }
             if (String.isNotBlank(request.email)) {
                 keys.add(emailKey(request.email));

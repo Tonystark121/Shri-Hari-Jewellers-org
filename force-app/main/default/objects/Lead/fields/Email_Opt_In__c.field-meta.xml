@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Email_Opt_In__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Email consent. Must be true before any marketing email is sent to this record.</description>
+    <inlineHelpText>Tick only when the customer has given consent to be contacted by email.</inlineHelpText>
+    <label>Email Opt In</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

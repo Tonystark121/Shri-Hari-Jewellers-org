@@ -5,5 +5,5 @@
     <description>Blocks bills dated after today. Both dates are read the same way, so a bill dated now is never refused. Future bills would miss the 12-month spend.</description>
     <errorConditionFormula>DATEVALUE(Transaction_Date__c) &gt; DATEVALUE(NOW())</errorConditionFormula>
     <errorDisplayField>Transaction_Date__c</errorDisplayField>
-    <errorMessage>Transaction Date cannot be in the future. Enter today&apos;s date or an earlier one.</errorMessage>
+    <errorMessage>Purchase Date cannot be in the future. Enter today&apos;s date or an earlier one.</errorMessage>
 </ValidationRule>

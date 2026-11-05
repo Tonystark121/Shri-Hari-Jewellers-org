@@ -694,4 +694,129 @@ private class LeadTriggerHandlerTest {
         Assert.areEqual('Another Lead in this save has the same phone.', onlyError(results[1]).getMessage(),
             'The second is refused');
     }
+
+    // =====================================================================
+    // WhatsApp Number (Lead and Contact: MobilePhone; Account: WhatsApp_Number__c)
+    // =====================================================================
+
+    @IsTest
+    static void aLeadWhoseWhatsAppIsACustomersNumberIsRefused() {
+        insert new List<Account>{
+            new Account(Name = 'Das Household', WhatsApp_Number__c = '+91 98300 22001'),
+            new Account(Name = 'Basu Household', Phone = '9830022002')
+        };
+
+        Test.startTest();
+        List<Database.SaveResult> results = Database.insert(new List<Lead>{
+            new Lead(LastName = 'Das', Phone = '9830022011', MobilePhone = '9830022001'),
+            new Lead(LastName = 'Basu', Phone = '9830022012', MobilePhone = '98300-22002'),
+            new Lead(LastName = 'Free', Phone = '9830022013', MobilePhone = '9830022014')
+        }, false);
+        Test.stopTest();
+
+        Assert.isFalse(results[0].isSuccess(), 'WhatsApp = an Account\'s WhatsApp Number');
+        Assert.isTrue(results[0].getErrors()[0].getMessage().contains('Das Household'), results[0].getErrors()[0].getMessage());
+        Assert.isFalse(results[1].isSuccess(), 'WhatsApp = an Account\'s Phone');
+        Assert.isTrue(results[2].isSuccess(), 'A new number: ' + results[2].getErrors());
+    }
+
+    @IsTest
+    static void aLeadWhosePhoneIsACustomersWhatsAppIsRefused() {
+        insert new Account(Name = 'Sen Household', WhatsApp_Number__c = '9830022003');
+
+        Test.startTest();
+        Database.SaveResult result = Database.insert(new Lead(LastName = 'Sen', Phone = '+91 98300 22003'), false);
+        Test.stopTest();
+
+        Assert.isFalse(result.isSuccess(), 'Phone = an Account\'s WhatsApp Number');
+    }
+
+    @IsTest
+    static void anInvalidWhatsAppNumberIsRefusedAndABlankOneIsFine() {
+        Test.startTest();
+        Database.SaveResult invalid = Database.insert(new Lead(LastName = 'Bad', Phone = '9830022004', MobilePhone = '12345'), false);
+        Database.SaveResult blank = Database.insert(new Lead(LastName = 'Blank', Phone = '9830022005'), false);
+        Test.stopTest();
+
+        Assert.isFalse(invalid.isSuccess(), 'Not 10 digits');
+        Assert.areEqual('WhatsApp Number must be a 10-digit number, optionally starting with +91 or 91.',
+            invalid.getErrors()[0].getMessage(), 'Explained');
+        Assert.isTrue(blank.isSuccess(), 'WhatsApp Number is optional: ' + blank.getErrors());
+    }
+
+    @IsTest
+    static void theCheckMatchesTheWhatsAppNumberAgainstEveryStoredNumber() {
+        Account household = new Account(Name = 'Paul Household', WhatsApp_Number__c = '9830022006');
+        insert household;
+        Lead openLead = new Lead(LastName = 'Roy', Phone = '9830022007', MobilePhone = '+91 98300 22008');
+        insert openLead;
+
+        Test.startTest();
+        LeadTriggerHandler.CheckRequest byAccountWhatsApp = new LeadTriggerHandler.CheckRequest();
+        byAccountWhatsApp.phone = '9830022099';
+        byAccountWhatsApp.whatsApp = '98300 22006';
+        LeadTriggerHandler.CheckRequest byLeadWhatsApp = new LeadTriggerHandler.CheckRequest();
+        byLeadWhatsApp.phone = '9830022008';
+        List<LeadTriggerHandler.CheckResult> results = LeadTriggerHandler.check(
+            new List<LeadTriggerHandler.CheckRequest>{ byAccountWhatsApp, byLeadWhatsApp }
+        );
+        Test.stopTest();
+
+        Assert.isTrue(results[0].isExistingCustomer, 'WhatsApp = the Account\'s WhatsApp Number');
+        Assert.areEqual(household.Id, results[0].accountId, 'That Account');
+        Assert.areEqual(1, results[0].matchingAccountCount, 'Listed for conversion');
+        Assert.isTrue(results[1].isOpenLead, 'Phone = an open Lead\'s WhatsApp Number');
+        Assert.areEqual(openLead.Id, results[1].openLeadId, 'That Lead');
+    }
+
+    @IsTest
+    static void changingTheWhatsAppNumberToATakenOneIsRefused() {
+        insert new Account(Name = 'Kar Household', Phone = '9830022009');
+        Lead other = new Lead(LastName = 'Other', Phone = '9830022010');
+        Lead leadRecord = new Lead(LastName = 'Kar', Phone = '9830022015');
+        insert new List<Lead>{ other, leadRecord };
+
+        Test.startTest();
+        Database.SaveResult toCustomer = Database.update(new Lead(Id = leadRecord.Id, MobilePhone = '+91 98300 22009'), false);
+        Database.SaveResult toOtherLead = Database.update(new Lead(Id = leadRecord.Id, MobilePhone = '9830022010'), false);
+        Database.SaveResult toOwnPhone = Database.update(new Lead(Id = leadRecord.Id, MobilePhone = '98300 22015'), false);
+        Test.stopTest();
+
+        Assert.isFalse(toCustomer.isSuccess(), 'A customer\'s phone');
+        Assert.areEqual(new List<String>{ 'MobilePhone' }, toCustomer.getErrors()[0].getFields(), 'Shown on WhatsApp Number');
+        Assert.isTrue(toCustomer.getErrors()[0].getMessage().startsWith('This WhatsApp number belongs to an existing customer: Kar Household'),
+            toCustomer.getErrors()[0].getMessage());
+        Assert.isFalse(toOtherLead.isSuccess(), 'Another open Lead\'s phone');
+        Assert.isTrue(toOwnPhone.isSuccess(), 'Its own phone as WhatsApp is fine: ' + toOwnPhone.getErrors());
+    }
+
+    @IsTest
+    static void aContactOnlyCustomersNewAccountGetsTheWhatsAppNumber() {
+        Contact withWhatsApp = new Contact(LastName = 'Ali', Phone = '9830022016', MobilePhone = '9830022017');
+        Contact plain = new Contact(LastName = 'Bose', Phone = '9830022018');
+        Database.DMLOptions options = new Database.DMLOptions();
+        options.DuplicateRuleHeader.allowSave = true;
+        Database.insert(new List<Contact>{ withWhatsApp, plain }, options);
+
+        LeadTriggerHandler.Customer fromContact = new LeadTriggerHandler.Customer();
+        fromContact.contactId = withWhatsApp.Id;
+        LeadTriggerHandler.Customer fromLead = new LeadTriggerHandler.Customer();
+        fromLead.contactId = plain.Id;
+
+        Test.startTest();
+        Map<Integer, String> failures = LeadTriggerHandler.createCustomerAccounts(
+            new List<Lead>{
+                new Lead(LastName = 'Ali', Phone = '9830022016'),
+                new Lead(LastName = 'Bose', Phone = '9830022018', MobilePhone = '9830022019')
+            },
+            new List<LeadTriggerHandler.Customer>{ fromContact, fromLead }
+        );
+        Test.stopTest();
+
+        Assert.isTrue(failures.isEmpty(), 'No failures: ' + failures);
+        Assert.areEqual('9830022017', [SELECT WhatsApp_Number__c FROM Account WHERE Id = :fromContact.accountId].WhatsApp_Number__c,
+            'The Contact\'s, as the Lead has none');
+        Assert.areEqual('9830022019', [SELECT WhatsApp_Number__c FROM Account WHERE Id = :fromLead.accountId].WhatsApp_Number__c,
+            'The Lead\'s first');
+    }
 }

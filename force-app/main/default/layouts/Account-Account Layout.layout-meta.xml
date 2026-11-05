@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Layout xmlns="http://soap.sforce.com/2006/04/metadata">
-    <excludeButtons>DataDotComAccountInsights</excludeButtons>
-    <excludeButtons>DataDotComClean</excludeButtons>
-    <excludeButtons>DataDotComCompanyHierarchy</excludeButtons>
+    <excludeButtons>GenerateKnowledge</excludeButtons>
     <excludeButtons>JigsawSearch</excludeButtons>
+    <excludeButtons>OpenSlackRecordChannel</excludeButtons>
     <excludeButtons>Submit</excludeButtons>
     <layoutSections>
         <customLabel>true</customLabel>
@@ -17,11 +16,23 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
+                <field>Phone</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>WhatsApp_Number__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
                 <field>Website</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Description</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Relationship_Manager__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
@@ -31,11 +42,19 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Type</field>
+                <field>Email__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Business_Type__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>ParentId</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Campaign_Attribution__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsLeftToRight</style>
@@ -44,18 +63,18 @@
         <customLabel>true</customLabel>
         <detailHeading>true</detailHeading>
         <editHeading>true</editHeading>
-        <label>Personal Details</label>
+        <label>Demographic Insight</label>
         <layoutColumns>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Date_of_Birth__c</field>
             </layoutItems>
-        </layoutColumns>
-        <layoutColumns>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Marital_Status__c</field>
             </layoutItems>
+        </layoutColumns>
+        <layoutColumns>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Anniversary_Date__c</field>
@@ -85,6 +104,10 @@
                 <behavior>Edit</behavior>
                 <field>WA_Opt_In__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>SMS_Opt_In__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
@@ -99,6 +122,10 @@
                 <behavior>Edit</behavior>
                 <field>Primary_Store__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Email_Opt_In__c</field>
+            </layoutItems>
         </layoutColumns>
         <style>TwoColumnsLeftToRight</style>
     </layoutSections>
@@ -108,10 +135,6 @@
         <editHeading>true</editHeading>
         <label>Get in Touch</label>
         <layoutColumns>
-            <layoutItems>
-                <behavior>Edit</behavior>
-                <field>Phone</field>
-            </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>ShippingAddress</field>
@@ -161,10 +184,6 @@
             <fields>FULL_NAME</fields>
             <relatedList>RelatedContactList</relatedList>
         </relatedLists>
-        <relatedLists>
-            <fields>OPPORTUNITY.NAME</fields>
-            <relatedList>RelatedOpportunityList</relatedList>
-        </relatedLists>
     </miniLayout>
     <platformActionList>
         <actionListContext>Record</actionListContext>
@@ -184,34 +203,24 @@
             <sortOrder>2</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
-            <actionName>NewTask</actionName>
+            <actionName>NewContact</actionName>
             <actionType>QuickAction</actionType>
             <sortOrder>3</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
-            <actionName>NewContact</actionName>
-            <actionType>QuickAction</actionType>
-            <sortOrder>4</sortOrder>
-        </platformActionListItems>
-        <platformActionListItems>
-            <actionName>NewOpportunity</actionName>
-            <actionType>QuickAction</actionType>
-            <sortOrder>5</sortOrder>
-        </platformActionListItems>
-        <platformActionListItems>
             <actionName>Edit</actionName>
             <actionType>StandardButton</actionType>
-            <sortOrder>6</sortOrder>
-        </platformActionListItems>
-        <platformActionListItems>
-            <actionName>Delete</actionName>
-            <actionType>StandardButton</actionType>
-            <sortOrder>7</sortOrder>
+            <sortOrder>4</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
             <actionName>CallHighlightAction</actionName>
             <actionType>ProductivityAction</actionType>
-            <sortOrder>8</sortOrder>
+            <sortOrder>5</sortOrder>
+        </platformActionListItems>
+        <platformActionListItems>
+            <actionName>NewTask</actionName>
+            <actionType>QuickAction</actionType>
+            <sortOrder>6</sortOrder>
         </platformActionListItems>
     </platformActionList>
     <relatedLists>
@@ -245,25 +254,47 @@
         <relatedList>RelatedHistoryList</relatedList>
     </relatedLists>
     <relatedLists>
+        <customButtons>New_Transaction</customButtons>
+        <excludeButtons>MassChangeOwner</excludeButtons>
+        <excludeButtons>New</excludeButtons>
         <fields>NAME</fields>
+        <fields>Bill_Number__c</fields>
+        <fields>Amount__c</fields>
+        <fields>Net_Amount__c</fields>
+        <fields>Payment_Mode__c</fields>
+        <fields>Transaction_Date__c</fields>
+        <fields>Store__c</fields>
         <relatedList>Transaction_Record__c.Account__c</relatedList>
     </relatedLists>
     <relatedLists>
+        <excludeButtons>MassChangeOwner</excludeButtons>
+        <excludeButtons>New</excludeButtons>
         <fields>NAME</fields>
+        <fields>Points_Balance__c</fields>
+        <fields>Tier__c</fields>
+        <fields>Total_Points_Earned__c</fields>
+        <fields>Total_Points_Expired__c</fields>
+        <fields>Total_Points_Redeemed__c</fields>
         <relatedList>Loyalty_Record__c.Account__c</relatedList>
     </relatedLists>
     <relatedLists>
+        <customButtons>New_Gift_Voucher</customButtons>
+        <excludeButtons>MassChangeOwner</excludeButtons>
+        <excludeButtons>New</excludeButtons>
         <fields>NAME</fields>
+        <fields>Voucher_Code__c</fields>
+        <fields>Status__c</fields>
+        <fields>Face_Value__c</fields>
+        <fields>Discount_Percentage__c</fields>
+        <fields>Minimum_Amount__c</fields>
+        <fields>Maximum_Amount__c</fields>
+        <fields>Expiry_Date__c</fields>
         <relatedList>Gift_Voucher__c.Account__c</relatedList>
     </relatedLists>
     <relatedLists>
-        <fields>OPPORTUNITY.NAME</fields>
-        <fields>OPPORTUNITY.STAGE_NAME</fields>
-        <fields>OPPORTUNITY.AMOUNT</fields>
-        <fields>OPPORTUNITY.CLOSE_DATE</fields>
-        <relatedList>RelatedOpportunityList</relatedList>
-    </relatedLists>
-    <relatedLists>
+        <excludeButtons>MassChangeOwner</excludeButtons>
+        <excludeButtons>MassMergeCase</excludeButtons>
+        <excludeButtons>NewCase</excludeButtons>
         <fields>CASES.CASE_NUMBER</fields>
         <fields>NAME</fields>
         <fields>CASES.SUBJECT</fields>

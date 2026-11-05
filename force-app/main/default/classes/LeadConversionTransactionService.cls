@@ -5,16 +5,23 @@
  * Convert a Lead with its first bill (Convert button on Lead):
  *   1. find the customer - the Account staff picked on the screen, or a new
  *      one when they chose to create it. Without either (the POS API,
- *      later), an Account that already has the Lead's phone or email (or a
- *      Contact under it that has) is used. A new Account carries the Lead's
- *      phone, email and personal details (name: the Company when a user
- *      typed it (B2B), else "<Name> Family" (B2C), e.g. Asha Mehta Family).
- *      An existing Account keeps every value it has; its blank Email and
- *      Business Type ("Unknown" counts as blank) are filled from the Lead,
- *      and the Lead's Description (the product description) is added to
- *      the Account's on a new line. A B2C Lead's name is added to a family
- *      Account's name: "Asha Mehta Family" + Rohit Mehta becomes "Asha Mehta
- *      & Rohit Mehta Family" (see familyAccountNameWith),
+ *      later), an Account that already has the Lead's phone, WhatsApp number
+ *      or email (or a Contact under it that has) is used. A new Account
+ *      carries the Lead's phone, WhatsApp number, email, WA / SMS / Email
+ *      opt-ins and personal details
+ *      (name: the Company when a user typed it (B2B), else "<Name> Family"
+ *      (B2C), e.g. Asha Mehta Family). An existing Account keeps every value
+ *      it has; its blank Email, WhatsApp Number and Business Type ("Unknown"
+ *      counts as blank) are filled from the Lead, and an opt-in the Lead has
+ *      is ticked on it (an opt-in is never unticked), and the Lead's Description
+ *      (the product description) is added to
+ *      the Account's on a new line. The Lead's name is added to the
+ *      Account's name when both have the same Business Type: a B2C Lead to a
+ *      B2C family Account - "Asha Mehta Family" + Rohit Mehta becomes "Asha
+ *      Mehta & Rohit Mehta Family" (familyAccountNameWith) - and a B2B Lead
+ *      to a B2B Account - "test user" + Rakesh Jain becomes "test user &
+ *      Rakesh Jain" (businessAccountNameWith). Across types, or when the
+ *      Account's Business Type is blank or Unknown, the name is kept,
  *   2. save the bill (Transaction_Record__c) on that Account,
  *   3. convert the Lead into that Account with Salesforce's own conversion,
  *      which creates a new Contact on the Account from the Lead's details -
@@ -44,6 +51,8 @@ public without sharing class LeadConversionTransactionService {
     private static final Integer ACCOUNT_NAME_MAX_LENGTH = 255;
     /** The Account default: a placeholder, so it is replaced like a blank. */
     private static final String BUSINESS_TYPE_UNKNOWN = 'Unknown';
+    private static final String BUSINESS_TYPE_B2B = 'B2B';
+    private static final String BUSINESS_TYPE_B2C = 'B2C';
     private static final String FAMILY_SUFFIX = ' Family';
     private static final String MEMBER_SEPARATOR = ' & ';
 
@@ -374,10 +383,13 @@ public without sharing class LeadConversionTransactionService {
      * counts as blank. Salesforce's own conversion fills the other blank
      * mapped fields.
      *
-     * Each B2C Lead's name is also added to a family Account's name (see
-     * familyAccountNameWith); a B2B Lead leaves the name as it is. The
-     * resulting name of every existing customer Account is put in
-     * accountNames.
+     * Each Lead's name is also added to the Account's name when both are of
+     * the same Business Type (see businessTypeOf): a B2C Lead into a B2C
+     * family Account (familyAccountNameWith), a B2B Lead into a B2B Account
+     * (businessAccountNameWith). A B2C Lead into a B2B Account, a B2B Lead
+     * into a B2C Account, or an Account whose Business Type is blank or
+     * Unknown, leaves the name as it is. The resulting name of every
+     * existing customer Account is put in accountNames.
      */
     private static Map<Integer, String> fillBlankDetails(
         List<Integer> pending,
@@ -391,7 +403,7 @@ public without sharing class LeadConversionTransactionService {
         // nothing blank. Every Lead's Description is added, in order.
         Map<Id, Integer> requestByAccount = new Map<Id, Integer>();
         Map<Id, List<String>> descriptionsByAccount = new Map<Id, List<String>>();
-        Map<Id, List<String>> membersByAccount = new Map<Id, List<String>>();
+        Map<Id, List<Lead>> membersByAccount = new Map<Id, List<Lead>>();
         for (Integer i : pending) {
             LeadTriggerHandler.Customer customer = customerByRequest.get(i);
             if (customer == null) {
@@ -400,16 +412,14 @@ public without sharing class LeadConversionTransactionService {
             if (!requestByAccount.containsKey(customer.accountId)) {
                 requestByAccount.put(customer.accountId, i);
                 descriptionsByAccount.put(customer.accountId, new List<String>());
-                membersByAccount.put(customer.accountId, new List<String>());
+                membersByAccount.put(customer.accountId, new List<Lead>());
             }
             Lead leadRecord = leadsById.get(requests[i].leadId);
             String description = leadRecord.Description;
             if (String.isNotBlank(description)) {
                 descriptionsByAccount.get(customer.accountId).add(description.trim());
             }
-            if (LeadTriggerHandler.isSystemCompany(leadRecord.Company)) {
-                membersByAccount.get(customer.accountId).add(LeadTriggerHandler.personName(leadRecord));
-            }
+            membersByAccount.get(customer.accountId).add(leadRecord);
         }
         if (requestByAccount.isEmpty()) {
             return failures;
@@ -419,7 +429,8 @@ public without sharing class LeadConversionTransactionService {
         List<Account> updates = new List<Account>();
         List<Integer> updatedRequests = new List<Integer>();
         for (Account accountRecord : [
-            SELECT Id, Name, Email__c, Business_Type__c, Description
+            SELECT Id, Name, Email__c, WhatsApp_Number__c, Business_Type__c, Description,
+                   WA_Opt_In__c, SMS_Opt_In__c, Email_Opt_In__c
             FROM Account
             WHERE Id IN :accountIds
             WITH SYSTEM_MODE
@@ -429,9 +440,17 @@ public without sharing class LeadConversionTransactionService {
             Account changes = new Account(Id = accountRecord.Id);
             Boolean changed = false;
 
+            // The Account's Business Type as it was before this conversion.
+            String accountType = accountRecord.Business_Type__c;
             String name = accountRecord.Name;
-            for (String member : membersByAccount.get(accountRecord.Id)) {
-                String withMember = familyAccountNameWith(name, member);
+            for (Lead member : membersByAccount.get(accountRecord.Id)) {
+                String leadType = businessTypeOf(member);
+                String withMember;
+                if (leadType == BUSINESS_TYPE_B2C && accountType == BUSINESS_TYPE_B2C) {
+                    withMember = familyAccountNameWith(name, LeadTriggerHandler.personName(member));
+                } else if (leadType == BUSINESS_TYPE_B2B && accountType == BUSINESS_TYPE_B2B) {
+                    withMember = businessAccountNameWith(name, LeadTriggerHandler.personName(member));
+                }
                 if (withMember != null) {
                     name = withMember;
                 }
@@ -444,6 +463,23 @@ public without sharing class LeadConversionTransactionService {
 
             if (String.isBlank(accountRecord.Email__c) && String.isNotBlank(leadRecord.Email)) {
                 changes.Email__c = leadRecord.Email;
+                changed = true;
+            }
+            if (String.isBlank(accountRecord.WhatsApp_Number__c) && String.isNotBlank(leadRecord.MobilePhone)) {
+                changes.WhatsApp_Number__c = leadRecord.MobilePhone;
+                changed = true;
+            }
+            // Opt-ins: a Lead's consent is added; consent on the Account is never removed.
+            if (leadRecord.WA_Opt_In__c && !accountRecord.WA_Opt_In__c) {
+                changes.WA_Opt_In__c = true;
+                changed = true;
+            }
+            if (leadRecord.SMS_Opt_In__c && !accountRecord.SMS_Opt_In__c) {
+                changes.SMS_Opt_In__c = true;
+                changed = true;
+            }
+            if (leadRecord.Email_Opt_In__c && !accountRecord.Email_Opt_In__c) {
+                changes.Email_Opt_In__c = true;
                 changed = true;
             }
             if ((String.isBlank(accountRecord.Business_Type__c) || accountRecord.Business_Type__c == BUSINESS_TYPE_UNKNOWN)
@@ -484,6 +520,7 @@ public without sharing class LeadConversionTransactionService {
         Account accountRecord = new Account(
             Name = accountNameFor(request, leadRecord),
             Phone = leadRecord.Phone,
+            WhatsApp_Number__c = leadRecord.MobilePhone,
             Email__c = leadRecord.Email,
             Business_Type__c = leadRecord.Business_Type__c,
             Date_of_Birth__c = leadRecord.Date_of_Birth__c,
@@ -491,6 +528,9 @@ public without sharing class LeadConversionTransactionService {
             Marital_Status__c = leadRecord.Marital_Status__c,
             Primary_Store__c = leadRecord.Store_Association__c,
             Campaign_Attribution__c = leadRecord.Campaign_Attribution__c,
+            WA_Opt_In__c = leadRecord.WA_Opt_In__c,
+            SMS_Opt_In__c = leadRecord.SMS_Opt_In__c,
+            Email_Opt_In__c = leadRecord.Email_Opt_In__c,
             Description = leadRecord.Description
         );
         if (isOwnedByUser(leadRecord)) {
@@ -506,7 +546,7 @@ public without sharing class LeadConversionTransactionService {
     /**
      * The existing customer Account for each request: the one picked on the
      * screen, else (unless a new Account was asked for) the one the Lead's
-     * phone or email already belongs to. Each comes with the Contact the Lead
+     * phone, WhatsApp number or email already belongs to. Each comes with the Contact the Lead
      * merges into, when that Account already has the same person.
      */
     private static Map<Integer, LeadTriggerHandler.Customer> existingCustomers(
@@ -531,7 +571,7 @@ public without sharing class LeadConversionTransactionService {
         return byRequest;
     }
 
-    /** The Account the Lead's phone or email already belongs to, for each request that has one. */
+    /** The Account the Lead's phone, WhatsApp number or email already belongs to, for each request that has one. */
     private static Map<Integer, LeadTriggerHandler.Customer> matchedCustomers(
         List<Integer> toMatch,
         List<ConvertRequest> requests,
@@ -546,10 +586,7 @@ public without sharing class LeadConversionTransactionService {
         Set<String> emails = new Set<String>();
         for (Integer i : toMatch) {
             Lead leadRecord = leadsById.get(requests[i].leadId);
-            String phone = LeadTriggerHandler.normalizePhone(leadRecord.Phone);
-            if (LeadTriggerHandler.isValidPhone(phone)) {
-                phones.add(phone);
-            }
+            phones.addAll(LeadTriggerHandler.phonesOf(leadRecord));
             if (String.isNotBlank(leadRecord.Email)) {
                 emails.add(leadRecord.Email);
             }
@@ -562,13 +599,11 @@ public without sharing class LeadConversionTransactionService {
 
         for (Integer i : toMatch) {
             Lead leadRecord = leadsById.get(requests[i].leadId);
-            String phone = LeadTriggerHandler.normalizePhone(leadRecord.Phone);
             LeadTriggerHandler.Customer customer;
-            if (LeadTriggerHandler.isValidPhone(phone)) {
-                customer = customers.get(LeadTriggerHandler.phoneKey(phone));
-            }
-            if (customer == null && String.isNotBlank(leadRecord.Email)) {
-                customer = customers.get(LeadTriggerHandler.emailKey(leadRecord.Email));
+            for (String key : LeadTriggerHandler.matchKeysOf(leadRecord)) {
+                if (customer == null && customers.containsKey(key)) {
+                    customer = customers.get(key);
+                }
             }
             // A Contact without an Account cannot take the bill; such a
             // person is treated as a new customer.
@@ -724,9 +759,10 @@ public without sharing class LeadConversionTransactionService {
             return new Map<Id, Lead>();
         }
         return new Map<Id, Lead>([
-            SELECT Id, FirstName, LastName, Company, Lead_Number__c, Business_Type__c, Phone, Email, IsConverted, OwnerId,
+            SELECT Id, FirstName, LastName, Company, Lead_Number__c, Business_Type__c, Phone, MobilePhone, Email, IsConverted, OwnerId,
                    Date_of_Birth__c, Anniversary_Date__c, Marital_Status__c, Description,
-                   Store_Association__c, Campaign_Attribution__c
+                   Store_Association__c, Campaign_Attribution__c,
+                   WA_Opt_In__c, SMS_Opt_In__c, Email_Opt_In__c
             FROM Lead
             WHERE Id IN :leadIds
             WITH SYSTEM_MODE
@@ -786,6 +822,40 @@ public without sharing class LeadConversionTransactionService {
         }
         String withMember = members + MEMBER_SEPARATOR + person + FAMILY_SUFFIX;
         return withMember.length() > ACCOUNT_NAME_MAX_LENGTH ? null : withMember;
+    }
+
+    /**
+     * A B2B Account's name with one more person, e.g. "test user" + Rakesh
+     * Jain = "test user & Rakesh Jain". Null - keep the name as it is - when
+     * the name already holds that person's name or would go over the
+     * 255-character limit.
+     */
+    public static String businessAccountNameWith(String accountName, String personName) {
+        if (String.isBlank(accountName) || String.isBlank(personName)) {
+            return null;
+        }
+        String trimmed = accountName.trim();
+        String person = personName.trim();
+        for (String member : trimmed.split(MEMBER_SEPARATOR)) {
+            if (member.trim().equalsIgnoreCase(person)) {
+                return null;
+            }
+        }
+        String withMember = trimmed + MEMBER_SEPARATOR + person;
+        return withMember.length() > ACCOUNT_NAME_MAX_LENGTH ? null : withMember;
+    }
+
+    /**
+     * The Lead's Business Type, B2B or B2C. A blank or Unknown Business Type
+     * (older Leads) follows the Company: a typed Company is B2B, the
+     * system's Company is B2C.
+     */
+    @TestVisible
+    private static String businessTypeOf(Lead leadRecord) {
+        if (leadRecord.Business_Type__c == BUSINESS_TYPE_B2B || leadRecord.Business_Type__c == BUSINESS_TYPE_B2C) {
+            return leadRecord.Business_Type__c;
+        }
+        return LeadTriggerHandler.isSystemCompany(leadRecord.Company) ? BUSINESS_TYPE_B2C : BUSINESS_TYPE_B2B;
     }
 
     private static Boolean isOwnedByUser(Lead leadRecord) {

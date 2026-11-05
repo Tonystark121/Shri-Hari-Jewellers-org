@@ -5,7 +5,8 @@
  * Every row goes through the same rules as the New Lead screen:
  *   - Last Name, Phone and Product Description are required;
  *   - Phone must be 10 digits (a leading +91 or 91, spaces and dashes are
- *     fine) and is saved exactly as written;
+ *     fine) and is saved exactly as written; WhatsApp Number is optional
+ *     and follows the same rule;
  *   - dates are YYYY-MM-DD; Date of Birth and Anniversary Date cannot be in
  *     the future; Anniversary Date only for a Married customer and after
  *     the Date of Birth;
@@ -15,13 +16,14 @@
  *     converts only with its first bill, through the Convert button;
  *   - a blank Company makes the Lead B2C (LeadTriggerHandler assigns
  *     "<Name> B2C (<Lead Number>)"); a Company makes it B2B;
- *   - an existing customer (same phone or email on an Account or Contact)
+ *   - an existing customer (same phone, WhatsApp number or email on an
+ *     Account or Contact - any of the row's numbers against any stored one)
  *     gets an enquiry Case instead of a Lead - Origin Phone, Priority
  *     Medium, owned by the account owner; a customer known only as a
  *     Contact is first given an Account, owned by the uploader
  *     (LeadTriggerHandler.createCustomerAccounts);
- *   - an open Lead with the same phone or email, or a repeat of an earlier
- *     row in the same file, fails.
+ *   - an open Lead with the same phone, WhatsApp number or email, or a
+ *     repeat of an earlier row in the same file, fails.
  *
  * Rows that pass are saved; rows that fail are not. Every row is written to
  * a results CSV (the uploaded columns plus Result, Record Number, Record Id
@@ -69,6 +71,7 @@ public with sharing class LeadUploadService {
     private static final String COL_FIRST_NAME = 'firstname';
     private static final String COL_LAST_NAME = 'lastname';
     private static final String COL_PHONE = 'phone';
+    private static final String COL_WHATSAPP = 'whatsappnumber';
     private static final String COL_EMAIL = 'email';
     private static final String COL_DATE_OF_BIRTH = 'dateofbirth';
     private static final String COL_STREET = 'street';
@@ -264,6 +267,7 @@ public with sharing class LeadUploadService {
         LeadTriggerHandler.Customer customer;
         String customerName;
         String normalizedPhone;
+        String normalizedWhatsApp;
         String email;
         String result;
         String recordNumber;
@@ -307,7 +311,7 @@ public with sharing class LeadUploadService {
             }
             for (String key : matchKeys(row)) {
                 if (firstLineByKey.containsKey(key)) {
-                    row.fail('Same phone or email as row ' + firstLineByKey.get(key) + ' of this file.');
+                    row.fail('Same phone, WhatsApp number or email as row ' + firstLineByKey.get(key) + ' of this file.');
                     break;
                 }
             }
@@ -324,6 +328,9 @@ public with sharing class LeadUploadService {
         for (Row row : rows) {
             if (row.isOpen()) {
                 phones.add(row.normalizedPhone);
+                if (row.normalizedWhatsApp != null) {
+                    phones.add(row.normalizedWhatsApp);
+                }
                 if (String.isNotBlank(row.email)) {
                     emails.add(row.email);
                 }
@@ -351,7 +358,7 @@ public with sharing class LeadUploadService {
                 row.customer = customer;
                 row.customerName = customer.accountName;
             } else if (openLead != null) {
-                row.fail('A Lead with this phone or email already exists: ' + openLead.Name
+                row.fail('A Lead with this phone, WhatsApp number or email already exists: ' + openLead.Name
                     + ' (owner ' + openLead.Owner.Name + ').');
             }
         }
@@ -462,6 +469,19 @@ public with sharing class LeadUploadService {
             throw new RowException('Phone must be a 10-digit number, optionally starting with +91 or 91.');
         }
 
+        String whatsApp = value(row, columnIndex, COL_WHATSAPP);
+        String normalizedWhatsApp;
+        if (String.isNotBlank(whatsApp)) {
+            normalizedWhatsApp = LeadTriggerHandler.normalizePhone(whatsApp);
+            if (!LeadTriggerHandler.isValidPhone(normalizedWhatsApp)) {
+                if (whatsApp.containsIgnoreCase('E+')) {
+                    throw new RowException('WhatsApp Number "' + whatsApp + '" was changed by Excel into scientific notation. '
+                        + 'Format the WhatsApp Number column as Text and enter the number again.');
+                }
+                throw new RowException('WhatsApp Number must be a 10-digit number, optionally starting with +91 or 91.');
+            }
+        }
+
         String productDescription = value(row, columnIndex, COL_PRODUCT);
         if (String.isBlank(productDescription)) {
             throw new RowException('Product Description is required.');
@@ -499,6 +519,7 @@ public with sharing class LeadUploadService {
             FirstName = value(row, columnIndex, COL_FIRST_NAME),
             LastName = lastName,
             Phone = phone,
+            MobilePhone = whatsApp,
             Email = email,
             Date_of_Birth__c = dateOfBirth,
             Street = value(row, columnIndex, COL_STREET),
@@ -526,6 +547,7 @@ public with sharing class LeadUploadService {
 
         row.leadRecord = leadRecord;
         row.normalizedPhone = normalizedPhone;
+        row.normalizedWhatsApp = normalizedWhatsApp;
         row.email = email;
     }
 
@@ -556,8 +578,12 @@ public with sharing class LeadUploadService {
         );
     }
 
+    /** Phone, WhatsApp Number and Email keys of the row: any one of them identifies the person. */
     private static List<String> matchKeys(Row row) {
         List<String> keys = new List<String>{ LeadTriggerHandler.phoneKey(row.normalizedPhone) };
+        if (row.normalizedWhatsApp != null && row.normalizedWhatsApp != row.normalizedPhone) {
+            keys.add(LeadTriggerHandler.phoneKey(row.normalizedWhatsApp));
+        }
         if (String.isNotBlank(row.email)) {
             keys.add(LeadTriggerHandler.emailKey(row.email));
         }

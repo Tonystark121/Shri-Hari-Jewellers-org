@@ -159,13 +159,13 @@
     <enableSharing>true</enableSharing>
     <enableStreamingApi>true</enableStreamingApi>
     <externalSharingModel>ControlledByParent</externalSharingModel>
-    <label>Transaction Record</label>
+    <label>Purchase Record</label>
     <nameField>
-        <displayFormat>TXN-{00000000}</displayFormat>
-        <label>Transaction Record Number</label>
+        <displayFormat>PR-{00000000}</displayFormat>
+        <label>Purchase Record Number</label>
         <type>AutoNumber</type>
     </nameField>
-    <pluralLabel>Transaction Records</pluralLabel>
+    <pluralLabel>Purchase Records</pluralLabel>
     <searchLayouts>
         <excludedStandardButtons>New</excludedStandardButtons>
         <excludedStandardButtons>OpenListInQuip</excludedStandardButtons>

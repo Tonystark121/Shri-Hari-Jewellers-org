@@ -2,11 +2,11 @@
 <WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>New_Transaction</fullName>
     <availability>online</availability>
-    <description>Opens the New Transaction screen flow: bill details, then Redeem Points or Redeem Gift Voucher (voucher checked immediately), then save.</description>
+    <description>Opens the New Purchase screen flow: bill details, then Redeem Points or Redeem Gift Voucher (voucher checked immediately), then save.</description>
     <displayType>massActionButton</displayType>
     <encodingKey>UTF-8</encodingKey>
     <linkType>url</linkType>
-    <masterLabel>New</masterLabel>
+    <masterLabel>New Purchase</masterLabel>
     <openType>replace</openType>
     <protected>false</protected>
     <requireRowSelection>false</requireRowSelection>

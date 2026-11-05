@@ -27,6 +27,12 @@
                 <elementReference>Phone_Input</elementReference>
             </value>
         </inputParameters>
+        <inputParameters>
+            <name>whatsApp</name>
+            <value>
+                <elementReference>WhatsApp_Input</elementReference>
+            </value>
+        </inputParameters>
         <nameSegment>LeadTriggerHandler</nameSegment>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
@@ -69,204 +75,17 @@
                 <elementReference>Phone_Input</elementReference>
             </value>
         </inputParameters>
+        <inputParameters>
+            <name>whatsApp</name>
+            <value>
+                <elementReference>WhatsApp_Input</elementReference>
+            </value>
+        </inputParameters>
         <nameSegment>LeadTriggerHandler</nameSegment>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
     <apiVersion>62.0</apiVersion>
-    <assignments>
-        <description>Copies the Type, Lead Source and the Subject built from the Type onto the enquiry.</description>
-        <name>Set_Enquiry_Choices</name>
-        <label>Set Enquiry Choices</label>
-        <locationX>176</locationX>
-        <locationY>890</locationY>
-        <assignmentItems>
-            <assignToReference>Enquiry_Case.Type</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Case_Type_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Enquiry_Case.Subject</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Enquiry_Subject</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Enquiry_Case.Lead_Source__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Enquiry_Lead_Source_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Customer_Has_Account</targetReference>
-        </connector>
-    </assignments>
-    <assignments>
-        <description>Puts the enquiry on the customer&apos;s new Account.</description>
-        <name>Set_Enquiry_Account</name>
-        <label>Set Enquiry Account</label>
-        <locationX>440</locationX>
-        <locationY>1106</locationY>
-        <assignmentItems>
-            <assignToReference>Enquiry_Case.AccountId</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Create_Customer_Account.accountId</elementReference>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Create_Enquiry</targetReference>
-        </connector>
-    </assignments>
-    <assignments>
-        <description>New Leads start in status New.</description>
-        <name>Set_Defaults</name>
-        <label>Set Defaults</label>
-        <locationX>176</locationX>
-        <locationY>134</locationY>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Status</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <stringValue>New</stringValue>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Lead_Form</targetReference>
-        </connector>
-    </assignments>
-    <assignments>
-        <description>Copies the Name, Phone, Address and Company inputs onto the Lead. A blank Company means B2C: the system then assigns &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;. The phone is kept exactly as typed.</description>
-        <name>Set_Lead_Fields</name>
-        <label>Set Lead Fields</label>
-        <locationX>176</locationX>
-        <locationY>350</locationY>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Salutation</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Salutation_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.FirstName</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>First_Name_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.LastName</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Last_Name_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Phone</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Phone_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Street</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Lead_Address.street</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.City</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Lead_Address.city</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.State</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Lead_Address.province</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.PostalCode</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Lead_Address.postalCode</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Country</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Lead_Address.country</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Date_of_Birth__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Date_of_Birth_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Marital_Status__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Marital_Status_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Anniversary_Date__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Anniversary_To_Save</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Description</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Product_Description_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Website</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Website_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Company</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Company_Input</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Lead_Record.Business_Type__c</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <elementReference>Business_Type_For_Company</elementReference>
-            </value>
-        </assignmentItems>
-        <assignmentItems>
-            <assignToReference>Show_Open_Lead</assignToReference>
-            <operator>Assign</operator>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </assignmentItems>
-        <connector>
-            <targetReference>Check_Customer</targetReference>
-        </connector>
-    </assignments>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <assignments>
         <description>Shows the open-Lead banner at the top of the Lead form.</description>
         <name>Flag_Open_Lead</name>
@@ -379,6 +198,71 @@
         </connector>
     </assignments>
     <assignments>
+        <description>New Leads start in status New.</description>
+        <name>Set_Defaults</name>
+        <label>Set Defaults</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Status</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Lead_Form</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Puts the enquiry on the customer&apos;s new Account.</description>
+        <name>Set_Enquiry_Account</name>
+        <label>Set Enquiry Account</label>
+        <locationX>440</locationX>
+        <locationY>1106</locationY>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.AccountId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Create_Customer_Account.accountId</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Enquiry</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Copies the Type, Lead Source and the Subject built from the Type onto the enquiry.</description>
+        <name>Set_Enquiry_Choices</name>
+        <label>Set Enquiry Choices</label>
+        <locationX>176</locationX>
+        <locationY>890</locationY>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.Type</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Case_Type_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.Subject</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Enquiry_Subject</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Enquiry_Case.Lead_Source__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Enquiry_Lead_Source_Value</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Customer_Has_Account</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
         <description>An unexpected failure (for example a duplicate rule or validation rule), shown on the Error screen.</description>
         <name>Set_Fault_Error</name>
         <label>Set Fault Error</label>
@@ -395,32 +279,142 @@
             <targetReference>Error_Screen</targetReference>
         </connector>
     </assignments>
-    <decisions>
-        <description>A customer known only as a Contact gets an Account before the enquiry is saved.</description>
-        <name>Customer_Has_Account</name>
-        <label>Customer Has Account?</label>
+    <assignments>
+        <description>Copies the Name, Phone, Address and Company inputs onto the Lead. A blank Company means B2C: the system then assigns &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;. The phone is kept exactly as typed.</description>
+        <name>Set_Lead_Fields</name>
+        <label>Set Lead Fields</label>
         <locationX>176</locationX>
-        <locationY>998</locationY>
-        <defaultConnector>
-            <targetReference>Create_Enquiry</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>Has Account</defaultConnectorLabel>
-        <rules>
-            <name>Contact_Only</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>Check_Customer.accountId</leftValueReference>
-                <operator>IsNull</operator>
-                <rightValue>
-                    <booleanValue>true</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>Create_Customer_Account</targetReference>
-            </connector>
-            <label>Contact Only</label>
-        </rules>
-    </decisions>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Salutation</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Salutation_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.FirstName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>First_Name_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.LastName</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Last_Name_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Phone</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Phone_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.MobilePhone</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>WhatsApp_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Street</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lead_Address.street</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.City</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lead_Address.city</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.State</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lead_Address.province</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.PostalCode</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lead_Address.postalCode</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Country</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Lead_Address.country</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Date_of_Birth__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Date_of_Birth_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Marital_Status__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Marital_Status_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Anniversary_Date__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Anniversary_To_Save</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Description</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Product_Description_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Website</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Website_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Company</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Company_Input</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Lead_Record.Business_Type__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Business_Type_For_Company</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Show_Open_Lead</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Check_Customer</targetReference>
+        </connector>
+    </assignments>
     <decisions>
         <description>Existing customer: raise an enquiry instead of a Lead. Open Lead: back to the form with a banner. Otherwise: create the Lead.</description>
         <name>Customer_Check_Outcome</name>
@@ -462,26 +456,47 @@
             <label>Open Lead</label>
         </rules>
     </decisions>
+    <decisions>
+        <description>A customer known only as a Contact gets an Account before the enquiry is saved.</description>
+        <name>Customer_Has_Account</name>
+        <label>Customer Has Account?</label>
+        <locationX>176</locationX>
+        <locationY>998</locationY>
+        <defaultConnector>
+            <targetReference>Create_Enquiry</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Has Account</defaultConnectorLabel>
+        <rules>
+            <name>Contact_Only</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Check_Customer.accountId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Customer_Account</targetReference>
+            </connector>
+            <label>Contact Only</label>
+        </rules>
+    </decisions>
     <description>New button on Lead. One screen laid out like the Lead page layout (Personal Details, Lead Details, Company Information). On Save the phone and email are checked: an existing customer gets an enquiry Case instead of a Lead; an open Lead with the same phone or email is shown as a banner on the form; otherwise the Lead is created. A blank Company makes the Lead B2C and the system assigns &quot;&lt;Name&gt; B2C (&lt;Lead Number&gt;)&quot;.</description>
     <dynamicChoiceSets>
         <name>Case_Type_Choices</name>
         <dataType>Picklist</dataType>
+        <displayField xsi:nil="true"/>
+        <object xsi:nil="true"/>
         <picklistField>Type</picklistField>
         <picklistObject>Case</picklistObject>
     </dynamicChoiceSets>
     <dynamicChoiceSets>
         <name>Lead_Source_Choices</name>
         <dataType>Picklist</dataType>
-        <picklistField>LeadSource</picklistField>
-        <picklistObject>Lead</picklistObject>
-    </dynamicChoiceSets>
-    <dynamicChoiceSets>
-        <description>Values of the Lead Salutation picklist (Mr., Ms., Mrs., Dr., Prof., ...).</description>
-        <name>Salutation_Choices</name>
-        <dataType>Picklist</dataType>
         <displayField xsi:nil="true"/>
         <object xsi:nil="true"/>
-        <picklistField>Salutation</picklistField>
+        <picklistField>LeadSource</picklistField>
         <picklistObject>Lead</picklistObject>
     </dynamicChoiceSets>
     <dynamicChoiceSets>
@@ -493,29 +508,27 @@
         <picklistField>Marital_Status__c</picklistField>
         <picklistObject>Lead</picklistObject>
     </dynamicChoiceSets>
+    <dynamicChoiceSets>
+        <description>Values of the Lead Salutation picklist (Mr., Ms., Mrs., Dr., Prof., ...).</description>
+        <name>Salutation_Choices</name>
+        <dataType>Picklist</dataType>
+        <displayField xsi:nil="true"/>
+        <object xsi:nil="true"/>
+        <picklistField>Salutation</picklistField>
+        <picklistObject>Lead</picklistObject>
+    </dynamicChoiceSets>
     <environments>Default</environments>
     <formulas>
-        <description>The customer&apos;s Account, or their Contact when they have no Account yet: the Raise an Enquiry banner links to it.</description>
-        <name>Customer_Record_Id</name>
+        <description>Lead Source saved on the enquiry: the one chosen on the enquiry screen, or the Lead form&apos;s when left blank.</description>
+        <name>Enquiry_Lead_Source_Value</name>
         <dataType>String</dataType>
-        <expression>BLANKVALUE({!Check_Customer.accountId}, {!Check_Customer.contactId})</expression>
+        <expression>BLANKVALUE({!Enquiry_Lead_Source_Input}, TEXT({!Lead_Record.LeadSource}))</expression>
     </formulas>
     <formulas>
-        <description>The Account the enquiry was raised on: the customer&apos;s, or the one just created for a customer known only as a Contact.</description>
-        <name>Enquiry_Account_Id</name>
-        <dataType>String</dataType>
-        <expression>BLANKVALUE({!Create_Customer_Account.accountId}, {!Check_Customer.accountId})</expression>
-    </formulas>
-    <formulas>
-        <description>Name of Enquiry_Account_Id.</description>
-        <name>Enquiry_Account_Name</name>
-        <dataType>String</dataType>
-        <expression>IF(ISBLANK({!Create_Customer_Account.accountId}), {!Check_Customer.accountName}, {!Create_Customer_Account.accountName})</expression>
-    </formulas>
-    <formulas>
-        <name>Full_Name</name>
-        <dataType>String</dataType>
-        <expression>TRIM(BLANKVALUE({!First_Name_Input}, &quot;&quot;) &amp; &quot; &quot; &amp; BLANKVALUE({!Last_Name_Input}, &quot;&quot;))</expression>
+        <description>Anniversary Date is saved only for a Married customer; the field is hidden otherwise.</description>
+        <name>Anniversary_To_Save</name>
+        <dataType>Date</dataType>
+        <expression>IF({!Marital_Status_Input} = &quot;Married&quot;, {!Anniversary_Input}, DATEVALUE(&quot;&quot;))</expression>
     </formulas>
     <formulas>
         <description>Same rule as LeadTriggerHandler: a blank Company means B2C.</description>
@@ -556,15 +569,32 @@
         <expression>BLANKVALUE(TEXT({!Get_Created_Lead.LeadSource}), &quot;—&quot;)</expression>
     </formulas>
     <formulas>
-        <description>Anniversary Date is saved only for a Married customer; the field is hidden otherwise.</description>
-        <name>Anniversary_To_Save</name>
-        <dataType>Date</dataType>
-        <expression>IF({!Marital_Status_Input} = &quot;Married&quot;, {!Anniversary_Input}, DATEVALUE(&quot;&quot;))</expression>
+        <description>The customer&apos;s Account, or their Contact when they have no Account yet: the Raise an Enquiry banner links to it.</description>
+        <name>Customer_Record_Id</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!Check_Customer.accountId}, {!Check_Customer.contactId})</expression>
+    </formulas>
+    <formulas>
+        <description>The Account the enquiry was raised on: the customer&apos;s, or the one just created for a customer known only as a Contact.</description>
+        <name>Enquiry_Account_Id</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!Create_Customer_Account.accountId}, {!Check_Customer.accountId})</expression>
+    </formulas>
+    <formulas>
+        <description>Name of Enquiry_Account_Id.</description>
+        <name>Enquiry_Account_Name</name>
+        <dataType>String</dataType>
+        <expression>IF(ISBLANK({!Create_Customer_Account.accountId}), {!Check_Customer.accountName}, {!Create_Customer_Account.accountName})</expression>
     </formulas>
     <formulas>
         <name>Enquiry_Subject</name>
         <dataType>String</dataType>
         <expression>IF({!Case_Type_Input} = &quot;Service Enquiry&quot;, &quot;Enquiry&quot;, BLANKVALUE({!Case_Type_Input}, &quot;Enquiry&quot;)) &amp; &quot; from &quot; &amp; {!Full_Name}</expression>
+    </formulas>
+    <formulas>
+        <name>Full_Name</name>
+        <dataType>String</dataType>
+        <expression>TRIM(BLANKVALUE({!First_Name_Input}, &quot;&quot;) &amp; &quot; &quot; &amp; BLANKVALUE({!Last_Name_Input}, &quot;&quot;))</expression>
     </formulas>
     <interviewLabel>New Lead {!$Flow.CurrentDateTime}</interviewLabel>
     <label>New Lead</label>
@@ -684,59 +714,35 @@
     </recordRollbacks>
     <runInMode>SystemModeWithoutSharing</runInMode>
     <screens>
+        <description>The new enquiry Case opens straight away. Don&apos;t Finish Flow is on, for the same reason as Open Lead.</description>
         <name>Enquiry_Created</name>
-        <label>Enquiry Raised</label>
+        <label>Open Enquiry</label>
         <locationX>176</locationX>
         <locationY>1106</locationY>
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <fields>
-            <name>Enquiry_Created_Header</name>
-            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 36px; color: rgb(46, 132, 74);&quot;&gt;✔&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;strong style=&quot;font-size: 20px; color: rgb(24, 24, 24);&quot;&gt;Enquiry raised&lt;/strong&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(112, 110, 107);&quot;&gt;{!Check_Customer.accountName} is already a customer, so no new Lead was created. The enquiry is with their account owner.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
+            <name>Open_Enquiry</name>
+            <extensionName>c:recordRedirect</extensionName>
+            <fieldType>ComponentInstance</fieldType>
+            <inputParameters>
+                <name>skipFinish</name>
+                <value>
+                    <booleanValue>true</booleanValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>recordToOpen</name>
+                <value>
+                    <elementReference>Enquiry_Case.Id</elementReference>
+                </value>
+            </inputParameters>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <storeOutputAutomatically>true</storeOutputAutomatically>
         </fields>
-        <fields>
-            <name>Enquiry_Summary</name>
-            <fieldText>Enquiry Summary</fieldText>
-            <fieldType>RegionContainer</fieldType>
-            <fields>
-                <name>Enquiry_Summary_Column1</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Enquiry_Summary_Left</name>
-                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;ENQUIRY NUMBER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Get_Enquiry.Id}&quot; target=&quot;_blank&quot;&gt;{!Get_Enquiry.CaseNumber}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;CUSTOMER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Enquiry_Account_Id}&quot; target=&quot;_blank&quot;&gt;{!Enquiry_Account_Name}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;SUBJECT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Enquiry.Subject}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <fields>
-                <name>Enquiry_Summary_Column2</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Enquiry_Summary_Right</name>
-                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;PRIORITY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Enquiry.Priority}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;ORIGIN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Enquiry.Origin}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Enquiry.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <isRequired>false</isRequired>
-            <regionContainerType>SectionWithHeader</regionContainerType>
-        </fields>
-        <nextOrFinishButtonLabel>Done</nextOrFinishButtonLabel>
-        <showFooter>true</showFooter>
+        <showFooter>false</showFooter>
         <showHeader>false</showHeader>
     </screens>
     <screens>
@@ -755,6 +761,14 @@
             <name>Existing_Customer_Banner</name>
             <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(1, 118, 211);&quot;&gt;ℹ  {!Full_Name} is already a customer&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;This phone or email belongs to &lt;/span&gt;&lt;a href=&quot;/{!Customer_Record_Id}&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;{!Check_Customer.accountName}&lt;/strong&gt;&lt;/a&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;. Instead of a duplicate Lead, raise an enquiry on their account - it goes straight to their account owner. The details you entered are already filled in below; add anything further if needed.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <name>Enquiry_Section</name>
@@ -774,11 +788,27 @@
                     <fieldType>DropdownBox</fieldType>
                     <helpText>&lt;p&gt;What the customer is contacting us about. The Subject follows the Type.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Enquiry_Case.Origin</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -795,6 +825,14 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Enquiry_Case.Priority</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Enquiry_Lead_Source_Input</name>
@@ -806,7 +844,16 @@
                     <fieldText>Lead Source</fieldText>
                     <fieldType>DropdownBox</fieldType>
                     <helpText>&lt;p&gt;Where this request came from. Filled in from the Lead form.&lt;/p&gt;</helpText>
+                    <inputsOnNextNavToAssocScrn>ResetValues</inputsOnNextNavToAssocScrn>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -818,16 +865,40 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <name>Subject_Preview</name>
             <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(112, 110, 107);&quot;&gt;Subject&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;strong style=&quot;font-size: 14px;&quot;&gt;{!Enquiry_Subject}&lt;/strong&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <fieldType>ObjectProvided</fieldType>
             <isRequired>false</isRequired>
             <objectFieldReference>Enquiry_Case.Description</objectFieldReference>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <nextOrFinishButtonLabel>Raise Enquiry</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>
@@ -846,69 +917,48 @@
             <name>Error_Message</name>
             <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(186, 5, 23);&quot;&gt;⚠  Nothing was saved&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;Go back to correct the details and save again. If it keeps happening, share this message with your administrator:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(92, 92, 92);&quot;&gt;{!Error_Text}&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
     <screens>
+        <description>The new Lead opens straight away. Don&apos;t Finish Flow is on: this flow is started from a URL whose retURL would otherwise take the user to the Lead list.</description>
         <name>Lead_Created</name>
-        <label>Lead Created</label>
+        <label>Open Lead</label>
         <locationX>704</locationX>
         <locationY>890</locationY>
         <allowBack>false</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <fields>
-            <name>Lead_Created_Header</name>
-            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 36px; color: rgb(46, 132, 74);&quot;&gt;✔&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;strong style=&quot;font-size: 20px; color: rgb(24, 24, 24);&quot;&gt;Lead created&lt;/strong&gt;&lt;/p&gt;&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(112, 110, 107);&quot;&gt;{!Get_Created_Lead.Name} has been added to your Leads.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
+            <name>Open_Created_Lead</name>
+            <extensionName>c:recordRedirect</extensionName>
+            <fieldType>ComponentInstance</fieldType>
+            <inputParameters>
+                <name>skipFinish</name>
+                <value>
+                    <booleanValue>true</booleanValue>
+                </value>
+            </inputParameters>
+            <inputParameters>
+                <name>recordToOpen</name>
+                <value>
+                    <elementReference>Lead_Record.Id</elementReference>
+                </value>
+            </inputParameters>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <storeOutputAutomatically>true</storeOutputAutomatically>
         </fields>
-        <fields>
-            <name>Lead_Summary</name>
-            <fieldText>Lead Summary</fieldText>
-            <fieldType>RegionContainer</fieldType>
-            <fields>
-                <name>Lead_Summary_Column1</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Lead_Summary_Left</name>
-                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;NAME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;&lt;a href=&quot;/{!Get_Created_Lead.Id}&quot; target=&quot;_blank&quot;&gt;{!Get_Created_Lead.Name}&lt;/a&gt;&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;COMPANY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Created_Lead.Company}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;BUSINESS TYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Created_Lead.Business_Type__c}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;LEAD NUMBER&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Created_Lead.Lead_Number__c}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <fields>
-                <name>Lead_Summary_Column2</name>
-                <fieldType>Region</fieldType>
-                <fields>
-                    <name>Lead_Summary_Right</name>
-                    <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;PHONE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Created_Lead_Phone}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;EMAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Created_Lead_Email}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;LEAD SOURCE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Created_Lead_Source}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 11px; color: rgb(112, 110, 107);&quot;&gt;STATUS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;font-size: 14px; color: rgb(24, 24, 24);&quot;&gt;&lt;strong&gt;{!Get_Created_Lead.Status}&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</fieldText>
-                    <fieldType>DisplayText</fieldType>
-                </fields>
-                <inputParameters>
-                    <name>width</name>
-                    <value>
-                        <stringValue>6</stringValue>
-                    </value>
-                </inputParameters>
-                <isRequired>false</isRequired>
-            </fields>
-            <isRequired>false</isRequired>
-            <regionContainerType>SectionWithHeader</regionContainerType>
-        </fields>
-        <fields>
-            <name>Lead_Created_Footer</name>
-            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;span style=&quot;color: rgb(112, 110, 107);&quot;&gt;Open the Lead to log a call, add notes or plan a store visit: &lt;/span&gt;&lt;a href=&quot;/{!Get_Created_Lead.Id}&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;Open {!Get_Created_Lead.Name} ↗&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;</fieldText>
-            <fieldType>DisplayText</fieldType>
-        </fields>
-        <nextOrFinishButtonLabel>Done</nextOrFinishButtonLabel>
-        <showFooter>true</showFooter>
+        <showFooter>false</showFooter>
         <showHeader>false</showHeader>
     </screens>
     <screens>
@@ -926,6 +976,14 @@
             <name>Open_Lead_Banner</name>
             <fieldText>&lt;p&gt;&lt;strong style=&quot;font-size: 16px; color: rgb(186, 5, 23);&quot;&gt;⚠  A Lead with this phone or email already exists&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;/{!Check_Customer.openLeadId}&quot; target=&quot;_blank&quot;&gt;&lt;strong&gt;{!Check_Customer.openLeadName}&lt;/strong&gt;&lt;/a&gt;&lt;span style=&quot;color: rgb(68, 68, 68);&quot;&gt;, owned by {!Check_Customer.openLeadOwnerName}. Work on that Lead instead, or correct the phone or email below and save again.&lt;/span&gt;&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
             <visibilityRule>
                 <conditionLogic>and</conditionLogic>
                 <conditions>
@@ -951,6 +1009,14 @@
                     <fieldText>Salutation</fieldText>
                     <fieldType>DropdownBox</fieldType>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>First_Name_Input</name>
@@ -958,6 +1024,14 @@
                     <fieldText>First Name</fieldText>
                     <fieldType>InputField</fieldType>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Last_Name_Input</name>
@@ -965,6 +1039,14 @@
                     <fieldText>Last Name</fieldText>
                     <fieldType>InputField</fieldType>
                     <isRequired>true</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Phone_Input</name>
@@ -973,6 +1055,14 @@
                     <fieldType>InputField</fieldType>
                     <helpText>&lt;p&gt;10-digit mobile number. It may start with +91 or 91; spaces and dashes are fine. Saved exactly as typed.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                     <validationRule>
                         <errorMessage>&lt;p&gt;Enter a 10-digit number, optionally starting with +91 or 91.&lt;/p&gt;</errorMessage>
                         <formulaExpression>OR(
@@ -985,11 +1075,45 @@
                     </validationRule>
                 </fields>
                 <fields>
+                    <name>WhatsApp_Input</name>
+                    <dataType>String</dataType>
+                    <fieldText>WhatsApp Number</fieldText>
+                    <fieldType>InputField</fieldType>
+                    <helpText>&lt;p&gt;10-digit number. It may start with +91 or 91; spaces and dashes are fine. Saved exactly as typed.&lt;/p&gt;</helpText>
+                    <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
+                    <validationRule>
+                        <errorMessage>&lt;p&gt;Enter a 10-digit number, optionally starting with +91 or 91.&lt;/p&gt;</errorMessage>
+                        <formulaExpression>OR(
+  ISBLANK({!WhatsApp_Input}),
+  REGEX(
+    SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE({!WhatsApp_Input}, &quot; &quot;, &quot;&quot;), &quot;-&quot;, &quot;&quot;), &quot;(&quot;, &quot;&quot;), &quot;)&quot;, &quot;&quot;), &quot;.&quot;, &quot;&quot;),
+    &quot;(\\+?91)?[0-9]{10}&quot;
+  )
+)</formulaExpression>
+                    </validationRule>
+                </fields>
+                <fields>
                     <name>Product_Description_Input</name>
                     <fieldText>Product Description</fieldText>
                     <fieldType>LargeTextArea</fieldType>
                     <helpText>&lt;p&gt;What the customer is interested in, e.g. product, design, metal or budget.&lt;/p&gt;</helpText>
                     <isRequired>true</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -1015,6 +1139,14 @@
                     <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
                     <isRequired>true</isRequired>
                     <storeOutputAutomatically>true</storeOutputAutomatically>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Marital_Status_Input</name>
@@ -1023,6 +1155,14 @@
                     <fieldText>Marital Status</fieldText>
                     <fieldType>DropdownBox</fieldType>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Anniversary_Input</name>
@@ -1030,6 +1170,14 @@
                     <fieldText>Anniversary Date</fieldText>
                     <fieldType>InputField</fieldType>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                     <validationRule>
                         <errorMessage>&lt;p&gt;Anniversary Date must be after the Date of Birth and cannot be in the future.&lt;/p&gt;</errorMessage>
                         <formulaExpression>OR(
@@ -1061,6 +1209,14 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <name>Personal_Details_Dates</name>
@@ -1074,6 +1230,14 @@
                     <fieldText>Date of Birth</fieldText>
                     <fieldType>InputField</fieldType>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                     <validationRule>
                         <errorMessage>&lt;p&gt;Date of Birth cannot be in the future.&lt;/p&gt;</errorMessage>
                         <formulaExpression>OR(ISBLANK({!Date_of_Birth_Input}), {!Date_of_Birth_Input} &lt;= TODAY())</formulaExpression>
@@ -1094,6 +1258,14 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.Email</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -1105,6 +1277,14 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithoutHeader</regionContainerType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <name>Lead_Details</name>
@@ -1117,11 +1297,27 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.LeadSource</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.Campaign_Attribution__c</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -1138,6 +1334,14 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.Store_Association__c</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -1149,6 +1353,14 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <fields>
             <name>Company_Information</name>
@@ -1164,16 +1376,40 @@
                     <fieldType>InputField</fieldType>
                     <helpText>&lt;p&gt;Leave blank for an individual customer (B2C): a unique company such as Asha Mehta B2C (000123) is assigned on save. Enter the company name for a business (B2B).&lt;/p&gt;</helpText>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Company_Preview_Text</name>
                     <fieldText>&lt;p&gt;&lt;span style=&quot;font-size: 12px; color: rgb(92, 92, 92);&quot;&gt;{!Company_Preview}&lt;/span&gt;&lt;/p&gt;</fieldText>
                     <fieldType>DisplayText</fieldType>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.Industry</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -1190,6 +1426,14 @@
                     <fieldType>ObjectProvided</fieldType>
                     <isRequired>false</isRequired>
                     <objectFieldReference>Lead_Record.Title</objectFieldReference>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <fields>
                     <name>Website_Input</name>
@@ -1197,6 +1441,14 @@
                     <fieldText>Website</fieldText>
                     <fieldType>InputField</fieldType>
                     <isRequired>false</isRequired>
+                    <styleProperties>
+                        <verticalAlignment>
+                            <stringValue>top</stringValue>
+                        </verticalAlignment>
+                        <width>
+                            <stringValue>12</stringValue>
+                        </width>
+                    </styleProperties>
                 </fields>
                 <inputParameters>
                     <name>width</name>
@@ -1208,6 +1460,14 @@
             </fields>
             <isRequired>false</isRequired>
             <regionContainerType>SectionWithHeader</regionContainerType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
         </fields>
         <nextOrFinishButtonLabel>Save</nextOrFinishButtonLabel>
         <showFooter>true</showFooter>

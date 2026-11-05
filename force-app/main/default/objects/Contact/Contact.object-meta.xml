@@ -335,7 +335,24 @@
         <customTabListAdditionalFields>FULL_NAME</customTabListAdditionalFields>
         <customTabListAdditionalFields>ACCOUNT.NAME</customTabListAdditionalFields>
         <customTabListAdditionalFields>CONTACT.PHONE1</customTabListAdditionalFields>
+        <excludedStandardButtons>NewFromDocument</excludedStandardButtons>
+        <excludedStandardButtons>ImeDistributionAction</excludedStandardButtons>
+        <excludedStandardButtons>NewContact</excludedStandardButtons>
+        <excludedStandardButtons>IntelligenceView</excludedStandardButtons>
+        <excludedStandardButtons>MassCancelSdrOutreach</excludedStandardButtons>
+        <excludedStandardButtons>MassActivateEinsteinSdr</excludedStandardButtons>
+        <excludedStandardButtons>AddToCampaign</excludedStandardButtons>
+        <excludedStandardButtons>Import</excludedStandardButtons>
+        <excludedStandardButtons>MassAddToCampaign</excludedStandardButtons>
+        <excludedStandardButtons>MassCreateCallList</excludedStandardButtons>
+        <excludedStandardButtons>SendListEmailAction</excludedStandardButtons>
+        <excludedStandardButtons>SendBulkMessageAction</excludedStandardButtons>
         <excludedStandardButtons>PrintableListView</excludedStandardButtons>
+        <excludedStandardButtons>MassAddToActionableList</excludedStandardButtons>
+        <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
+        <excludedStandardButtons>DiscoModalMassAction</excludedStandardButtons>
+        <excludedStandardButtons>PartnerDiscoModalMassAction</excludedStandardButtons>
+        <excludedStandardButtons>SendToGrid</excludedStandardButtons>
         <lookupDialogsAdditionalFields>FULL_NAME</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>ACCOUNT.NAME</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>ACCOUNT.SITE</lookupDialogsAdditionalFields>

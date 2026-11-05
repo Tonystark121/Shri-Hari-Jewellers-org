@@ -4,7 +4,7 @@
     <description>The household this purchase belongs to. Matched by mobile number when the POS pushes the transaction.</description>
     <label>Household Account</label>
     <referenceTo>Account</referenceTo>
-    <relationshipLabel>Transaction Records</relationshipLabel>
+    <relationshipLabel>Purchase Records</relationshipLabel>
     <relationshipName>Transaction_Records</relationshipName>
     <relationshipOrder>0</relationshipOrder>
     <reparentableMasterDetail>true</reparentableMasterDetail>

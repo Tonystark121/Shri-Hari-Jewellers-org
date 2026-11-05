@@ -459,6 +459,7 @@ grant_type=client_credentials
         <thead><tr><th>Field</th><th>Salesforce API name</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
         <tbody>
           <tr><td class="fld">phone</td><td class="api">Phone</td><td>String(40)</td><td><span class="cond">CONDITIONAL</span></td><td>Mobile number of the customer. At least one of <code>phone</code> or <code>email</code> must be present</td></tr>
+          <tr><td class="fld">whatsappNumber</td><td class="api">MobilePhone (label: WhatsApp Number)</td><td>String(40)</td><td>OPTIONAL</td><td>WhatsApp number of the customer, same format as <code>phone</code> (10 digits, optionally starting with +91 or 91). Matched like <code>phone</code> for existing customers and open Leads. An invalid value returns 400 <code>INVALID_PHONE</code> with field <code>whatsappNumber</code></td></tr>
           <tr><td class="fld">email</td><td class="api">Email</td><td>Email(80)</td><td><span class="cond">CONDITIONAL</span></td><td>Must be a valid email format or the call is rejected</td></tr>
           <tr><td class="fld">website</td><td class="api">Website</td><td>URL(255)</td><td><span class="opt">OPTIONAL</span></td><td>Company website, when the customer gives one</td></tr>
         </tbody>
@@ -510,7 +511,7 @@ grant_type=client_credentials
     </div>
 
     <div class="note warn">
-      <p><span class="lbl">Fields deliberately not in this payload:</span> Lead Owner, Mobile Phone and Campaign Id (standard). Ownership is decided by the assignment rule, not by the caller; Mobile Phone and the standard Campaign lookup are not exposed on Lead in this org, so the mobile number goes in <code>phone</code> and campaign attribution goes in <code>campaignName</code>. Any field sent that is not listed above is ignored.</p>
+      <p><span class="lbl">Fields deliberately not in this payload:</span> Lead Owner and Campaign Id (standard). Ownership is decided by the assignment rule, not by the caller; the standard Campaign lookup is not exposed on Lead in this org, so campaign attribution goes in <code>campaignName</code>. The standard Mobile field is used as the WhatsApp Number and is sent as <code>whatsappNumber</code>. Any field sent that is not listed above is ignored.</p>
     </div>
 
     <h3>Sample request &mdash; website enquiry</h3>

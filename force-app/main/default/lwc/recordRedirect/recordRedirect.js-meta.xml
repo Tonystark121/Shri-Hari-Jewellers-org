@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Record Redirect</masterLabel>
+    <description>Flow screen component: opens Record To Open as soon as it is shown and finishes the flow unless Don&apos;t Finish Flow is on. Used by Convert Lead and New Lead.</description>
+    <targets>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="recordToOpen" type="String" label="Record To Open" description="Id of the record to open, e.g. the customer Account." />
+            <property name="skipFinish" type="Boolean" label="Don't Finish Flow" default="false" description="Leave the flow open after opening the record. Turn on for flows started from a URL with retURL (New Lead); leave off to close a quick action window (Convert Lead)." />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
