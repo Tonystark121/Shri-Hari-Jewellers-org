@@ -10,11 +10,26 @@
  */
 public without sharing class TransactionTriggerHandler {
 
+    /** Start of every message that rejects a bill. */
+    public static final String REJECTED = 'The bill was not saved: ';
+
     /**
-     * Checks the redemptions POS reported on the bills (points and gift
-     * voucher), links the voucher and stamps Net Amount. Bills with
-     * impossible figures or a voucher that cannot be redeemed are rejected
-     * with the reason.
+     * Final bill handling. POS reports what happened at the till; the bill
+     * is recorded accordingly:
+     *
+     *   - Points Redeemed: 0 when no points were spent.
+     *   - Voucher Code filled in: a gift voucher was redeemed, and Voucher
+     *     Discount is the rupees it took off. No Voucher Code: no voucher, so
+     *     Voucher Discount is 0 and the other voucher details are cleared.
+     *
+     * Bills with impossible figures are rejected with the reason. Every other
+     * bill gets Net Amount = Amount - Voucher Discount - Points Redeemed,
+     * which is what the customer paid and what loyalty points are earned on.
+     *
+     * Net Amount is worked out here, for every bill, whether or not a voucher
+     * or points were redeemed. GiftVoucherRedemption then checks and links
+     * the voucher on the bills that carry one; it does not change the bill's
+     * figures.
      */
     public static void beforeInsert(List<Transaction_Record__c> newTransactions) {
 
@@ -22,7 +37,32 @@ public without sharing class TransactionTriggerHandler {
             return;
         }
 
-        GiftVoucherRedemption.beforeInsert(newTransactions);
+        // ---------------------------------------------------------
+        // 1. Check the reported figures and stamp Net Amount
+        // ---------------------------------------------------------
+
+        List<Transaction_Record__c> acceptedBills = new List<Transaction_Record__c>();
+
+        for (Transaction_Record__c bill : newTransactions) {
+
+            String problem = problemWithFigures(bill);
+
+            if (problem != null) {
+                bill.addError(REJECTED + problem);
+                continue;
+            }
+
+            bill.Net_Amount__c = amountOf(bill) - bill.Voucher_Discount__c - bill.Points_Redeemed__c;
+            acceptedBills.add(bill);
+        }
+
+        // ---------------------------------------------------------
+        // 2. Check and link the gift vouchers reported on the bills
+        // ---------------------------------------------------------
+
+        if (!acceptedBills.isEmpty()) {
+            GiftVoucherRedemption.beforeInsert(acceptedBills);
+        }
     }
 
     public static void afterInsert(List<Transaction_Record__c> newTransactions) {
@@ -39,15 +79,96 @@ public without sharing class TransactionTriggerHandler {
 
         // ---------------------------------------------------------
         // 2. Deduct the points POS reported as redeemed, earn new ones
+        //
+        // Skipped while Loyalty Bypass > Disable Earning is ticked
+        // for the running user (historical bills loaded from CASA
+        // have already had their loyalty effect).
         // ---------------------------------------------------------
 
-        LoyaltyEngine.processEarn(newTransactions);
+        if (!isEarningDisabled()) {
+            LoyaltyEngine.processEarn(newTransactions);
+        }
 
         // ---------------------------------------------------------
         // 3. Recalculate Last 12 Month Spend
         // ---------------------------------------------------------
 
         recalculateLast12MonthSpend(newTransactions);
+    }
+
+    /**
+     * Fills in the blanks POS may leave (Points Redeemed and Voucher
+     * Discount become 0, voucher details are cleared on a bill without a
+     * Voucher Code), then returns why the reported figures are impossible,
+     * or null when they are fine.
+     */
+    @TestVisible
+    private static String problemWithFigures(Transaction_Record__c bill) {
+
+        Decimal amount = amountOf(bill);
+
+        if (bill.Points_Redeemed__c == null) {
+            bill.Points_Redeemed__c = 0;
+        }
+
+        if (bill.Voucher_Discount__c == null) {
+            bill.Voucher_Discount__c = 0;
+        }
+
+        // No Voucher Code: no voucher was redeemed on this bill.
+        if (String.isBlank(bill.Voucher_Code__c)) {
+
+            if (bill.Voucher_Discount__c != 0) {
+                return 'a Voucher Discount is reported without a Voucher Code.';
+            }
+
+            bill.Voucher_Offer_Type__c = null;
+            bill.Voucher_Face_Value__c = null;
+            bill.Voucher_Discount_Percentage__c = null;
+            bill.Voucher_Redemption_Channel__c = null;
+
+        } else {
+
+            String code = bill.Voucher_Code__c.trim();
+
+            if (bill.Voucher_Discount__c <= 0) {
+                return 'enter the Voucher Discount (rupees taken off the bill) of voucher ' + code + '.';
+            }
+
+            if (bill.Voucher_Discount__c > amount) {
+                return 'the Voucher Discount (' + rupees(bill.Voucher_Discount__c) + ') is more than the bill Amount (' + rupees(amount) + ').';
+            }
+        }
+
+        Decimal points = bill.Points_Redeemed__c;
+
+        if (points < 0 || points != points.round(System.RoundingMode.DOWN)) {
+            return 'Points Redeemed must be a whole number of 0 or more.';
+        }
+
+        // A return (negative Amount) reports no points, so only a
+        // redemption is compared with the bill.
+        Decimal payable = amount - bill.Voucher_Discount__c;
+
+        if (points > 0 && points > payable) {
+            return 'Points Redeemed (' + points.intValue() + ') is more than the bill after the voucher discount (' + rupees(payable) + ').';
+        }
+
+        return null;
+    }
+
+    private static Decimal amountOf(Transaction_Record__c bill) {
+        return bill.Amount__c == null ? 0 : bill.Amount__c;
+    }
+
+    private static String rupees(Decimal value) {
+        return '₹' + (value == null ? '0' : value.setScale(2).format());
+    }
+
+    /** True when Loyalty Bypass > Disable Earning is ticked for the running user. */
+    private static Boolean isEarningDisabled() {
+        Loyalty_Bypass__c bypass = Loyalty_Bypass__c.getInstance();
+        return bypass != null && bypass.Disable_Earning__c == true;
     }
 
     /**

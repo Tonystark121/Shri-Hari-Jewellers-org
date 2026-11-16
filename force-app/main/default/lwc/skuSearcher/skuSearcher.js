@@ -2,8 +2,12 @@ import { LightningElement, api } from 'lwc';
 import { FlowAttributeChangeEvent } from 'lightning/flowSupport';
 import searchProducts from '@salesforce/apex/SkuSearchController.searchProducts';
 import getProducts from '@salesforce/apex/SkuSearchController.getProducts';
+import FORM_FACTOR from '@salesforce/client/formFactor';
 
 const SEARCH_DELAY_MS = 300;
+
+/** Salesforce mobile app on a phone. */
+const IS_PHONE = FORM_FACTOR === 'Small';
 
 const stockLabelFor = (quantity) => (quantity === null || quantity === undefined ? '—' : String(quantity));
 
@@ -56,6 +60,23 @@ export default class SkuSearcher extends LightningElement {
 
     get hasItems() {
         return this.items.length > 0;
+    }
+
+    /** On a phone the add bar stacks and the picks show as a list instead of a table. */
+    get isPhone() {
+        return IS_PHONE;
+    }
+
+    get addBarClass() {
+        return IS_PHONE
+            ? 'slds-m-top_x-small'
+            : 'slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-top_x-small';
+    }
+
+    get checkedSummaryClass() {
+        return IS_PHONE
+            ? 'slds-text-body_small slds-text-color_weak slds-m-bottom_x-small'
+            : 'slds-text-body_small slds-text-color_weak';
     }
 
     get hasResults() {

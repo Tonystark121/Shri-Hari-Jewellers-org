@@ -50,12 +50,13 @@
         </template>
 
         <template lwc:if={showAddBar}>
-        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-top_x-small">
-            <div class="slds-text-body_small slds-text-color_weak">{checkedSummary}</div>
+        <div class={addBarClass}>
+            <div class={checkedSummaryClass}>{checkedSummary}</div>
             <lightning-button
                 variant="brand"
                 label={addSelectedLabel}
                 icon-name="utility:add"
+                stretch={isPhone}
                 disabled={noneChecked}
                 onclick={handleAddSelected}
             ></lightning-button>
@@ -64,6 +65,41 @@
 
         <template lwc:if={hasItems}>
             <div class="slds-text-title_caps slds-m-top_medium slds-m-bottom_xx-small">{selectedHeading}</div>
+            <template lwc:if={isPhone}>
+            <ul class="slds-has-dividers_around-space" aria-label="Selected products">
+                <template for:each={items} for:item="item">
+                    <li key={item.productId} class="slds-item">
+                        <div class="item-name"><strong>{item.name}</strong></div>
+                        <div class="slds-text-color_weak slds-text-body_small">{item.sku} · In stock: {item.stockLabel}</div>
+                        <div class="slds-grid slds-grid_vertical-align-end slds-m-top_x-small">
+                            <div class="slds-col slds-grow">
+                                <lightning-input
+                                    type="number"
+                                    label="Quantity"
+                                    min="1"
+                                    step="1"
+                                    required
+                                    value={item.quantity}
+                                    data-id={item.productId}
+                                    onchange={handleQuantityChange}
+                                ></lightning-input>
+                            </div>
+                            <div class="slds-col slds-grow-none slds-p-left_x-small">
+                                <lightning-button-icon
+                                    icon-name="utility:delete"
+                                    variant="border-filled"
+                                    alternative-text="Remove"
+                                    title="Remove"
+                                    data-id={item.productId}
+                                    onclick={handleRemove}
+                                ></lightning-button-icon>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+            </template>
+            <template lwc:else>
             <table class="slds-table slds-table_cell-buffer slds-table_bordered" aria-label="Selected products">
                 <thead>
                     <tr class="slds-line-height_reset">
@@ -107,6 +143,7 @@
                     </template>
                 </tbody>
             </table>
+            </template>
         </template>
 
         <template lwc:if={errorMessage}>

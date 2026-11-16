@@ -95,7 +95,7 @@ public with sharing class LoyaltyEngine {
      *   6. Update the Loyalty Record.
      *
      * Net Amount (Amount - Voucher Discount - Points Redeemed) is stamped
-     * before the bill is saved, by GiftVoucherRedemption.
+     * on every bill before it is saved, by TransactionTriggerHandler.
      *
      * Points earned by a bill are never available to that same bill, but a
      * later bill in the same batch can spend them.
@@ -241,7 +241,7 @@ public with sharing class LoyaltyEngine {
                 newEvents.add( redemptionEvent( loyalty, transactionRecord, pointsRedeemed, processedAt ) );
             }
 
-            // Stamped before insert by GiftVoucherRedemption.
+            // Stamped before insert by TransactionTriggerHandler.
             Decimal netAmount = transactionRecord.Net_Amount__c == null ? 0 : transactionRecord.Net_Amount__c;
 
             // -----------------------------------------------------

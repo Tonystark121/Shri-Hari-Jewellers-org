@@ -22,3 +22,8 @@
 .action-column {
     width: 3rem;
 }
+
+/* Phone: long product names wrap instead of running off the screen. */
+.item-name {
+    overflow-wrap: anywhere;
+}

@@ -1,21 +1,21 @@
 /**
  * @description
- * Redemptions on a Transaction Record (bill), as reported by POS.
+ * The gift voucher reported by POS on a Transaction Record (bill).
  *
- * POS decides the redemption; Salesforce records it. The bill carries what
- * happened at the till:
- *   - Points Redeemed (any whole number, 0 for none) - LoyaltyEngine deducts
- *     them from the balance after the bill is saved,
- *   - a gift voucher: Voucher Code, Offer Type, Face Value (Fixed Price) or
- *     Discount Percentage (Percentage), Voucher Discount in rupees and the
- *     Redemption Channel.
- * Both may appear on the same bill.
+ * A filled-in Voucher Code means POS redeemed a voucher on the bill, with its
+ * Offer Type, Face Value (Fixed Price) or Discount Percentage (Percentage),
+ * Voucher Discount in rupees and the Redemption Channel. A bill without a
+ * Voucher Code is left alone.
+ *
+ * Only the voucher record is handled here. The bill's figures (Voucher
+ * Discount, Points Redeemed, Net Amount) are checked and stamped by
+ * TransactionTriggerHandler before this class is called, for every bill.
  *
  * Called by TransactionTriggerHandler, so every bill is checked however it is
  * created (Convert and New Transaction screens, POS API, data load). A bill
- * is rejected, with the reason, when:
- *   - a reported figure is missing or impossible (negative points, a voucher
- *     discount or points above the bill),
+ * with a voucher is rejected, with the reason, when:
+ *   - the voucher details are incomplete (Offer Type, Face Value or
+ *     Percentage, Redemption Channel),
  *   - the voucher code is not in Salesforce, belongs to another customer,
  *     is not Active (already Redeemed, Cancelled or Expired) or is past its
  *     Expiry Date,
@@ -23,16 +23,13 @@
  * The voucher's own offer, face value and bill range are not re-checked:
  * POS applied the offer, and its figures are kept on the bill.
  *
- * Net Amount = Amount - Voucher Discount - Points Redeemed; points are earned
- * on it.
- *
  * Vouchers are read and updated in system mode: the user or integration
  * saving a bill does not need access to the voucher records.
  */
 public with sharing class GiftVoucherRedemption {
 
     @TestVisible
-    private static final String REJECTED = 'The bill was not saved: ';
+    private static final String REJECTED = TransactionTriggerHandler.REJECTED;
 
     private static final String STATUS_ACTIVE = 'Active';
     private static final String STATUS_REDEEMED = 'Redeemed';
@@ -45,8 +42,8 @@ public with sharing class GiftVoucherRedemption {
 
     /**
      * @description
-     * Checks the reported redemptions, links the voucher and stamps Net
-     * Amount. The vouchers are locked (FOR UPDATE), so two bills saved at the
+     * Checks the voucher on each bill that carries a Voucher Code and links
+     * it. The vouchers are locked (FOR UPDATE), so two bills saved at the
      * same moment cannot both redeem the same voucher.
      */
     public static void beforeInsert(List<Transaction_Record__c> bills) {
@@ -56,25 +53,21 @@ public with sharing class GiftVoucherRedemption {
         for (Transaction_Record__c bill : bills) {
             // Only the system links the voucher record.
             bill.Gift_Voucher__c = null;
-            bill.Points_Redeemed__c = bill.Points_Redeemed__c == null ? 0 : bill.Points_Redeemed__c;
 
-            String problem = String.isBlank(bill.Voucher_Code__c) ? problemWithoutVoucher(bill) : problemWithVoucherDetails(bill);
-            if (problem == null) {
-                problem = problemWithPoints(bill);
+            // No Voucher Code: no voucher was redeemed on this bill.
+            if (String.isBlank(bill.Voucher_Code__c)) {
+                continue;
             }
+
+            String problem = problemWithVoucherDetails(bill);
             if (problem != null) {
                 bill.addError(REJECTED + problem);
                 continue;
             }
 
-            Decimal amount = bill.Amount__c == null ? 0 : bill.Amount__c;
-            bill.Net_Amount__c = amount - bill.Voucher_Discount__c - bill.Points_Redeemed__c;
-
-            if (String.isNotBlank(bill.Voucher_Code__c)) {
-                bill.Voucher_Code__c = bill.Voucher_Code__c.trim();
-                codes.add(bill.Voucher_Code__c);
-                voucherBills.add(bill);
-            }
+            bill.Voucher_Code__c = bill.Voucher_Code__c.trim();
+            codes.add(bill.Voucher_Code__c);
+            voucherBills.add(bill);
         }
 
         if (codes.isEmpty()) {
@@ -142,24 +135,14 @@ public with sharing class GiftVoucherRedemption {
     // Rules
     // =====================================================================
 
-    /** A bill without a voucher code must not carry a voucher discount; other voucher details are cleared. */
-    private static String problemWithoutVoucher(Transaction_Record__c bill) {
-        if (bill.Voucher_Discount__c != null && bill.Voucher_Discount__c != 0) {
-            return 'a Voucher Discount is reported without a Voucher Code.';
-        }
-        bill.Voucher_Discount__c = 0;
-        bill.Voucher_Offer_Type__c = null;
-        bill.Voucher_Face_Value__c = null;
-        bill.Voucher_Discount_Percentage__c = null;
-        bill.Voucher_Redemption_Channel__c = null;
-        return null;
-    }
-
-    /** Why the reported voucher details are incomplete or impossible, or null when they are fine. */
+    /**
+     * Why the reported voucher details are incomplete, or null when they are
+     * fine. Voucher Discount is checked with the bill's other figures by
+     * TransactionTriggerHandler.
+     */
     @TestVisible
     private static String problemWithVoucherDetails(Transaction_Record__c bill) {
         String code = bill.Voucher_Code__c.trim();
-        Decimal amount = bill.Amount__c == null ? 0 : bill.Amount__c;
 
         if (bill.Voucher_Offer_Type__c != OFFER_FIXED && bill.Voucher_Offer_Type__c != OFFER_PERCENTAGE) {
             return 'enter the Voucher Offer Type (Fixed Price or Percentage) of voucher ' + code + '.';
@@ -171,29 +154,8 @@ public with sharing class GiftVoucherRedemption {
             && (bill.Voucher_Discount_Percentage__c == null || bill.Voucher_Discount_Percentage__c <= 0 || bill.Voucher_Discount_Percentage__c > 100)) {
             return 'enter the Voucher Discount Percentage (more than 0, up to 100) of voucher ' + code + '.';
         }
-        if (bill.Voucher_Discount__c == null || bill.Voucher_Discount__c <= 0) {
-            return 'enter the Voucher Discount (rupees taken off the bill) of voucher ' + code + '.';
-        }
-        if (bill.Voucher_Discount__c > amount) {
-            return 'the Voucher Discount (' + rupees(bill.Voucher_Discount__c) + ') is more than the bill Amount (' + rupees(amount) + ').';
-        }
         if (String.isBlank(bill.Voucher_Redemption_Channel__c)) {
             return 'select the Voucher Redemption Channel of voucher ' + code + '.';
-        }
-        return null;
-    }
-
-    /** Why the reported points are impossible on this bill, or null when they are fine. */
-    @TestVisible
-    private static String problemWithPoints(Transaction_Record__c bill) {
-        Decimal points = bill.Points_Redeemed__c;
-        if (points < 0 || points != points.round(System.RoundingMode.DOWN)) {
-            return 'Points Redeemed must be a whole number of 0 or more.';
-        }
-        // A return (negative Amount) reports no points, so only a redemption is compared with the bill.
-        Decimal payable = (bill.Amount__c == null ? 0 : bill.Amount__c) - (bill.Voucher_Discount__c == null ? 0 : bill.Voucher_Discount__c);
-        if (points > 0 && points > payable) {
-            return 'Points Redeemed (' + points.intValue() + ') is more than the bill after the voucher discount (' + rupees(payable) + ').';
         }
         return null;
     }
@@ -214,9 +176,5 @@ public with sharing class GiftVoucherRedemption {
             return 'voucher ' + code + ' expired on ' + voucher.Expiry_Date__c.format() + '.';
         }
         return null;
-    }
-
-    private static String rupees(Decimal value) {
-        return '₹' + (value == null ? '0' : value.setScale(2).format());
     }
 }

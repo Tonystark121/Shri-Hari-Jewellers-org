@@ -40,7 +40,7 @@ public without sharing class ShreeHariTrailingSpendBatch
 
         return Datetime.newInstance(
             today.addDays(1),
-            Time.newInstance(23, 59, 59, 59)
+            Time.newInstance(0, 0, 0, 0)
         );
     }
 

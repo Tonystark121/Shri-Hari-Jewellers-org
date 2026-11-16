@@ -658,22 +658,6 @@
 )</expression>
     </formulas>
     <formulas>
-        <description>Record opened after conversion: the Contact for a B2C Lead, the Account for a B2B Lead. B2C = Business Type B2C, or Business Type not B2B and the Company is the system&apos;s. Same rule as LeadConversionTransactionService.businessTypeOf.</description>
-        <name>Record_To_Open</name>
-        <dataType>String</dataType>
-        <expression>IF(
-  OR(
-    TEXT({!Get_Lead.Business_Type__c}) = &quot;B2C&quot;,
-    AND(
-      TEXT({!Get_Lead.Business_Type__c}) &lt;&gt; &quot;B2B&quot;,
-      OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]&quot;))
-    )
-  ),
-  BLANKVALUE({!Convert.contactId}, {!Convert.accountId}),
-  {!Convert.accountId}
-)</expression>
-    </formulas>
-    <formulas>
         <name>Lead_Email_Display</name>
         <dataType>String</dataType>
         <expression>BLANKVALUE({!Get_Lead.Email}, &quot;—&quot;)</expression>
@@ -697,6 +681,22 @@
         <name>Purchase_Date_Value</name>
         <dataType>Date</dataType>
         <expression>DATEVALUE({!Transaction_Date_Input})</expression>
+    </formulas>
+    <formulas>
+        <description>Record opened after conversion: the Contact for a B2C Lead, the Account for a B2B Lead. B2C = Business Type B2C, or Business Type not B2B and the Company is the system&apos;s. Same rule as LeadConversionTransactionService.businessTypeOf.</description>
+        <name>Record_To_Open</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  OR(
+    TEXT({!Get_Lead.Business_Type__c}) = &quot;B2C&quot;,
+    AND(
+      TEXT({!Get_Lead.Business_Type__c}) &lt;&gt; &quot;B2B&quot;,
+      OR(ISBLANK({!Get_Lead.Company}), REGEX(TRIM({!Get_Lead.Company}), &quot;(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]&quot;))
+    )
+  ),
+  BLANKVALUE({!Convert.contactId}, {!Convert.accountId}),
+  {!Convert.accountId}
+)</expression>
     </formulas>
     <interviewLabel>Convert Lead {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Convert Lead</label>
@@ -1049,7 +1049,7 @@
             <inputParameters>
                 <name>columns</name>
                 <value>
-                    <stringValue>[{&quot;apiName&quot;:&quot;Name&quot;,&quot;guid&quot;:&quot;column-name&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:0,&quot;label&quot;:&quot;Account Name&quot;,&quot;type&quot;:&quot;text&quot;},{&quot;apiName&quot;:&quot;Phone&quot;,&quot;guid&quot;:&quot;column-phone&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:1,&quot;label&quot;:&quot;Phone&quot;,&quot;type&quot;:&quot;phone&quot;},{&quot;apiName&quot;:&quot;Email__c&quot;,&quot;guid&quot;:&quot;column-email&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:2,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;},{&quot;apiName&quot;:&quot;Customer_Tier__c&quot;,&quot;guid&quot;:&quot;column-customer-tier&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:3,&quot;label&quot;:&quot;Tier&quot;,&quot;type&quot;:&quot;text&quot;},{&quot;apiName&quot;:&quot;Last_12M_Spend__c&quot;,&quot;guid&quot;:&quot;column-last-12m-spend&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:4,&quot;label&quot;:&quot;Last 12 Month Spend&quot;,&quot;type&quot;:&quot;currency&quot;},{&quot;apiName&quot;:&quot;CASA_ID__c&quot;,&quot;guid&quot;:&quot;column-casa-id&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:5,&quot;label&quot;:&quot;CASA ID&quot;,&quot;type&quot;:&quot;text&quot;}]</stringValue>
+                    <stringValue>[{&quot;apiName&quot;:&quot;Name&quot;,&quot;guid&quot;:&quot;column-name&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:true,&quot;order&quot;:0,&quot;label&quot;:&quot;Account Name&quot;,&quot;type&quot;:&quot;text&quot;},{&quot;apiName&quot;:&quot;Phone&quot;,&quot;guid&quot;:&quot;column-phone&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:false,&quot;order&quot;:1,&quot;label&quot;:&quot;Phone&quot;,&quot;type&quot;:&quot;phone&quot;},{&quot;apiName&quot;:&quot;WhatsApp_Number__c&quot;,&quot;guid&quot;:&quot;column-whatsapp&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:false,&quot;order&quot;:2,&quot;label&quot;:&quot;WhatsApp Number&quot;,&quot;type&quot;:&quot;phone&quot;},{&quot;apiName&quot;:&quot;Email__c&quot;,&quot;guid&quot;:&quot;column-email&quot;,&quot;editable&quot;:false,&quot;hasCustomHeaderLabel&quot;:false,&quot;customHeaderLabel&quot;:&quot;&quot;,&quot;wrapText&quot;:false,&quot;order&quot;:3,&quot;label&quot;:&quot;Email&quot;,&quot;type&quot;:&quot;email&quot;}]</stringValue>
                 </value>
             </inputParameters>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>

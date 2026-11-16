@@ -191,6 +191,26 @@ private class ShreeHariTrailingSpendBatchTest {
         );
     }
 
+    /**
+     * The window is exactly 365 days: from (today - 364 days) 00:00:00 up to,
+     * but not including, tomorrow 00:00:00. Nothing dated tomorrow is inside.
+     */
+    @IsTest
+    static void theWindowIsTheLast365DaysEndingAtMidnightTonight() {
+        Date today = Date.newInstance(2026, 11, 12);
+
+        Assert.areEqual(
+            Datetime.newInstance(Date.newInstance(2025, 11, 13), Time.newInstance(0, 0, 0, 0)),
+            ShreeHariTrailingSpendBatch.windowStartFor(today),
+            'Starts at midnight 364 days before today'
+        );
+        Assert.areEqual(
+            Datetime.newInstance(Date.newInstance(2026, 11, 13), Time.newInstance(0, 0, 0, 0)),
+            ShreeHariTrailingSpendBatch.windowEndExclusiveFor(today),
+            'Ends at midnight tonight, the first instant of tomorrow'
+        );
+    }
+
     @IsTest
     static void demotesAHouseholdWhoseWindowHasEmptied() {
         // Yesterday's figure, with the purchase behind it now aged out.
