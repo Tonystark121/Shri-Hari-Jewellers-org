@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Billing_Address__c</fullName>
+    <description>The billing address of the order (address object), stored as JSON.</description>
+    <inlineHelpText>Shopify order.billing_address</inlineHelpText>
+    <label>Billing Address</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

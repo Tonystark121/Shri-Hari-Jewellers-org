@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Shopify_Published_At__c</fullName>
+    <description>When the product was published in Shopify.</description>
+    <inlineHelpText>Shopify product.published_at</inlineHelpText>
+    <label>Shopify Published At</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

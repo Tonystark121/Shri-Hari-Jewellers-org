@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Company_Available_Locations_Count__c</fullName>
+    <description>The number of company locations associated with the customer, as sent.</description>
+    <inlineHelpText>Shopify customer.company_available_locations_count</inlineHelpText>
+    <label>Company Available Locations Count</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

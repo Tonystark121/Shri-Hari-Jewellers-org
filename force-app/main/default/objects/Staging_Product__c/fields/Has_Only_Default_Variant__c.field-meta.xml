@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Has_Only_Default_Variant__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True if the product has no options.</description>
+    <inlineHelpText>Shopify product.has_only_default_variant</inlineHelpText>
+    <label>Has Only Default Variant</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

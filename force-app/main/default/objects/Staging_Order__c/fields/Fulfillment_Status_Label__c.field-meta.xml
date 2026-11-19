@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fulfillment_Status_Label__c</fullName>
+    <description>The localized version of the fulfillment status of the order. The documentation lists a set of values; because the value is localized, other values are also stored as sent (a value that differs only in letter case, such as Partial, is stored as the documented value).</description>
+    <inlineHelpText>Shopify order.fulfillment_status_label</inlineHelpText>
+    <label>Fulfillment Status Label</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>complete</fullName>
+                <default>false</default>
+                <label>complete</label>
+            </value>
+            <value>
+                <fullName>fulfilled</fullName>
+                <default>false</default>
+                <label>fulfilled</label>
+            </value>
+            <value>
+                <fullName>partial</fullName>
+                <default>false</default>
+                <label>partial</label>
+            </value>
+            <value>
+                <fullName>restocked</fullName>
+                <default>false</default>
+                <label>restocked</label>
+            </value>
+            <value>
+                <fullName>unfulfilled</fullName>
+                <default>false</default>
+                <label>unfulfilled</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

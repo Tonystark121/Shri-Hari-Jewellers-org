@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Tax_Exempt__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True if the customer is exempt from taxes.</description>
+    <inlineHelpText>Shopify customer.tax_exempt</inlineHelpText>
+    <label>Tax Exempt</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

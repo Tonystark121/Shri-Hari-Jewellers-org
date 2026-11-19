@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>B2B__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True if the customer is a B2B customer.</description>
+    <inlineHelpText>Shopify customer.b2b?</inlineHelpText>
+    <label>B2B</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

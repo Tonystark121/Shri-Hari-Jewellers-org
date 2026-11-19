@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Financial_Status__c</fullName>
+    <description>The order's financial status. One of the documented set of values.</description>
+    <inlineHelpText>Shopify order.financial_status</inlineHelpText>
+    <label>Financial Status</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>authorized</fullName>
+                <default>false</default>
+                <label>authorized</label>
+            </value>
+            <value>
+                <fullName>expired</fullName>
+                <default>false</default>
+                <label>expired</label>
+            </value>
+            <value>
+                <fullName>paid</fullName>
+                <default>false</default>
+                <label>paid</label>
+            </value>
+            <value>
+                <fullName>partially_paid</fullName>
+                <default>false</default>
+                <label>partially_paid</label>
+            </value>
+            <value>
+                <fullName>partially_refunded</fullName>
+                <default>false</default>
+                <label>partially_refunded</label>
+            </value>
+            <value>
+                <fullName>pending</fullName>
+                <default>false</default>
+                <label>pending</label>
+            </value>
+            <value>
+                <fullName>refunded</fullName>
+                <default>false</default>
+                <label>refunded</label>
+            </value>
+            <value>
+                <fullName>unpaid</fullName>
+                <default>false</default>
+                <label>unpaid</label>
+            </value>
+            <value>
+                <fullName>voided</fullName>
+                <default>false</default>
+                <label>voided</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

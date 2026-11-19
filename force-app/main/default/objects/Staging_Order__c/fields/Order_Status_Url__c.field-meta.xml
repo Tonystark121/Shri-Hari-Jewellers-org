@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Order_Status_Url__c</fullName>
+    <description>The URL for the Order status page for the order, as sent.</description>
+    <inlineHelpText>Shopify order.order_status_url</inlineHelpText>
+    <label>Order Status Url</label>
+    <length>4000</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

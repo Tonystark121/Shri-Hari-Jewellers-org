@@ -1,0 +1,14 @@
+{
+  "id": 7364019208386,
+  "first_name": "Rakesh",
+  "last_name": "Agarwal",
+  "name": "Rakesh Agarwal",
+  "email": "rakesh.agarwal@example.com",
+  "phone": "+919007712345",
+  "accepts_marketing": false,
+  "orders_count": 0,
+  "total_spent": 0,
+  "tags": [
+    "walk-in"
+  ]
+}

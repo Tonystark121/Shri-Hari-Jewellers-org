@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Refunded_Amount__c</fullName>
+    <description>The total amount that has been refunded from the order, as sent (Shopify Liquid sends the currency subunit, e.g. paise).</description>
+    <inlineHelpText>Shopify order.total_refunded_amount</inlineHelpText>
+    <label>Total Refunded Amount</label>
+    <precision>16</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

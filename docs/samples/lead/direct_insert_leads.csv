@@ -1,0 +1,11 @@
+FirstName,LastName,Phone,MobilePhone,Email,Description,Company,B2B_Lead__c,Status,LeadSource,Date_of_Birth__c,Marital_Status__c,Anniversary_Date__c
+Ravi,Kumar,9123450001,+91 91234-50011,ravi.kumar.sample@example.com,Gold necklace for wedding,,false,,Walk-in,1990-05-14,Married,2016-02-20
+Meera,Shah,+91 91234-50002,,,Diamond studs for corporate gifting,Shah Gems Pvt Ltd,false,contacted,google,,,
+Arjun,Rao,9123450003,,,Bulk silver coins,,true,,Manual,,,
+Sana,Khan,9123450004,,priya.mukherjee.test1@example.com,Bangles,,false,,,,,
+Sunil,Verma,,,,Gold chain,,false,,,,,
+Kavya,Iyer,9123450006,,,,,false,,,,,
+Rahul,Jain,9123450007,,,Platinum ring,,false,,,2030-01-01,,
+Pooja,Das,9123450008,,,Earrings,,false,Converted,,,,
+Anshita,Chanda,+91 7980828320,,,Mangalsutra,,false,,,,,
+Anjali,Menon,+91-82903 98921,,,Nose pin,,false,,,,,

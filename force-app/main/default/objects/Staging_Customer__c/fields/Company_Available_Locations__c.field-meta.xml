@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Company_Available_Locations__c</fullName>
+    <description>The company locations that the customer has access to, or can interact with (array of company_location), stored as JSON.</description>
+    <inlineHelpText>Shopify customer.company_available_locations</inlineHelpText>
+    <label>Company Available Locations</label>
+    <length>131072</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

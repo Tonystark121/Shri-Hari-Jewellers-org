@@ -1,0 +1,772 @@
+<title>Shree Hari Customer API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap">
+<style>
+  :root{
+    --ground:#FBF8F5;
+    --paper:#FFFFFF;
+    --surface:#F5EEE7;
+    --surface-2:#EFE5DB;
+    --ink:#2A211C;
+    --ink-soft:#6B5B4E;
+    --ink-faint:#8C7B6E;
+    --rule:#E2D5C8;
+    --rule-strong:#C9B7A6;
+    --brand:#553F33;
+    --brand-deep:#3B2B22;
+    --on-brand:#F6EDE3;
+    --gold:#A07C3F;
+    --gold-soft:#F0E4CF;
+    --rust:#A33B2A;
+    --rust-soft:#F6E3DE;
+    --green:#3D6B4E;
+    --green-soft:#E1EDE4;
+    --code-bg:#241C17;
+    --code-ink:#EDE2D6;
+    --code-key:#D8B778;
+    --code-str:#B9CBA6;
+    --code-com:#9A8678;
+    --code-bar:#181210;
+    --shadow:0 1px 2px rgba(42,33,28,.06);
+    --maxw:960px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#171210;
+      --paper:#1E1815;
+      --surface:#262019;
+      --surface-2:#2F2720;
+      --ink:#F0E7DE;
+      --ink-soft:#C3B2A4;
+      --ink-faint:#9C8A7C;
+      --rule:#3A302A;
+      --rule-strong:#4E4139;
+      --brand:#D9BFA6;
+      --brand-deep:#E8D6C3;
+      --on-brand:#1A1310;
+      --gold:#D9B06B;
+      --gold-soft:#3A2F1E;
+      --rust:#E09480;
+      --rust-soft:#3B2420;
+      --green:#8FC29F;
+      --green-soft:#1F2E24;
+      --code-bg:#120E0C;
+      --code-bar:#0C0908;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#171210;
+    --paper:#1E1815;
+    --surface:#262019;
+    --surface-2:#2F2720;
+    --ink:#F0E7DE;
+    --ink-soft:#C3B2A4;
+    --ink-faint:#9C8A7C;
+    --rule:#3A302A;
+    --rule-strong:#4E4139;
+    --brand:#D9BFA6;
+    --brand-deep:#E8D6C3;
+    --on-brand:#1A1310;
+    --gold:#D9B06B;
+    --gold-soft:#3A2F1E;
+    --rust:#E09480;
+    --rust-soft:#3B2420;
+    --green:#8FC29F;
+    --green-soft:#1F2E24;
+    --code-bg:#120E0C;
+    --code-bar:#0C0908;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+    font-size:14px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  *{box-sizing:border-box}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+
+  /* ---------- running header ---------- */
+  .runner{
+    background:var(--brand);
+    color:var(--on-brand);
+    padding:10px max(16px,calc((100% - var(--maxw))/2));
+    display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;
+    font-size:12px;letter-spacing:.02em;
+  }
+  .runner b{font-weight:600}
+  .runner .r{opacity:.8}
+
+  .wrap{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding-inline:16px;
+    padding-block:40px 64px;
+  }
+
+  /* ---------- masthead ---------- */
+  .eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;margin:0 0 10px;
+  }
+  h1{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:clamp(28px,5vw,42px);
+    line-height:1.12;font-weight:700;letter-spacing:-.01em;
+    margin:0 0 12px;color:var(--brand-deep);text-wrap:balance;
+  }
+  .standfirst{
+    font-size:16px;color:var(--ink-soft);margin:0 0 22px;max-width:62ch;
+  }
+  .hairline{height:3px;background:var(--brand);border:0;margin:0 0 22px;max-width:120px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+  .chip{
+    border:1px solid var(--rule-strong);background:var(--paper);
+    padding:8px 14px;font-size:12px;font-weight:600;color:var(--ink-soft);
+  }
+  .chip span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin-bottom:2px}
+  .chip.gold{border-color:var(--gold);background:var(--gold-soft);color:var(--brand-deep)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:44px}
+  h2{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:22px;font-weight:700;color:var(--brand-deep);
+    margin:0 0 4px;letter-spacing:-.01em;
+  }
+  h2 .num{color:var(--gold);font-family:"IBM Plex Mono",monospace;font-size:16px;margin-right:10px;font-weight:500}
+  h3{font-size:14px;font-weight:600;color:var(--ink);margin:26px 0 10px;letter-spacing:.01em}
+  h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:22px 0 8px}
+  .sect-rule{height:1px;background:var(--rule-strong);border:0;margin:8px 0 18px}
+  p{margin:0 0 14px;max-width:72ch}
+  a{color:var(--brand);text-decoration-thickness:1px;text-underline-offset:2px}
+  code:not(pre code){
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.90em;
+    background:var(--surface);border:1px solid var(--rule);padding:1px 5px;color:var(--brand-deep);
+  }
+  strong{font-weight:600}
+
+  /* ---------- callouts ---------- */
+  .note{
+    border-left:3px solid var(--brand);background:var(--surface);
+    padding:14px 16px;margin:0 0 18px;font-size:13.5px;
+  }
+  .note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+  .note.stop{border-left-color:var(--rust);background:var(--rust-soft)}
+  .note p:last-child{margin-bottom:0}
+  .note .lbl{font-weight:600;color:var(--brand-deep)}
+
+  /* ---------- flow ---------- */
+  .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:18px 0 22px}
+  .flow .box{
+    flex:1 1 150px;min-width:130px;border:1px solid var(--rule-strong);background:var(--paper);
+    padding:14px 12px;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink);
+    display:flex;flex-direction:column;justify-content:center;gap:3px;
+  }
+  .flow .box em{display:block;font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .flow .box.accent{background:var(--surface);border-color:var(--brand);color:var(--brand-deep)}
+  .flow .arw{align-self:center;color:var(--gold);font-size:16px;font-weight:600}
+
+  /* ---------- tables ---------- */
+  .tbl{overflow-x:auto;margin:0 0 18px;border:1px solid var(--rule-strong)}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--paper);min-width:560px}
+  thead th{
+    background:var(--surface-2);color:var(--brand-deep);text-align:left;
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+    padding:10px 12px;border-bottom:1px solid var(--rule-strong);white-space:nowrap;
+  }
+  td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  td.api,code.api{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--brand);word-break:break-word}
+  td.fld{font-weight:600;white-space:nowrap}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.tight{min-width:420px}
+
+  .req,.opt,.cond{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;
+    font-weight:600;padding:2px 6px;white-space:nowrap;display:inline-block;
+  }
+  .req{background:var(--rust-soft);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 35%,transparent)}
+  .opt{background:var(--surface);color:var(--ink-faint);border:1px solid var(--rule-strong)}
+  .cond{background:var(--gold-soft);color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+  .code-200{color:var(--green);font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  .code-4xx{color:var(--rust);font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+
+  /* ---------- endpoint bar ---------- */
+  .endpoint{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    border:1px solid var(--rule-strong);border-left:3px solid var(--brand);
+    background:var(--paper);padding:12px 16px;margin:0 0 6px;
+  }
+  .verb{background:var(--green-soft);color:var(--green);font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;padding:4px 10px;letter-spacing:.06em}
+  .path{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:500;color:var(--brand-deep);word-break:break-all;flex:1 1 260px}
+  .endpoint .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600}
+
+  /* ---------- code ---------- */
+  .codeblock{margin:0 0 18px;border:1px solid var(--code-bar);background:var(--code-bg)}
+  .codeblock .bar{
+    background:var(--code-bar);color:#B9A695;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;letter-spacing:.08em;padding:7px 14px;text-transform:uppercase;
+  }
+  pre{
+    margin:0;padding:14px 16px;overflow-x:auto;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.65;
+    color:var(--code-ink);
+  }
+  pre .k{color:var(--code-key)}
+  pre .s{color:var(--code-str)}
+  pre .c{color:var(--code-com)}
+
+  /* ---------- lists ---------- */
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0 0 18px}
+  ol.steps li{
+    counter-increment:s;position:relative;padding:0 0 14px 34px;font-size:13.5px;max-width:72ch;
+  }
+  ol.steps li::before{
+    content:counter(s);position:absolute;left:0;top:0;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    color:var(--gold);border:1px solid var(--gold);width:22px;height:22px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  ul.plain{margin:0 0 16px;padding-left:18px}
+  ul.plain li{margin-bottom:7px;max-width:72ch}
+
+  .values{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .val{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    background:var(--surface);border:1px solid var(--rule-strong);padding:3px 8px;color:var(--brand-deep);
+  }
+  .val.dflt{border-color:var(--gold);background:var(--gold-soft)}
+
+  footer{
+    margin-top:56px;border-top:1px solid var(--rule-strong);padding-top:18px;
+    font-size:12px;color:var(--ink-faint);
+  }
+
+  @media (max-width:520px){
+    .flow .arw{display:none}
+    .flow .box{flex:1 1 100%}
+  }
+
+  @media print{
+    :root{--ground:#fff;--paper:#fff}
+    body{font-size:10.5pt}
+    .runner{position:static}
+    .wrap{padding-block:18px}
+    section{break-inside:auto}
+    h2{break-after:avoid}
+    .tbl,.codeblock,.note,.endpoint,.flow{break-inside:avoid}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+
+<div class="runner">
+  <div><b>Shree Hari Jewellers &times; Salesforce</b> <span class="r">&mdash; Shopify Customer REST API</span></div>
+  <div class="r">Draft v1.0 &nbsp;|&nbsp; Nov 2026 &nbsp;|&nbsp; UAT</div>
+</div>
+
+<div class="wrap">
+
+  <p class="eyebrow">Integration Specification</p>
+  <h1>Shopify &rarr; Salesforce Customer REST API</h1>
+  <hr class="hairline">
+  <p class="standfirst">How the Shree Hari website sends Shopify customer records into Salesforce. Uses the same External Client App and the same access token as the Lead API; only the URL and the payload differ. Prepared by Halsa Global for the Shree Hari Jewellers website team.</p>
+
+  <div class="chips">
+    <div class="chip"><span>Protocol</span>REST / JSON</div>
+    <div class="chip"><span>Auth</span>Same as Lead API &middot; OAuth 2.0</div>
+    <div class="chip"><span>Payload</span>Shopify <code>customer</code> object</div>
+    <div class="chip gold"><span>Environment</span>UAT Sandbox</div>
+  </div>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section>
+    <h2><span class="num">01</span>Overview</h2>
+    <hr class="sect-rule">
+
+    <div class="note">
+      <p><span class="lbl">Integration pattern:</span> the website POSTs one Shopify customer as JSON, in the shape of the Shopify Liquid <a href="https://shopify.dev/docs/api/liquid/objects/customer"><code>customer</code> object</a>. Salesforce stores it as one <strong>Staging Customer</strong> record and returns that record&rsquo;s Id and number. Property names are the Shopify names, unchanged.</p>
+    </div>
+
+    <div class="flow">
+      <div class="box"><em>Source</em>Shopify<br>customer</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Transport</em>HTTPS POST<br>Bearer token</div>
+      <div class="arw">&rarr;</div>
+      <div class="box accent"><em>Salesforce</em>Apex REST<br>/shreehari/v1/customers</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Result</em>Staging Customer<br>SC-number</div>
+    </div>
+
+    <p>Every call creates a new Staging Customer record, so Salesforce keeps a full history of what was sent. Records are processed inside Salesforce afterwards and need nothing further from the website.</p>
+
+    <h3>Environment</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Item</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Org</td><td>Shree Hari Jewellers &mdash; UAT Sandbox</td></tr>
+          <tr><td class="fld">Instance URL</td><td class="api">https://agility-efficiency-7306--uat.sandbox.my.salesforce.com</td></tr>
+          <tr><td class="fld">Base path</td><td class="api">/services/apexrest/shreehari/v1</td></tr>
+          <tr><td class="fld">Customer endpoint</td><td class="api">POST /services/apexrest/shreehari/v1/customers</td></tr>
+          <tr><td class="fld">Lead endpoint (unchanged)</td><td class="api">POST /services/apexrest/shreehari/v1/leads</td></tr>
+          <tr><td class="fld">Token endpoint</td><td class="api">POST /services/oauth2/token</td></tr>
+          <tr><td class="fld">External Client App</td><td>Shree Hari Website API <span style="color:var(--ink-faint)">(API name <code>Shree_Hari_Website_API</code>)</span> &mdash; the same app as the Lead API</td></tr>
+          <tr><td class="fld">Runs as</td><td class="api">indiateam+shreehari@halsaglobal.io.integration</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <p><span class="lbl">Production cut-over:</span> only the instance URL changes. The path, property names and payload stay identical.</p>
+    </div>
+  </section>
+
+  <!-- ============ AUTH ============ -->
+  <section>
+    <h2><span class="num">02</span>Authentication</h2>
+    <hr class="sect-rule">
+
+    <p>Exactly as for the Lead API: the <strong>OAuth 2.0 Client Credentials flow</strong> with the same Consumer Key and Consumer Secret. One token works for both endpoints, so a website already calling the Lead API needs no new credentials &mdash; only the new URL.</p>
+
+    <div class="codeblock">
+      <div class="bar">Token request</div>
+<pre><span class="k">POST</span> https://agility-efficiency-7306--uat.sandbox.my.salesforce.com/services/oauth2/token
+<span class="k">Content-Type:</span> application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;client_id=<span class="s">{3MVG9Nm09gOGRa5Cfj84CC2IPJsONJWs_OXZeRMB6R.}</span>
+&amp;client_secret=<span class="s">{FFFF54A591E99C14256954FA717A}</span></pre>
+    </div>
+
+    <p>Use the <code>access_token</code> from the response in the header <code>Authorization: Bearer {{access_token}}</code>. The IP restrictions described in the Lead API document apply here too: calls must come from an allowlisted IP address.</p>
+  </section>
+
+  <!-- ============ CONVENTIONS ============ -->
+  <section>
+    <h2><span class="num">03</span>Conventions</h2>
+    <hr class="sect-rule">
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Convention</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Content-Type</td><td class="api">application/json</td></tr>
+          <tr><td class="fld">Character set</td><td>UTF-8</td></tr>
+          <tr><td class="fld">Property names</td><td>Exactly the Shopify Liquid <code>customer</code> property names, in <code>snake_case</code> &mdash; <code>first_name</code>, <code>orders_count</code>, <code>b2b?</code>. Names ending in <code>?</code> are also accepted without it (<code>b2b</code>, <code>has_avatar</code>)</td></tr>
+          <tr><td class="fld">Payload shape</td><td>One customer per request, as one JSON object with the properties at the top level, exactly as in the samples in section 04. Arrays of customers are rejected</td></tr>
+          <tr><td class="fld">Required</td><td>Only <code>id</code>. Send every other property you have</td></tr>
+          <tr><td class="fld">Empty values</td><td><code>null</code> is accepted and leaves the field blank. An empty string <code>""</code> for a number or true/false property also counts as no value</td></tr>
+          <tr><td class="fld">Numbers</td><td>JSON numbers, unformatted &mdash; <code>18750000</code>. Numeric text such as <code>"18750000"</code> is also accepted; <code>"1,87,500"</code> is rejected</td></tr>
+          <tr><td class="fld">Money</td><td><code>total_spent</code> is in the currency&rsquo;s subunit, as Shopify Liquid outputs it (paise for INR) and is stored as sent</td></tr>
+          <tr><td class="fld">Booleans</td><td>JSON <code>true</code> / <code>false</code>. The text <code>"true"</code> / <code>"false"</code> is also accepted (any letter case); anything else, such as <code>"yes"</code> or <code>1</code>, is rejected</td></tr>
+          <tr><td class="fld">Objects and arrays</td><td>Send them as Shopify produces them (<code>addresses</code>, <code>orders</code>, <code>metafields</code> &hellip;). They are stored as JSON text, unchanged</td></tr>
+          <tr><td class="fld">Other properties</td><td>Any property not listed in section 04 is not rejected: it is kept on the record in <em>Additional Properties</em>, so nothing sent is lost</td></tr>
+          <tr><td class="fld">Fixed value lists</td><td>None. The Shopify <code>customer</code> object defines no property with a fixed set of values</td></tr>
+          <tr><td class="fld">Repeats and retries</td><td>Each successful call creates a new record, including a retry of a call that already succeeded. Retry only on <span class="code-4xx">401</span> (after re-authenticating) and <span class="code-4xx">500</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ ENDPOINT ============ -->
+  <section>
+    <h2><span class="num">04</span>Send Customer</h2>
+    <hr class="sect-rule">
+
+    <div class="endpoint">
+      <span class="verb">POST</span>
+      <span class="path">/services/apexrest/shreehari/v1/customers</span>
+      <span class="tag">Send Customer</span>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-soft)">Stores one Shopify customer as a Staging Customer record and returns its Id and number.</p>
+
+    <h3>Request headers</h3>
+    <div class="tbl">
+      <table class="tight">
+        <thead><tr><th>Header</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">Authorization</td><td class="api">Bearer {{access_token}}</td></tr>
+          <tr><td class="fld">Content-Type</td><td class="api">application/json</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Properties</h3>
+    <p>All 26 properties of the Shopify <code>customer</code> object, each stored in a Salesforce field named after it. Lengths are the most characters a value can have; for objects and arrays, the length of their JSON text.</p>
+    <h4>Identity and contact</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Property</th><th>Salesforce field</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">id</td><td class="api">Id__c</td><td>String(255)</td><td><span class="req">REQUIRED</span></td><td>The Shopify customer ID. Send it as a JSON number (<code>7364019208385</code>) or as text, including the <code>gid://shopify/Customer/&hellip;</code> form. Stored as sent and returned as <code>shopifyCustomerId</code></td></tr>
+          <tr><td class="fld">name</td><td class="api">Name__c</td><td>String(255)</td><td><span class="opt">OPTIONAL</span></td><td>Full name of the customer</td></tr>
+          <tr><td class="fld">first_name</td><td class="api">First_Name__c</td><td>String(255)</td><td><span class="opt">OPTIONAL</span></td><td></td></tr>
+          <tr><td class="fld">last_name</td><td class="api">Last_Name__c</td><td>String(255)</td><td><span class="opt">OPTIONAL</span></td><td></td></tr>
+          <tr><td class="fld">email</td><td class="api">Email__c</td><td>String(255)</td><td><span class="opt">OPTIONAL</span></td><td>Stored exactly as sent; the format is not checked</td></tr>
+          <tr><td class="fld">phone</td><td class="api">Phone__c</td><td>String(255)</td><td><span class="opt">OPTIONAL</span></td><td>Stored exactly as sent, for example <code>+919830012345</code>; the format is not checked</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Account flags</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Property</th><th>Salesforce field</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">accepts_marketing</td><td class="api">Accepts_Marketing__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td><code>true</code> if the customer accepts marketing</td></tr>
+          <tr><td class="fld">has_account</td><td class="api">Has_Account__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td><code>true</code> if the customer's Shopify state is <code>ENABLED</code></td></tr>
+          <tr><td class="fld">has_avatar?</td><td class="api">Has_Avatar__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Also accepted as <code>has_avatar</code>, without the question mark</td></tr>
+          <tr><td class="fld">tax_exempt</td><td class="api">Tax_Exempt__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td><code>true</code> if the customer is exempt from taxes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Orders and spend</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Property</th><th>Salesforce field</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">orders_count</td><td class="api">Orders_Count__c</td><td>Number(18, 0)</td><td><span class="opt">OPTIONAL</span></td><td>Total number of orders placed</td></tr>
+          <tr><td class="fld">total_spent</td><td class="api">Total_Spent__c</td><td>Number(16, 2)</td><td><span class="opt">OPTIONAL</span></td><td>In the currency&rsquo;s subunit, as Shopify Liquid outputs it: <code>18750000</code> paise = &#8377;1,87,500. Stored as sent, not converted to rupees. At most 14 digits before the decimal point</td></tr>
+          <tr><td class="fld">last_order</td><td class="api">Last_Order__c</td><td>JSON &rarr; Long Text(131,072)</td><td><span class="opt">OPTIONAL</span></td><td>The last order placed by the customer (Shopify <code>order</code> object)</td></tr>
+          <tr><td class="fld">orders</td><td class="api">Orders__c</td><td>JSON &rarr; Long Text(131,072)</td><td><span class="opt">OPTIONAL</span></td><td>All orders placed by the customer (array of <code>order</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Addresses</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Property</th><th>Salesforce field</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">addresses_count</td><td class="api">Addresses_Count__c</td><td>Number(18, 0)</td><td><span class="opt">OPTIONAL</span></td><td>Number of addresses associated with the customer</td></tr>
+          <tr><td class="fld">default_address</td><td class="api">Default_Address__c</td><td>JSON &rarr; Long Text(32,768)</td><td><span class="opt">OPTIONAL</span></td><td>The default address (Shopify <code>address</code> object)</td></tr>
+          <tr><td class="fld">addresses</td><td class="api">Addresses__c</td><td>JSON &rarr; Long Text(131,072)</td><td><span class="opt">OPTIONAL</span></td><td>All addresses of the customer (array of <code>address</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>B2B company</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Property</th><th>Salesforce field</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">b2b?</td><td class="api">B2B__c</td><td>Boolean</td><td><span class="opt">OPTIONAL</span></td><td>Also accepted as <code>b2b</code>, without the question mark</td></tr>
+          <tr><td class="fld">company_available_locations_count</td><td class="api">Company_Available_Locations_Count__c</td><td>Number(18, 0)</td><td><span class="opt">OPTIONAL</span></td><td>Number of company locations associated with the customer</td></tr>
+          <tr><td class="fld">current_company</td><td class="api">Current_Company__c</td><td>JSON &rarr; Long Text(32,768)</td><td><span class="opt">OPTIONAL</span></td><td>The company the customer is purchasing for (<code>company</code> object)</td></tr>
+          <tr><td class="fld">current_location</td><td class="api">Current_Location__c</td><td>JSON &rarr; Long Text(32,768)</td><td><span class="opt">OPTIONAL</span></td><td>The currently selected company location (<code>company_location</code> object)</td></tr>
+          <tr><td class="fld">company_available_locations</td><td class="api">Company_Available_Locations__c</td><td>JSON &rarr; Long Text(131,072)</td><td><span class="opt">OPTIONAL</span></td><td>Company locations the customer can access (array of <code>company_location</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Payment, store credit, tags and metafields</h4>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Property</th><th>Salesforce field</th><th>Type</th><th>Required?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="fld">payment_methods</td><td class="api">Payment_Methods__c</td><td>JSON &rarr; Long Text(32,768)</td><td><span class="opt">OPTIONAL</span></td><td>Saved payment methods (array of <code>customer_payment_method</code>)</td></tr>
+          <tr><td class="fld">store_credit_account</td><td class="api">Store_Credit_Account__c</td><td>JSON &rarr; Long Text(32,768)</td><td><span class="opt">OPTIONAL</span></td><td>Store credit account (<code>store_credit_account</code> object)</td></tr>
+          <tr><td class="fld">tags</td><td class="api">Tags__c</td><td>JSON &rarr; Long Text(32,768)</td><td><span class="opt">OPTIONAL</span></td><td>Array of strings, for example <code>["bridal", "vip"]</code>. A single string such as <code>"bridal, vip"</code> is also accepted and kept exactly as sent</td></tr>
+          <tr><td class="fld">metafields</td><td class="api">Metafields__c</td><td>JSON &rarr; Long Text(131,072)</td><td><span class="opt">OPTIONAL</span></td><td>Customer metafields, for example date of birth or anniversary stored as metafields</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Sample request &mdash; full customer</h3>
+    <p style="font-size:12.5px;color:var(--ink-soft)">Every property, with two addresses and three orders. File: <code>Customer_Sample_Full.json</code>.</p>
+    <div class="codeblock">
+      <div class="bar">POST /services/apexrest/shreehari/v1/customers</div>
+<pre>{
+  <span class="k">"accepts_marketing"</span>: true,
+  <span class="k">"addresses"</span>: [
+    {
+      <span class="k">"address1"</span>: <span class="s">"12/1 Lake View Road"</span>,
+      <span class="k">"address2"</span>: <span class="s">"Flat 4B"</span>,
+      <span class="k">"city"</span>: <span class="s">"Kolkata"</span>,
+      <span class="k">"company"</span>: null,
+      <span class="k">"country"</span>: {
+        <span class="k">"name"</span>: <span class="s">"India"</span>,
+        <span class="k">"iso_code"</span>: <span class="s">"IN"</span>
+      },
+      <span class="k">"country_code"</span>: <span class="s">"IN"</span>,
+      <span class="k">"first_name"</span>: <span class="s">"Ananya"</span>,
+      <span class="k">"id"</span>: 8803457089729,
+      <span class="k">"last_name"</span>: <span class="s">"Sharma"</span>,
+      <span class="k">"name"</span>: <span class="s">"Ananya Sharma"</span>,
+      <span class="k">"phone"</span>: <span class="s">"+919830012345"</span>,
+      <span class="k">"province"</span>: <span class="s">"West Bengal"</span>,
+      <span class="k">"province_code"</span>: <span class="s">"WB"</span>,
+      <span class="k">"street"</span>: <span class="s">"12/1 Lake View Road, Flat 4B"</span>,
+      <span class="k">"summary"</span>: <span class="s">"12/1 Lake View Road, Flat 4B, Kolkata, West Bengal, India"</span>,
+      <span class="k">"url"</span>: <span class="s">"/account/addresses/8803457089729"</span>,
+      <span class="k">"zip"</span>: <span class="s">"700029"</span>
+    },
+    {
+      <span class="k">"address1"</span>: <span class="s">"Godrej Waterside, Tower 2"</span>,
+      <span class="k">"address2"</span>: <span class="s">"Sector V, Salt Lake"</span>,
+      <span class="k">"city"</span>: <span class="s">"Kolkata"</span>,
+      <span class="k">"company"</span>: null,
+      <span class="k">"country"</span>: {
+        <span class="k">"name"</span>: <span class="s">"India"</span>,
+        <span class="k">"iso_code"</span>: <span class="s">"IN"</span>
+      },
+      <span class="k">"country_code"</span>: <span class="s">"IN"</span>,
+      <span class="k">"first_name"</span>: <span class="s">"Ananya"</span>,
+      <span class="k">"id"</span>: 8803457122497,
+      <span class="k">"last_name"</span>: <span class="s">"Sharma"</span>,
+      <span class="k">"name"</span>: <span class="s">"Ananya Sharma"</span>,
+      <span class="k">"phone"</span>: <span class="s">"+919830012345"</span>,
+      <span class="k">"province"</span>: <span class="s">"West Bengal"</span>,
+      <span class="k">"province_code"</span>: <span class="s">"WB"</span>,
+      <span class="k">"street"</span>: <span class="s">"Godrej Waterside, Tower 2, Sector V, Salt Lake"</span>,
+      <span class="k">"summary"</span>: <span class="s">"Godrej Waterside, Tower 2, Sector V, Salt Lake, Kolkata, West Bengal, India"</span>,
+      <span class="k">"url"</span>: <span class="s">"/account/addresses/8803457122497"</span>,
+      <span class="k">"zip"</span>: <span class="s">"700091"</span>
+    }
+  ],
+  <span class="k">"addresses_count"</span>: 2,
+  <span class="k">"b2b?"</span>: false,
+  <span class="k">"company_available_locations"</span>: [],
+  <span class="k">"company_available_locations_count"</span>: 0,
+  <span class="k">"current_company"</span>: null,
+  <span class="k">"current_location"</span>: null,
+  <span class="k">"default_address"</span>: {
+    <span class="k">"address1"</span>: <span class="s">"12/1 Lake View Road"</span>,
+    <span class="k">"address2"</span>: <span class="s">"Flat 4B"</span>,
+    <span class="k">"city"</span>: <span class="s">"Kolkata"</span>,
+    <span class="k">"company"</span>: null,
+    <span class="k">"country"</span>: {
+      <span class="k">"name"</span>: <span class="s">"India"</span>,
+      <span class="k">"iso_code"</span>: <span class="s">"IN"</span>
+    },
+    <span class="k">"country_code"</span>: <span class="s">"IN"</span>,
+    <span class="k">"first_name"</span>: <span class="s">"Ananya"</span>,
+    <span class="k">"id"</span>: 8803457089729,
+    <span class="k">"last_name"</span>: <span class="s">"Sharma"</span>,
+    <span class="k">"name"</span>: <span class="s">"Ananya Sharma"</span>,
+    <span class="k">"phone"</span>: <span class="s">"+919830012345"</span>,
+    <span class="k">"province"</span>: <span class="s">"West Bengal"</span>,
+    <span class="k">"province_code"</span>: <span class="s">"WB"</span>,
+    <span class="k">"street"</span>: <span class="s">"12/1 Lake View Road, Flat 4B"</span>,
+    <span class="k">"summary"</span>: <span class="s">"12/1 Lake View Road, Flat 4B, Kolkata, West Bengal, India"</span>,
+    <span class="k">"url"</span>: <span class="s">"/account/addresses/8803457089729"</span>,
+    <span class="k">"zip"</span>: <span class="s">"700029"</span>
+  },
+  <span class="k">"email"</span>: <span class="s">"ananya.sharma@example.com"</span>,
+  <span class="k">"first_name"</span>: <span class="s">"Ananya"</span>,
+  <span class="k">"has_account"</span>: true,
+  <span class="k">"has_avatar?"</span>: false,
+  <span class="k">"id"</span>: 7364019208385,
+  <span class="k">"last_name"</span>: <span class="s">"Sharma"</span>,
+  <span class="k">"last_order"</span>: {
+    <span class="k">"id"</span>: 6120384529601,
+    <span class="k">"name"</span>: <span class="s">"#1031"</span>,
+    <span class="k">"order_number"</span>: 1031,
+    <span class="k">"created_at"</span>: <span class="s">"2026-10-28 18:42:10 +0530"</span>,
+    <span class="k">"financial_status"</span>: <span class="s">"paid"</span>,
+    <span class="k">"fulfillment_status"</span>: <span class="s">"fulfilled"</span>,
+    <span class="k">"total_price"</span>: 9500000,
+    <span class="k">"line_items"</span>: [
+      {
+        <span class="k">"title"</span>: <span class="s">"22K Gold Bridal Necklace Set"</span>,
+        <span class="k">"sku"</span>: <span class="s">"NKS-22K-BRD-01"</span>,
+        <span class="k">"quantity"</span>: 1,
+        <span class="k">"final_line_price"</span>: 9500000
+      }
+    ]
+  },
+  <span class="k">"metafields"</span>: {
+    <span class="k">"custom"</span>: {
+      <span class="k">"date_of_birth"</span>: <span class="s">"1992-08-25"</span>,
+      <span class="k">"anniversary_date"</span>: <span class="s">"2018-02-14"</span>,
+      <span class="k">"preferred_store"</span>: <span class="s">"Kolkata - Gariahat"</span>
+    }
+  },
+  <span class="k">"name"</span>: <span class="s">"Ananya Sharma"</span>,
+  <span class="k">"orders"</span>: [
+    {
+      <span class="k">"id"</span>: 6120384529601,
+      <span class="k">"name"</span>: <span class="s">"#1031"</span>,
+      <span class="k">"order_number"</span>: 1031,
+      <span class="k">"created_at"</span>: <span class="s">"2026-10-28 18:42:10 +0530"</span>,
+      <span class="k">"financial_status"</span>: <span class="s">"paid"</span>,
+      <span class="k">"fulfillment_status"</span>: <span class="s">"fulfilled"</span>,
+      <span class="k">"total_price"</span>: 9500000,
+      <span class="k">"line_items"</span>: [
+        {
+          <span class="k">"title"</span>: <span class="s">"22K Gold Bridal Necklace Set"</span>,
+          <span class="k">"sku"</span>: <span class="s">"NKS-22K-BRD-01"</span>,
+          <span class="k">"quantity"</span>: 1,
+          <span class="k">"final_line_price"</span>: 9500000
+        }
+      ]
+    },
+    {
+      <span class="k">"id"</span>: 6098812207297,
+      <span class="k">"name"</span>: <span class="s">"#1018"</span>,
+      <span class="k">"order_number"</span>: 1018,
+      <span class="k">"created_at"</span>: <span class="s">"2026-08-14 12:05:44 +0530"</span>,
+      <span class="k">"financial_status"</span>: <span class="s">"paid"</span>,
+      <span class="k">"fulfillment_status"</span>: <span class="s">"fulfilled"</span>,
+      <span class="k">"total_price"</span>: 6250000,
+      <span class="k">"line_items"</span>: [
+        {
+          <span class="k">"title"</span>: <span class="s">"22K Gold Bangle Pair"</span>,
+          <span class="k">"sku"</span>: <span class="s">"BNG-22K-2.6"</span>,
+          <span class="k">"quantity"</span>: 1,
+          <span class="k">"final_line_price"</span>: 6250000
+        }
+      ]
+    },
+    {
+      <span class="k">"id"</span>: 6071190458561,
+      <span class="k">"name"</span>: <span class="s">"#1004"</span>,
+      <span class="k">"order_number"</span>: 1004,
+      <span class="k">"created_at"</span>: <span class="s">"2026-05-02 16:20:03 +0530"</span>,
+      <span class="k">"financial_status"</span>: <span class="s">"paid"</span>,
+      <span class="k">"fulfillment_status"</span>: <span class="s">"fulfilled"</span>,
+      <span class="k">"total_price"</span>: 3000000,
+      <span class="k">"line_items"</span>: [
+        {
+          <span class="k">"title"</span>: <span class="s">"18K Diamond Stud Earrings"</span>,
+          <span class="k">"sku"</span>: <span class="s">"EAR-18K-DS-03"</span>,
+          <span class="k">"quantity"</span>: 1,
+          <span class="k">"final_line_price"</span>: 3000000
+        }
+      ]
+    }
+  ],
+  <span class="k">"orders_count"</span>: 3,
+  <span class="k">"payment_methods"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"pm_7364019208385_1"</span>,
+      <span class="k">"payment_instrument_type"</span>: <span class="s">"credit_card"</span>,
+      <span class="k">"payment_instrument_display_name"</span>: <span class="s">"Visa ending in 4242"</span>
+    }
+  ],
+  <span class="k">"phone"</span>: <span class="s">"+919830012345"</span>,
+  <span class="k">"store_credit_account"</span>: {
+    <span class="k">"id"</span>: 50331649,
+    <span class="k">"balance"</span>: {
+      <span class="k">"amount"</span>: <span class="s">"2500.00"</span>,
+      <span class="k">"currency_code"</span>: <span class="s">"INR"</span>
+    }
+  },
+  <span class="k">"tags"</span>: [
+    <span class="s">"bridal"</span>,
+    <span class="s">"newsletter"</span>,
+    <span class="s">"vip"</span>
+  ],
+  <span class="k">"tax_exempt"</span>: false,
+  <span class="k">"total_spent"</span>: 18750000
+}</pre>
+    </div>
+
+    <h3>Sample request &mdash; minimal customer</h3>
+    <p style="font-size:12.5px;color:var(--ink-soft)">A new customer with no orders yet. File: <code>Customer_Sample_Minimal.json</code>.</p>
+    <div class="codeblock">
+      <div class="bar">POST /services/apexrest/shreehari/v1/customers</div>
+<pre>{
+  <span class="k">"id"</span>: 7364019208386,
+  <span class="k">"first_name"</span>: <span class="s">"Rakesh"</span>,
+  <span class="k">"last_name"</span>: <span class="s">"Agarwal"</span>,
+  <span class="k">"name"</span>: <span class="s">"Rakesh Agarwal"</span>,
+  <span class="k">"email"</span>: <span class="s">"rakesh.agarwal@example.com"</span>,
+  <span class="k">"phone"</span>: <span class="s">"+919007712345"</span>,
+  <span class="k">"accepts_marketing"</span>: false,
+  <span class="k">"orders_count"</span>: 0,
+  <span class="k">"total_spent"</span>: 0,
+  <span class="k">"tags"</span>: [
+    <span class="s">"walk-in"</span>
+  ]
+}</pre>
+    </div>
+
+    <h3>Sample response</h3>
+    <div class="codeblock">
+      <div class="bar">201 Created</div>
+<pre>{
+  <span class="k">"success"</span>: true,
+  <span class="k">"stagingCustomerId"</span>: <span class="s">"a0Rh2000000AbCdEAK"</span>,
+  <span class="k">"stagingCustomerNumber"</span>: <span class="s">"SC-12"</span>,
+  <span class="k">"shopifyCustomerId"</span>: <span class="s">"7364019208385"</span>,
+  <span class="k">"message"</span>: <span class="s">"Customer received and stored as SC-12."</span>
+}</pre>
+    </div>
+
+    <p style="font-size:12.5px;color:var(--ink-soft)"><code>stagingCustomerId</code> and <code>stagingCustomerNumber</code> identify the Salesforce record; keep them in your logs. <code>shopifyCustomerId</code> echoes the <code>id</code> you sent, as text.</p>
+
+    <h3>HTTP status codes</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="code-200">201 Created</td><td>Customer stored &mdash; <code>stagingCustomerId</code> returned</td></tr>
+          <tr><td class="code-4xx">400 Bad Request</td><td>Malformed JSON, missing <code>id</code>, a value of the wrong type, or a value too long. Nothing is stored; fix the payload and send again</td></tr>
+          <tr><td class="code-4xx">401 Unauthorized</td><td>Missing or expired Bearer token &mdash; re-authenticate and retry once</td></tr>
+          <tr><td class="code-4xx">500 Server Error</td><td>Salesforce could not save the record &mdash; safe to retry</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ ERRORS ============ -->
+  <section>
+    <h2><span class="num">05</span>Error responses</h2>
+    <hr class="sect-rule">
+    <p>Every error raised by the endpoint uses the same JSON shape as the Lead API. <code>field</code> names the Shopify property at fault and is left out when the problem is the whole body. When a call is rejected, nothing from it is stored.</p>
+
+    <div class="codeblock">
+      <div class="bar">400 Bad Request</div>
+<pre>{
+  <span class="k">"success"</span>: false,
+  <span class="k">"errorCode"</span>: <span class="s">"INVALID_NUMBER"</span>,
+  <span class="k">"message"</span>: <span class="s">"orders_count must be a number, but \"three\" was sent."</span>,
+  <span class="k">"field"</span>: <span class="s">"orders_count"</span>,
+  <span class="k">"httpStatus"</span>: 400
+}</pre>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Error code</th><th>HTTP</th><th>When it occurs</th><th>Example message</th></tr></thead>
+        <tbody>
+          <tr><td class="api">INVALID_JSON</td><td class="code-4xx">400</td><td>The body is empty, is not valid JSON, or is not one JSON object (for example an array of customers)</td><td>Request body must be one customer as a JSON object (one customer per call).</td></tr>
+          <tr><td class="api">MISSING_REQUIRED_FIELD</td><td class="code-4xx">400</td><td><code>id</code> is missing, <code>null</code> or blank</td><td>id is required: the Shopify customer ID.</td></tr>
+          <tr><td class="api">INVALID_TYPE</td><td class="code-4xx">400</td><td>An object or array was sent for a text property (<code>id</code>, <code>name</code>, <code>first_name</code>, <code>last_name</code>, <code>email</code>, <code>phone</code>)</td><td>email must be text, but an object or array was sent.</td></tr>
+          <tr><td class="api">INVALID_NUMBER</td><td class="code-4xx">400</td><td>A number property carries something that is not a number</td><td>orders_count must be a number, but "three" was sent.</td></tr>
+          <tr><td class="api">INVALID_BOOLEAN</td><td class="code-4xx">400</td><td>A true/false property carries something other than <code>true</code> / <code>false</code></td><td>accepts_marketing must be true or false, but "yes" was sent.</td></tr>
+          <tr><td class="api">VALUE_TOO_LONG</td><td class="code-4xx">400</td><td>A value is longer than its field in section 04, or a number is too large</td><td>first_name is 256 characters long; at most 255 can be stored.</td></tr>
+          <tr><td class="api">DML_EXCEPTION</td><td class="code-4xx">500</td><td>Salesforce could not save the record</td><td>The Salesforce error text</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <p><span class="lbl">401 is different.</span> An expired or missing token is rejected by Salesforce before the endpoint runs, so the body is Salesforce&rsquo;s own: <code>[{"message": "Session expired or invalid", "errorCode": "INVALID_SESSION_ID"}]</code>.</p>
+    </div>
+  </section>
+
+  <!-- ============ POSTMAN ============ -->
+  <section>
+    <h2><span class="num">06</span>Testing in Postman</h2>
+    <hr class="sect-rule">
+    <p>Import <code>ShreeHari_Customer_API.postman_collection.json</code>. It holds the token call, the two sample requests from section 04, and one request that shows a 400 error.</p>
+    <ol class="steps">
+      <li>Open the collection&rsquo;s <em>Variables</em> tab and fill in <code>client_id</code> and <code>client_secret</code> &mdash; the same Consumer Key and Secret as for the Lead API. <code>instance_url</code> is already set to UAT.</li>
+      <li>Send <strong>1. Get Access Token</strong>. It saves <code>access_token</code> into the collection automatically.</li>
+      <li>Send <strong>2. Send Customer &mdash; full</strong>. A <span class="code-200">201</span> with a <code>stagingCustomerNumber</code> means the customer is in Salesforce.</li>
+      <li>Try the other requests. <strong>4. Error &mdash; missing id</strong> should come back <span class="code-4xx">400 MISSING_REQUIRED_FIELD</span> with nothing stored.</li>
+    </ol>
+    <p>To test your own data, paste a Shopify customer JSON into the body of request 2. The sample files can also be sent as they are.</p>
+  </section>
+
+  <footer>
+    Prepared by Halsa Global for Shree Hari Jewellers &mdash; Draft v1.0, 17 November 2026.<br>
+    Property names follow the Shopify Liquid <code>customer</code> object (shopify.dev/docs/api/liquid/objects/customer). Field types and lengths were read from the Shree Hari UAT sandbox on 17 November 2026, and every sample in this document was run against the UAT endpoint&rsquo;s code before publication.
+  </footer>
+</div>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Quantity_Price_Breaks__c</fullName>
+    <description>Array of quantity_price_break for the variant, stored as JSON.</description>
+    <inlineHelpText>Shopify variant.quantity_price_breaks</inlineHelpText>
+    <label>Quantity Price Breaks</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

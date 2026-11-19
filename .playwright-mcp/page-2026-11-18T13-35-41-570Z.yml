@@ -1,0 +1,23 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e7]:
+        - img "Salesforce login" [ref=f1e8]
+        - generic [ref=f1e9]: Salesforce login
+      - generic [ref=f1e11]:
+        - generic [ref=f1e12]:
+          - generic [ref=f1e13]: To access this page, you have to log in to Salesforce.
+          - heading "Salesforce login" [level=1] [ref=f1e14]
+          - generic [ref=f1e15]:
+            - text: Username
+            - textbox "Username" [active] [ref=f1e17]
+          - button "Log In to Sandbox" [ref=f1e18] [cursor=pointer]
+          - generic [ref=f1e19]:
+            - checkbox "Remember me" [ref=f1e20]
+            - generic [ref=f1e21]: Remember me
+        - link "Forgot Your Password?" [ref=f1e23] [cursor=pointer]:
+          - /url: /secur/forgotpassword.jsp?locale=us&lqs=startURL%3D%252Fvisualforce%252Fsession%253Furl%253Dhttps%25253A%25252F%25252Fagility-efficiency-7306--uat.sandbox.lightning.force.com%25252Flightning%25252Fo%25252FLead%25252Flist%26ec%3D302
+    - generic [ref=f1e24]: © 2026 Salesforce, Inc. All rights reserved.
+  - iframe [ref=f1e26]
+  - generic: Login
+  - iframe [aria-hidden] [ref=f1e27]

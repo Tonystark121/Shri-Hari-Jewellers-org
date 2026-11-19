@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cancel_Reason__c</fullName>
+    <description>The reason that the order was cancelled. One of the documented set of values.</description>
+    <inlineHelpText>Shopify order.cancel_reason</inlineHelpText>
+    <label>Cancel Reason</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>customer</fullName>
+                <default>false</default>
+                <label>customer</label>
+            </value>
+            <value>
+                <fullName>declined</fullName>
+                <default>false</default>
+                <label>declined</label>
+            </value>
+            <value>
+                <fullName>fraud</fullName>
+                <default>false</default>
+                <label>fraud</label>
+            </value>
+            <value>
+                <fullName>inventory</fullName>
+                <default>false</default>
+                <label>inventory</label>
+            </value>
+            <value>
+                <fullName>staff</fullName>
+                <default>false</default>
+                <label>staff</label>
+            </value>
+            <value>
+                <fullName>other</fullName>
+                <default>false</default>
+                <label>other</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

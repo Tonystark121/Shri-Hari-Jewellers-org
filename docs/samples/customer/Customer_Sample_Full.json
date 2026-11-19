@@ -1,0 +1,184 @@
+{
+  "accepts_marketing": true,
+  "addresses": [
+    {
+      "address1": "12/1 Lake View Road",
+      "address2": "Flat 4B",
+      "city": "Kolkata",
+      "company": null,
+      "country": {
+        "name": "India",
+        "iso_code": "IN"
+      },
+      "country_code": "IN",
+      "first_name": "Ananya",
+      "id": 8803457089729,
+      "last_name": "Sharma",
+      "name": "Ananya Sharma",
+      "phone": "+919830012345",
+      "province": "West Bengal",
+      "province_code": "WB",
+      "street": "12/1 Lake View Road, Flat 4B",
+      "summary": "12/1 Lake View Road, Flat 4B, Kolkata, West Bengal, India",
+      "url": "/account/addresses/8803457089729",
+      "zip": "700029"
+    },
+    {
+      "address1": "Godrej Waterside, Tower 2",
+      "address2": "Sector V, Salt Lake",
+      "city": "Kolkata",
+      "company": null,
+      "country": {
+        "name": "India",
+        "iso_code": "IN"
+      },
+      "country_code": "IN",
+      "first_name": "Ananya",
+      "id": 8803457122497,
+      "last_name": "Sharma",
+      "name": "Ananya Sharma",
+      "phone": "+919830012345",
+      "province": "West Bengal",
+      "province_code": "WB",
+      "street": "Godrej Waterside, Tower 2, Sector V, Salt Lake",
+      "summary": "Godrej Waterside, Tower 2, Sector V, Salt Lake, Kolkata, West Bengal, India",
+      "url": "/account/addresses/8803457122497",
+      "zip": "700091"
+    }
+  ],
+  "addresses_count": 2,
+  "b2b?": false,
+  "company_available_locations": [],
+  "company_available_locations_count": 0,
+  "current_company": null,
+  "current_location": null,
+  "default_address": {
+    "address1": "12/1 Lake View Road",
+    "address2": "Flat 4B",
+    "city": "Kolkata",
+    "company": null,
+    "country": {
+      "name": "India",
+      "iso_code": "IN"
+    },
+    "country_code": "IN",
+    "first_name": "Ananya",
+    "id": 8803457089729,
+    "last_name": "Sharma",
+    "name": "Ananya Sharma",
+    "phone": "+919830012345",
+    "province": "West Bengal",
+    "province_code": "WB",
+    "street": "12/1 Lake View Road, Flat 4B",
+    "summary": "12/1 Lake View Road, Flat 4B, Kolkata, West Bengal, India",
+    "url": "/account/addresses/8803457089729",
+    "zip": "700029"
+  },
+  "email": "ananya.sharma@example.com",
+  "first_name": "Ananya",
+  "has_account": true,
+  "has_avatar?": false,
+  "id": 7364019208385,
+  "last_name": "Sharma",
+  "last_order": {
+    "id": 6120384529601,
+    "name": "#1031",
+    "order_number": 1031,
+    "created_at": "2026-10-28 18:42:10 +0530",
+    "financial_status": "paid",
+    "fulfillment_status": "fulfilled",
+    "total_price": 9500000,
+    "line_items": [
+      {
+        "title": "22K Gold Bridal Necklace Set",
+        "sku": "NKS-22K-BRD-01",
+        "quantity": 1,
+        "final_line_price": 9500000
+      }
+    ]
+  },
+  "metafields": {
+    "custom": {
+      "date_of_birth": "1992-08-25",
+      "anniversary_date": "2018-02-14",
+      "preferred_store": "Kolkata - Gariahat"
+    }
+  },
+  "name": "Ananya Sharma",
+  "orders": [
+    {
+      "id": 6120384529601,
+      "name": "#1031",
+      "order_number": 1031,
+      "created_at": "2026-10-28 18:42:10 +0530",
+      "financial_status": "paid",
+      "fulfillment_status": "fulfilled",
+      "total_price": 9500000,
+      "line_items": [
+        {
+          "title": "22K Gold Bridal Necklace Set",
+          "sku": "NKS-22K-BRD-01",
+          "quantity": 1,
+          "final_line_price": 9500000
+        }
+      ]
+    },
+    {
+      "id": 6098812207297,
+      "name": "#1018",
+      "order_number": 1018,
+      "created_at": "2026-08-14 12:05:44 +0530",
+      "financial_status": "paid",
+      "fulfillment_status": "fulfilled",
+      "total_price": 6250000,
+      "line_items": [
+        {
+          "title": "22K Gold Bangle Pair",
+          "sku": "BNG-22K-2.6",
+          "quantity": 1,
+          "final_line_price": 6250000
+        }
+      ]
+    },
+    {
+      "id": 6071190458561,
+      "name": "#1004",
+      "order_number": 1004,
+      "created_at": "2026-05-02 16:20:03 +0530",
+      "financial_status": "paid",
+      "fulfillment_status": "fulfilled",
+      "total_price": 3000000,
+      "line_items": [
+        {
+          "title": "18K Diamond Stud Earrings",
+          "sku": "EAR-18K-DS-03",
+          "quantity": 1,
+          "final_line_price": 3000000
+        }
+      ]
+    }
+  ],
+  "orders_count": 3,
+  "payment_methods": [
+    {
+      "id": "pm_7364019208385_1",
+      "payment_instrument_type": "credit_card",
+      "payment_instrument_display_name": "Visa ending in 4242"
+    }
+  ],
+  "phone": "+919830012345",
+  "store_credit_account": {
+    "id": 50331649,
+    "balance": {
+      "amount": "2500.00",
+      "currency_code": "INR"
+    }
+  },
+  "tags": [
+    "bridal",
+    "newsletter",
+    "vip"
+  ],
+  "tax_exempt": false,
+  "total_spent": 18750000
+}

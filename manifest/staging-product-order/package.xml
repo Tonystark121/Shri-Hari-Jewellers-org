@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <types>
+        <members>ShreeHariOrderRestResource</members>
+        <members>ShreeHariOrderRestResourceTest</members>
+        <members>ShreeHariProductRestResource</members>
+        <members>ShreeHariProductRestResourceTest</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>Staging_Order__c</members>
+        <members>Staging_Product__c</members>
+        <members>Staging_Product_Variant__c</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>Staging_Order__c</members>
+        <members>Staging_Product__c</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>Staging_Order__c-Staging Order Layout</members>
+        <members>Staging_Product__c-Staging Product Layout</members>
+        <members>Staging_Product_Variant__c-Staging Product Variant Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>Shree_Hari_Order_API_Access</members>
+        <members>Shree_Hari_Product_API_Access</members>
+        <name>PermissionSet</name>
+    </types>
+    <version>67.0</version>
+</Package>

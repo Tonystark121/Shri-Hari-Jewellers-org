@@ -104,3 +104,62 @@ Last Name only ("Ali")	Ali Family	Ali Family; adding Riya Ali later gives Ali Fa
 Old name "raj sinha & aman sinha Family" + Neha Sinha	added with "&"	rewritten as sinha Family (raj, aman, Neha)
 Old name "Asha Mehta Family (000123)" + Rohit Mehta	not merged	Mehta Family (Asha, Rohit)
 Renamed by hand (no "Family"), B2B, or a cross-type merge	unchanged	unchanged
+
+
+
+
+Order parts Details:
+
+
+I've mapped each of the 44 Shopify order properties to a Salesforce field, or marked it as staying on the staging record. A Shopify order lands in four places in your org:
+
+Shopify part	Salesforce object	Count
+Who bought	Account (household) and Contact (the person)	one
+The purchase	Purchase Record (Transaction_Record__c, the bill)	one per order
+What was bought	Purchase Line Item (Purchase_Line_Item__c), linked to Product2	one per entry in line_items
+Everything else	stays on Staging Order only	—
+Money: every Shopify amount is in paise, so divide by 100 before writing it to a Currency field (49293 becomes ₹492.93).
+
+1. Customer: who placed the order → Account and Contact
+Shopify order property	Where it goes	How
+customer.id	Staging Customer Id__c	Links the order to the staging customer. Account has no Shopify ID field, so it can't be matched on directly.
+phone, then customer.phone	Used to find the Account	Find the household by phone, then WhatsApp number, then email. This is the same rule Lead conversion uses in LeadConversionTransactionService.
+email, then customer.email	Account Email__c / Contact Email	Fallback match, and fills the field if it's blank
+customer.first_name / last_name	Contact FirstName / LastName	Only when a new Contact is created
+billing_address	Account BillingAddress	address1 + address2 → Street, city → City, province → State, zip → PostalCode, country → Country
+shipping_address	Account ShippingAddress / Contact MailingAddress	Same sub-fields as above
+2. Purchase: the order itself → Purchase Record
+Shopify order property	Purchase Record field	How
+name (e.g. "#1001")	Bill_Number__c	Required and unique
+id	POS_Reference_ID__c	Source reference for reconciliation
+created_at	Transaction_Date__c	Required. Convert from "2022-04-29 11:15:46 -0400" to a DateTime.
+total_price ÷ 100	Amount__c	Required. Already after discounts, before refunds.
+transactions[] (gateway, kind = sale/capture, status = success)	Payment_Mode__c (Cash / Card / UPI / Wallet / Split)	Needs a gateway → value table. More than one successful payment means Split.
+discount_applications[] where type = discount_code	Voucher_Code__c (code = title), Voucher_Discount__c (total_allocated_amount ÷ 100), Voucher_Redemption_Channel__c = Shopify	Only when the code is a Shree Hari Gift Voucher (see decision 4)
+financial_status, cancelled, cancelled_at, cancel_reason	No field. They decide whether to create the bill at all.	See decision 2
+Taken from the line items	Metal_Type__c	Gold, Silver or Platinum when every line is the same metal, Mixed otherwise
+Taken from the line items	SKU_Details__c	Text summary of the lines
+No Shopify property	Store__c, Points_Redeemed__c	See decisions 5 and 6
+Loyalty points and the account's lifetime value (CLV), last-12-months spend and tier update by themselves once the bill is saved. The existing trigger and LoyaltyEngine handle that.
+
+3. Products: what was bought → Purchase Line Item and Product2
+Create one Purchase Line Item for each entry in line_items[]:
+
+Shopify line_item property	Purchase Line Item field	How
+sku	SKU__c, and Product__c	Look up Product2 where ProductCode = sku. That is the field the SKU Searcher uses.
+title	Item_Description__c	
+quantity	Quantity__c	
+final_price ÷ 100	Unit_Price__c	Price of one piece after line discounts
+final_line_price ÷ 100	Line_Amount__c	Equals final_price × quantity
+grams	Weight_Grams__c	Shopify's shipping weight, which may not be the jewellery's net weight
+product_id / variant_id	Staging Product Id__c	Product2 has no Shopify ID field
+Product type, tags or metafield	Metal_Type__c	Not in line_items directly; read it from the product
+Use line_items only. subtotal_line_items holds the same lines (minus tips), so using both would double-count.
+
+4. Stays on Staging Order only (nothing to move)
+These have no matching field in your data model. They remain on the staging record for reference:
+
+Labels: cancel_reason_label, financial_status_label, fulfillment_status, fulfillment_status_label
+Shopify identifiers and links: confirmation_number, order_number, customer_url, customer_order_url, order_status_url
+Totals and price breakdown: item_count, line_items_subtotal_price, subtotal_price, shipping_price, tax_price, tax_lines, total_discounts, total_duties, total_refunded_amount, total_net_amount
+Other order data: attributes, metafields, tags, note, shipping_methods, pickup_in_store?, cart_level_discount_applications, discounts (deprecated)

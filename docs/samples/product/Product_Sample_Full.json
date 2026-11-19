@@ -1,0 +1,816 @@
+{
+  "available": true,
+  "category": {
+    "ancestors": [
+      {
+        "gid": "gid://shopify/TaxonomyCategory/aa",
+        "id": "aa",
+        "name": "Apparel & Accessories"
+      },
+      {
+        "gid": "gid://shopify/TaxonomyCategory/aa-6",
+        "id": "aa-6",
+        "name": "Jewelry"
+      }
+    ],
+    "gid": "gid://shopify/TaxonomyCategory/aa-6-8",
+    "id": "aa-6-8",
+    "name": "Necklaces"
+  },
+  "collections": [
+    {
+      "all_products_count": 48,
+      "all_tags": [
+        "bridal",
+        "hallmarked",
+        "kundan"
+      ],
+      "all_types": [
+        "Necklace"
+      ],
+      "all_vendors": [
+        "Shree Hari Jewellers"
+      ],
+      "current_type": null,
+      "current_vendor": null,
+      "default_sort_by": "best-selling",
+      "description": "Jewellery for the wedding day.",
+      "featured_image": null,
+      "handle": "bridal-collection",
+      "id": 301245678593,
+      "image": null,
+      "metafields": {},
+      "products_count": 48,
+      "published_at": "2026-09-01 10:00:00 +0530",
+      "sort_by": null,
+      "sort_options": [],
+      "tags": [
+        "bridal"
+      ],
+      "template_suffix": null,
+      "title": "Bridal Collection",
+      "url": "/collections/bridal-collection"
+    },
+    {
+      "all_products_count": 112,
+      "all_tags": [
+        "bridal",
+        "hallmarked",
+        "kundan"
+      ],
+      "all_types": [
+        "Necklace"
+      ],
+      "all_vendors": [
+        "Shree Hari Jewellers"
+      ],
+      "current_type": null,
+      "current_vendor": null,
+      "default_sort_by": "best-selling",
+      "description": "All necklaces.",
+      "featured_image": null,
+      "handle": "necklaces",
+      "id": 301245711361,
+      "image": null,
+      "metafields": {},
+      "products_count": 112,
+      "published_at": "2026-09-01 10:00:00 +0530",
+      "sort_by": null,
+      "sort_options": [],
+      "tags": [
+        "bridal"
+      ],
+      "template_suffix": null,
+      "title": "Necklaces",
+      "url": "/collections/necklaces"
+    },
+    {
+      "all_products_count": 27,
+      "all_tags": [
+        "bridal",
+        "hallmarked",
+        "kundan"
+      ],
+      "all_types": [
+        "Necklace"
+      ],
+      "all_vendors": [
+        "Shree Hari Jewellers"
+      ],
+      "current_type": null,
+      "current_vendor": null,
+      "default_sort_by": "best-selling",
+      "description": "Kundan and polki work.",
+      "featured_image": null,
+      "handle": "kundan",
+      "id": 301245744129,
+      "image": null,
+      "metafields": {},
+      "products_count": 27,
+      "published_at": "2026-09-01 10:00:00 +0530",
+      "sort_by": null,
+      "sort_options": [],
+      "tags": [
+        "bridal"
+      ],
+      "template_suffix": null,
+      "title": "Kundan",
+      "url": "/collections/kundan"
+    }
+  ],
+  "compare_at_price": 13200000,
+  "compare_at_price_max": 14500000,
+  "compare_at_price_min": 13200000,
+  "compare_at_price_varies": true,
+  "content": "<p>Handcrafted 22K gold Kundan necklace with ruby drops. BIS hallmarked.</p><ul><li>Gross weight: 42.35 g</li><li>Stone: Kundan, ruby</li></ul>",
+  "created_at": "2026-10-05 11:20:45 +0530",
+  "description": "<p>Handcrafted 22K gold Kundan necklace with ruby drops. BIS hallmarked.</p><ul><li>Gross weight: 42.35 g</li><li>Stone: Kundan, ruby</li></ul>",
+  "featured_image": {
+    "alt": "Kundan necklace, front",
+    "aspect_ratio": 1.0,
+    "attached_to_variant?": true,
+    "height": 2400,
+    "id": 38211457704065,
+    "position": 1,
+    "product_id": 8412036579457,
+    "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+    "variants": [
+      {
+        "id": 45120398417025
+      }
+    ],
+    "width": 2400
+  },
+  "featured_media": {
+    "alt": "Kundan necklace, front",
+    "id": 30155201634433,
+    "media_type": "image",
+    "position": 1,
+    "preview_image": {
+      "alt": "Kundan necklace, front",
+      "aspect_ratio": 1.0,
+      "height": 2400,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+      "width": 2400
+    }
+  },
+  "first_available_variant": {
+    "available": true,
+    "barcode": null,
+    "compare_at_price": 13200000,
+    "featured_image": {
+      "alt": "Kundan necklace, front",
+      "aspect_ratio": 1.0,
+      "attached_to_variant?": true,
+      "height": 2400,
+      "id": 38211457704065,
+      "position": 1,
+      "product_id": 8412036579457,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+      "variants": [
+        {
+          "id": 45120398417025
+        }
+      ],
+      "width": 2400
+    },
+    "featured_media": {
+      "alt": "Kundan necklace, front",
+      "id": 30155201634433,
+      "media_type": "image",
+      "position": 1,
+      "preview_image": {
+        "alt": "Kundan necklace, front",
+        "aspect_ratio": 1.0,
+        "height": 2400,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+        "width": 2400
+      }
+    },
+    "id": 45120398417025,
+    "image": {
+      "alt": "Kundan necklace, front",
+      "aspect_ratio": 1.0,
+      "attached_to_variant?": true,
+      "height": 2400,
+      "id": 38211457704065,
+      "position": 1,
+      "product_id": 8412036579457,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+      "variants": [
+        {
+          "id": 45120398417025
+        }
+      ],
+      "width": 2400
+    },
+    "incoming": false,
+    "inventory_management": "shopify",
+    "inventory_policy": "deny",
+    "inventory_quantity": 3,
+    "matched": true,
+    "metafields": {
+      "custom": {
+        "net_weight": 38.85
+      }
+    },
+    "next_incoming_date": null,
+    "option1": "22K",
+    "option2": "16 inch",
+    "option3": null,
+    "options": [
+      "22K",
+      "16 inch"
+    ],
+    "options_with_values": [
+      {
+        "name": "Purity",
+        "value": "22K"
+      },
+      {
+        "name": "Length",
+        "value": "16 inch"
+      }
+    ],
+    "price": 12500000,
+    "quantity_price_breaks": [],
+    "quantity_price_breaks_configured?": false,
+    "quantity_rule": {
+      "min": 1,
+      "max": null,
+      "increment": 1
+    },
+    "requires_selling_plan": false,
+    "requires_shipping": true,
+    "selected": false,
+    "selected_selling_plan_allocation": null,
+    "selling_plan_allocations": [],
+    "sku": "NK-KUN-22K-16",
+    "store_availabilities": [
+      {
+        "available": true,
+        "location": {
+          "id": 70012345601,
+          "name": "Shree Hari - Gariahat"
+        },
+        "physical_storefront": true,
+        "pick_up_enabled": true,
+        "pick_up_time": "Usually ready in 24 hours"
+      }
+    ],
+    "taxable": true,
+    "title": "22K / 16 inch",
+    "unit_price": null,
+    "unit_price_measurement": null,
+    "url": "/products/22k-gold-kundan-necklace?variant=45120398417025",
+    "weight": 42.35,
+    "weight_in_unit": 42.35,
+    "weight_unit": "g"
+  },
+  "gift_card?": false,
+  "handle": "22k-gold-kundan-necklace",
+  "has_only_default_variant": false,
+  "id": 8412036579457,
+  "images": [
+    {
+      "alt": "Kundan necklace, front",
+      "aspect_ratio": 1.0,
+      "attached_to_variant?": true,
+      "height": 2400,
+      "id": 38211457704065,
+      "position": 1,
+      "product_id": 8412036579457,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+      "variants": [
+        {
+          "id": 45120398417025
+        }
+      ],
+      "width": 2400
+    },
+    {
+      "alt": "Kundan necklace, 18 inch",
+      "aspect_ratio": 1.0,
+      "attached_to_variant?": true,
+      "height": 2400,
+      "id": 38211457736833,
+      "position": 2,
+      "product_id": 8412036579457,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-18-inch.jpg",
+      "variants": [
+        {
+          "id": 45120398449793
+        }
+      ],
+      "width": 2400
+    }
+  ],
+  "media": [
+    {
+      "alt": "Kundan necklace, front",
+      "id": 30155201634433,
+      "media_type": "image",
+      "position": 1,
+      "preview_image": {
+        "alt": "Kundan necklace, front",
+        "aspect_ratio": 1.0,
+        "height": 2400,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+        "width": 2400
+      }
+    },
+    {
+      "alt": "Kundan necklace, 18 inch",
+      "id": 30155201667201,
+      "media_type": "image",
+      "position": 2,
+      "preview_image": {
+        "alt": "Kundan necklace, 18 inch",
+        "aspect_ratio": 1.0,
+        "height": 2400,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-18-inch.jpg",
+        "width": 2400
+      }
+    },
+    {
+      "alt": "Necklace on model",
+      "aspect_ratio": 1.778,
+      "duration": 21500,
+      "id": 30155201699969,
+      "media_type": "video",
+      "position": 3,
+      "preview_image": {
+        "alt": "Necklace on model",
+        "aspect_ratio": 1.778,
+        "height": 1080,
+        "src": "//shreehari.example.com/cdn/shop/files/preview_images/kundan-necklace-video.jpg",
+        "width": 1920
+      },
+      "sources": [
+        {
+          "format": "mp4",
+          "height": 1080,
+          "mime_type": "video/mp4",
+          "url": "//shreehari.example.com/cdn/shop/videos/kundan-necklace.HD-1080p.mp4",
+          "width": 1920
+        },
+        {
+          "format": "m3u8",
+          "height": 1080,
+          "mime_type": "application/x-mpegURL",
+          "url": "//shreehari.example.com/cdn/shop/videos/kundan-necklace.m3u8",
+          "width": 1920
+        }
+      ]
+    }
+  ],
+  "metafields": {
+    "custom": {
+      "purity": "22K",
+      "gross_weight": 42.35,
+      "stone_details": "Kundan polki, 6 ruby drops",
+      "certificate": "//shreehari.example.com/cdn/shop/files/bis-certificate-nk-kun.pdf",
+      "matching_earrings": {
+        "id": 8412036612225,
+        "handle": "22k-gold-kundan-earrings"
+      }
+    }
+  },
+  "options": [
+    "Purity",
+    "Length"
+  ],
+  "options_by_name": {
+    "Purity": {
+      "name": "Purity",
+      "position": 1,
+      "selected_value": "22K",
+      "values": [
+        {
+          "available": true,
+          "id": 3120045883393,
+          "name": "22K",
+          "product_url": null,
+          "selected": true,
+          "swatch": null
+        }
+      ]
+    },
+    "Length": {
+      "name": "Length",
+      "position": 2,
+      "selected_value": "16 inch",
+      "values": [
+        {
+          "available": true,
+          "id": 3120045916161,
+          "name": "16 inch",
+          "product_url": null,
+          "selected": true,
+          "swatch": null
+        },
+        {
+          "available": true,
+          "id": 3120045948929,
+          "name": "18 inch",
+          "product_url": null,
+          "selected": false,
+          "swatch": null
+        }
+      ]
+    }
+  },
+  "options_with_values": [
+    {
+      "name": "Purity",
+      "position": 1,
+      "selected_value": "22K",
+      "values": [
+        {
+          "available": true,
+          "id": 3120045883393,
+          "name": "22K",
+          "product_url": null,
+          "selected": true,
+          "swatch": null
+        }
+      ]
+    },
+    {
+      "name": "Length",
+      "position": 2,
+      "selected_value": "16 inch",
+      "values": [
+        {
+          "available": true,
+          "id": 3120045916161,
+          "name": "16 inch",
+          "product_url": null,
+          "selected": true,
+          "swatch": null
+        },
+        {
+          "available": true,
+          "id": 3120045948929,
+          "name": "18 inch",
+          "product_url": null,
+          "selected": false,
+          "swatch": null
+        }
+      ]
+    }
+  ],
+  "price": 12500000,
+  "price_max": 13800000,
+  "price_min": 12500000,
+  "price_varies": true,
+  "published_at": "2026-10-06 10:00:00 +0530",
+  "quantity_price_breaks_configured?": false,
+  "requires_selling_plan": false,
+  "selected_or_first_available_selling_plan_allocation": null,
+  "selected_or_first_available_variant": {
+    "available": true,
+    "barcode": null,
+    "compare_at_price": 13200000,
+    "featured_image": {
+      "alt": "Kundan necklace, front",
+      "aspect_ratio": 1.0,
+      "attached_to_variant?": true,
+      "height": 2400,
+      "id": 38211457704065,
+      "position": 1,
+      "product_id": 8412036579457,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+      "variants": [
+        {
+          "id": 45120398417025
+        }
+      ],
+      "width": 2400
+    },
+    "featured_media": {
+      "alt": "Kundan necklace, front",
+      "id": 30155201634433,
+      "media_type": "image",
+      "position": 1,
+      "preview_image": {
+        "alt": "Kundan necklace, front",
+        "aspect_ratio": 1.0,
+        "height": 2400,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+        "width": 2400
+      }
+    },
+    "id": 45120398417025,
+    "image": {
+      "alt": "Kundan necklace, front",
+      "aspect_ratio": 1.0,
+      "attached_to_variant?": true,
+      "height": 2400,
+      "id": 38211457704065,
+      "position": 1,
+      "product_id": 8412036579457,
+      "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+      "variants": [
+        {
+          "id": 45120398417025
+        }
+      ],
+      "width": 2400
+    },
+    "incoming": false,
+    "inventory_management": "shopify",
+    "inventory_policy": "deny",
+    "inventory_quantity": 3,
+    "matched": true,
+    "metafields": {
+      "custom": {
+        "net_weight": 38.85
+      }
+    },
+    "next_incoming_date": null,
+    "option1": "22K",
+    "option2": "16 inch",
+    "option3": null,
+    "options": [
+      "22K",
+      "16 inch"
+    ],
+    "options_with_values": [
+      {
+        "name": "Purity",
+        "value": "22K"
+      },
+      {
+        "name": "Length",
+        "value": "16 inch"
+      }
+    ],
+    "price": 12500000,
+    "quantity_price_breaks": [],
+    "quantity_price_breaks_configured?": false,
+    "quantity_rule": {
+      "min": 1,
+      "max": null,
+      "increment": 1
+    },
+    "requires_selling_plan": false,
+    "requires_shipping": true,
+    "selected": false,
+    "selected_selling_plan_allocation": null,
+    "selling_plan_allocations": [],
+    "sku": "NK-KUN-22K-16",
+    "store_availabilities": [
+      {
+        "available": true,
+        "location": {
+          "id": 70012345601,
+          "name": "Shree Hari - Gariahat"
+        },
+        "physical_storefront": true,
+        "pick_up_enabled": true,
+        "pick_up_time": "Usually ready in 24 hours"
+      }
+    ],
+    "taxable": true,
+    "title": "22K / 16 inch",
+    "unit_price": null,
+    "unit_price_measurement": null,
+    "url": "/products/22k-gold-kundan-necklace?variant=45120398417025",
+    "weight": 42.35,
+    "weight_in_unit": 42.35,
+    "weight_unit": "g"
+  },
+  "selected_selling_plan": null,
+  "selected_selling_plan_allocation": null,
+  "selected_variant": null,
+  "selling_plan_groups": [],
+  "tags": [
+    "bridal",
+    "hallmarked",
+    "kundan"
+  ],
+  "template_suffix": "bridal",
+  "title": "22K Gold Kundan Necklace",
+  "type": "Necklace",
+  "url": "/products/22k-gold-kundan-necklace",
+  "variants": [
+    {
+      "available": true,
+      "barcode": null,
+      "compare_at_price": 13200000,
+      "featured_image": {
+        "alt": "Kundan necklace, front",
+        "aspect_ratio": 1.0,
+        "attached_to_variant?": true,
+        "height": 2400,
+        "id": 38211457704065,
+        "position": 1,
+        "product_id": 8412036579457,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+        "variants": [
+          {
+            "id": 45120398417025
+          }
+        ],
+        "width": 2400
+      },
+      "featured_media": {
+        "alt": "Kundan necklace, front",
+        "id": 30155201634433,
+        "media_type": "image",
+        "position": 1,
+        "preview_image": {
+          "alt": "Kundan necklace, front",
+          "aspect_ratio": 1.0,
+          "height": 2400,
+          "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+          "width": 2400
+        }
+      },
+      "id": 45120398417025,
+      "image": {
+        "alt": "Kundan necklace, front",
+        "aspect_ratio": 1.0,
+        "attached_to_variant?": true,
+        "height": 2400,
+        "id": 38211457704065,
+        "position": 1,
+        "product_id": 8412036579457,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-front.jpg",
+        "variants": [
+          {
+            "id": 45120398417025
+          }
+        ],
+        "width": 2400
+      },
+      "incoming": false,
+      "inventory_management": "shopify",
+      "inventory_policy": "deny",
+      "inventory_quantity": 3,
+      "matched": true,
+      "metafields": {
+        "custom": {
+          "net_weight": 38.85
+        }
+      },
+      "next_incoming_date": null,
+      "option1": "22K",
+      "option2": "16 inch",
+      "option3": null,
+      "options": [
+        "22K",
+        "16 inch"
+      ],
+      "options_with_values": [
+        {
+          "name": "Purity",
+          "value": "22K"
+        },
+        {
+          "name": "Length",
+          "value": "16 inch"
+        }
+      ],
+      "price": 12500000,
+      "quantity_price_breaks": [],
+      "quantity_price_breaks_configured?": false,
+      "quantity_rule": {
+        "min": 1,
+        "max": null,
+        "increment": 1
+      },
+      "requires_selling_plan": false,
+      "requires_shipping": true,
+      "selected": false,
+      "selected_selling_plan_allocation": null,
+      "selling_plan_allocations": [],
+      "sku": "NK-KUN-22K-16",
+      "store_availabilities": [
+        {
+          "available": true,
+          "location": {
+            "id": 70012345601,
+            "name": "Shree Hari - Gariahat"
+          },
+          "physical_storefront": true,
+          "pick_up_enabled": true,
+          "pick_up_time": "Usually ready in 24 hours"
+        }
+      ],
+      "taxable": true,
+      "title": "22K / 16 inch",
+      "unit_price": null,
+      "unit_price_measurement": null,
+      "url": "/products/22k-gold-kundan-necklace?variant=45120398417025",
+      "weight": 42.35,
+      "weight_in_unit": 42.35,
+      "weight_unit": "g"
+    },
+    {
+      "available": true,
+      "barcode": null,
+      "compare_at_price": 14500000,
+      "featured_image": {
+        "alt": "Kundan necklace, 18 inch",
+        "aspect_ratio": 1.0,
+        "attached_to_variant?": true,
+        "height": 2400,
+        "id": 38211457736833,
+        "position": 2,
+        "product_id": 8412036579457,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-18-inch.jpg",
+        "variants": [
+          {
+            "id": 45120398449793
+          }
+        ],
+        "width": 2400
+      },
+      "featured_media": {
+        "alt": "Kundan necklace, 18 inch",
+        "id": 30155201667201,
+        "media_type": "image",
+        "position": 2,
+        "preview_image": {
+          "alt": "Kundan necklace, 18 inch",
+          "aspect_ratio": 1.0,
+          "height": 2400,
+          "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-18-inch.jpg",
+          "width": 2400
+        }
+      },
+      "id": 45120398449793,
+      "image": {
+        "alt": "Kundan necklace, 18 inch",
+        "aspect_ratio": 1.0,
+        "attached_to_variant?": true,
+        "height": 2400,
+        "id": 38211457736833,
+        "position": 2,
+        "product_id": 8412036579457,
+        "src": "//shreehari.example.com/cdn/shop/files/kundan-necklace-18-inch.jpg",
+        "variants": [
+          {
+            "id": 45120398449793
+          }
+        ],
+        "width": 2400
+      },
+      "incoming": false,
+      "inventory_management": "shopify",
+      "inventory_policy": "deny",
+      "inventory_quantity": 1,
+      "matched": true,
+      "metafields": {
+        "custom": {
+          "net_weight": 43.3
+        }
+      },
+      "next_incoming_date": null,
+      "option1": "22K",
+      "option2": "18 inch",
+      "option3": null,
+      "options": [
+        "22K",
+        "18 inch"
+      ],
+      "options_with_values": [
+        {
+          "name": "Purity",
+          "value": "22K"
+        },
+        {
+          "name": "Length",
+          "value": "18 inch"
+        }
+      ],
+      "price": 13800000,
+      "quantity_price_breaks": [],
+      "quantity_price_breaks_configured?": false,
+      "quantity_rule": {
+        "min": 1,
+        "max": null,
+        "increment": 1
+      },
+      "requires_selling_plan": false,
+      "requires_shipping": true,
+      "selected": false,
+      "selected_selling_plan_allocation": null,
+      "selling_plan_allocations": [],
+      "sku": "NK-KUN-22K-18",
+      "store_availabilities": [],
+      "taxable": true,
+      "title": "22K / 18 inch",
+      "unit_price": null,
+      "unit_price_measurement": null,
+      "url": "/products/22k-gold-kundan-necklace?variant=45120398449793",
+      "weight": 46.8,
+      "weight_in_unit": 46.8,
+      "weight_unit": "g"
+    }
+  ],
+  "variants_count": 2,
+  "vendor": "Shree Hari Jewellers"
+}

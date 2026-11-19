@@ -1,0 +1,11 @@
+Salutation,First Name,Last Name *,Phone *,WhatsApp Number,Email,Date of Birth (YYYY-MM-DD),Street,City,State,Postal Code,Country,Product Description *,Marital Status,Anniversary Date (YYYY-MM-DD),Status,Lead Source,Walk-In (Yes/No),Store Code,Campaign Name,Company,Industry,Title,Website
+Mr.,Ajay,PWT Upload One,9000011130,,ajay.pwt@example.com,1985-03-10,,Pune,,,,Ring enquiry,Married,2010-05-05,,Google,No,,,,,,
+,Bina,PWT Upload Two,9000011131,,,,,,,,,Earrings,,,,,,,,PWT Upload Traders,,,
+,Chetan,PWT Upload Three,12345,,,,,,,,,Bad phone row,,,,,,,,,,,
+,Deepa,PWT Upload Four,9000011101,,,,,,,,,Existing customer row,,,,,,,,,,,
+,Esha,PWT Upload Five,9000011110,,,,,,,,,Phone of converted Lead Rohit (now customer),,,,,,,,,,,
+,Farah,PWT Upload Six,9000011132,,,2030-01-01,,,,,,Future DOB,,,,,,,,,,,
+,Gita,PWT Upload Seven,9000011133,,,,,,,,,Bad status,,,Converted,,,,,,,,
+,Hari,PWT Upload Eight,9000011130,,,,,,,,,Same phone as row 1,,,,,,,,,,,
+,,,9000011134,,,,,,,,,Missing last name,,,,,,,,,,,
+,Isha,PWT Upload Ten,9000011135,,,,,,,,,,,,,,,,,,,,

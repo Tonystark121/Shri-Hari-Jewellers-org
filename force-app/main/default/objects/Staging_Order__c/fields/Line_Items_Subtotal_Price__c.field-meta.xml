@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Line_Items_Subtotal_Price__c</fullName>
+    <description>The sum of the prices of all of the line items in the order, after any line item discounts, as sent (Shopify Liquid sends the currency subunit, e.g. paise).</description>
+    <inlineHelpText>Shopify order.line_items_subtotal_price</inlineHelpText>
+    <label>Line Items Subtotal Price</label>
+    <precision>16</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

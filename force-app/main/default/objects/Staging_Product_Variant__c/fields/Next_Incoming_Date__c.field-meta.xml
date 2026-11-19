@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Next_Incoming_Date__c</fullName>
+    <description>The arrival date for the next incoming inventory of the variant.</description>
+    <inlineHelpText>Shopify variant.next_incoming_date</inlineHelpText>
+    <label>Next Incoming Date</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>DateTime</type>
+</CustomField>

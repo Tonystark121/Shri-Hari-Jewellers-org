@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Shipping_Methods__c</fullName>
+    <description>The shipping methods for the order (array of shipping_method), stored as JSON.</description>
+    <inlineHelpText>Shopify order.shipping_methods</inlineHelpText>
+    <label>Shipping Methods</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Current_Company__c</fullName>
+    <description>The company that the customer is purchasing for (company object), stored as JSON.</description>
+    <inlineHelpText>Shopify customer.current_company</inlineHelpText>
+    <label>Current Company</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

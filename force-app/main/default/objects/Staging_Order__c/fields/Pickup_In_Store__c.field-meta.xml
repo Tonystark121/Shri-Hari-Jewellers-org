@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pickup_In_Store__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>True if the order is a store pickup order.</description>
+    <inlineHelpText>Shopify order.pickup_in_store?</inlineHelpText>
+    <label>Pickup In Store</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

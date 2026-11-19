@@ -1,72 +1,4 @@
-/**
- * @description
- * Trigger logic for Lead.
- *
- * Phone
- *   Phone is saved exactly as entered. The validation rule
- *   Phone_Must_Be_10_Digits checks it, and matching compares the cleaned
- *   10-digit form (normalizePhone) without changing it.
- *
- * B2C Company
- *   Company is required on Lead, but a B2C customer has none. When Company
- *   is blank (uploads, API) or still holds the New Lead screen's default
- *   "<Name> - B2C", the Lead is B2C: Business Type is set to B2C and Company
- *   becomes "<Name> B2C (<Lead Number>)", e.g. Asha Mehta B2C (000123).
- *   The Lead Number only exists once the Lead is saved, so it is added in
- *   after insert. A Company that was typed in is kept as it is.
- *
- *   On a B2C Lead the Company is then maintained by the system only: it
- *   follows name changes and cannot be changed by hand. (Company is
- *   system-required, so it cannot be made read-only on the page layout.)
- *   Leads saved before this format keep theirs - "<Name> Family (<Lead
- *   Number>)" or "<Name> - B2C-<Lead Number>" - and it still follows name
- *   changes in that form.
- *
- * Existing customers
- *   A Lead whose phone or email belongs to an existing customer (Account or
- *   Contact) is not saved: an enquiry Case is raised for the customer
- *   instead. The New Lead flow, Upload Leads and the website API
- *   (ShreeHariLeadRestResource) raise the enquiry before saving; this check
- *   stops any other insert. A customer known only as a Contact (no Account)
- *   is given an Account when its enquiry is raised (createCustomerAccounts).
- *
- * Conversion
- *   A Lead converts only together with its first bill, through
- *   LeadConversionTransactionService. Any other conversion is refused.
- *
- * Changing a Lead's phone or email
- *   An edit that gives a Lead the phone or email of an existing customer or
- *   of another open Lead is refused, with the same matching as on create
- *   (blockTakenContactDetails). The Lead keeps its old value. Only a value
- *   that really changed is checked.
- *
- * Duplicate open Leads on create are blocked by the Lead Duplicate Check
- * duplicate rule (exact matches, create and edit), not here.
- *
- * Matching ("is this person already known?")
- *   Also used by the New Lead flow (invocable check()) and, later, by the
- *   website API and Lead conversion:
- *     - existing customer: an Account whose Phone, WhatsApp Number or Email
- *       matches, or a Contact whose Phone, WhatsApp Number (MobilePhone) or
- *       Email matches;
- *     - open Lead: an unconverted Lead whose Phone, WhatsApp Number
- *       (MobilePhone) or Email matches.
- *   A person's Phone and WhatsApp Number are both their numbers, so each is
- *   matched against every stored number: a WhatsApp Number saved as another
- *   record's Phone is the same person.
- *   Phones are compared as 10 digits: normalizePhone() removes spaces,
- *   dashes, brackets, dots and a leading +91 or 91 for comparing only. Stored
- *   phones can be in any format (e.g. +91-9830012345), so they are found by
- *   trying the common stored forms of each number and normalising what
- *   comes back.
- *
- * Runs without sharing: the Company update after insert must succeed even
- * when an assignment rule has given the Lead to another user, and a customer
- * or Lead the current user cannot see is still the same person and must
- * still be found. For the same reason its queries and the Company update
- * run in system mode: Apex at this API version otherwise enforces the
- * running user's field-level security.
- */
+
 public without sharing class LeadTriggerHandler {
 
     @TestVisible
@@ -74,7 +6,11 @@ public without sharing class LeadTriggerHandler {
 
     private static final String BUSINESS_TYPE_B2B = 'B2B';
 
+    /** The Business Type picklist's default: nobody has said which it is. */
+    private static final String BUSINESS_TYPE_UNKNOWN = 'Unknown';
+
     private static final String B2C_SUFFIX = ' - B2C';
+    private static final String B2B_SUFFIX = ' - B2B';
 
     @TestVisible
     private static final String COMPANY_LOCKED =
@@ -93,14 +29,19 @@ public without sharing class LeadTriggerHandler {
 
     public static void beforeInsert(List<Lead> leads) {
         for (Lead leadRecord : leads) {
-            if (isAutoCompany(leadRecord.Company)) {
-                leadRecord.Business_Type__c = BUSINESS_TYPE_B2C;
+            Boolean isB2b = leadRecord.B2B_Lead__c == true;
+            if (isAutoCompany(leadRecord.Company, isB2b)) {
+                leadRecord.Business_Type__c = isB2b ? BUSINESS_TYPE_B2B : BUSINESS_TYPE_B2C;
                 // Placeholder until the Lead Number exists (after insert).
-                leadRecord.Company = companyStem(leadRecord);
+                leadRecord.Company = isB2b ? b2bStem(leadRecord) : companyStem(leadRecord);
+            } else if (isB2b) {
+                // B2B checkbox with a typed Company: keep the Company, force the type.
+                leadRecord.Business_Type__c = BUSINESS_TYPE_B2B;
             }
         }
 
         blockExistingCustomers(leads);
+        applyInsertRules(leads);
     }
 
     /** Adds the Lead Number to the Company of every new B2C Lead. */
@@ -109,13 +50,15 @@ public without sharing class LeadTriggerHandler {
         for (Lead leadRecord : leads) {
             if (leadRecord.Business_Type__c == BUSINESS_TYPE_B2C && leadRecord.Company == companyStem(leadRecord)) {
                 toStamp.add(new Lead(Id = leadRecord.Id, Company = b2cCompany(leadRecord)));
+            } else if (leadRecord.Business_Type__c == BUSINESS_TYPE_B2B && leadRecord.Company == b2bStem(leadRecord)) {
+                toStamp.add(new Lead(Id = leadRecord.Id, Company = b2bCompany(leadRecord)));
             }
         }
-
+    
         if (toStamp.isEmpty()) {
             return;
         }
-
+    
         stampingCompany = true;
         try {
             update as system toStamp;
@@ -145,28 +88,50 @@ public without sharing class LeadTriggerHandler {
             if (phoneChanged(leadRecord, oldLead) || whatsAppChanged(leadRecord, oldLead) || emailChanged(leadRecord, oldLead)) {
                 contactDetailsChanged.add(leadRecord);
             }
-
-            if (stampingCompany || oldLead.Business_Type__c != BUSINESS_TYPE_B2C) {
+    
+            if (stampingCompany) {
                 continue;
             }
-
+    
+            // B2B Lead checkbox switched on/off after the Lead was created.
+            Boolean b2bOn = leadRecord.B2B_Lead__c == true && oldLead.B2B_Lead__c != true;
+            Boolean b2bOff = leadRecord.B2B_Lead__c != true && oldLead.B2B_Lead__c == true;
+            if (b2bOn || b2bOff) {
+                Boolean systemNamed = hasSystemCompany(oldLead);
+                if (b2bOn) {
+                    leadRecord.Business_Type__c = BUSINESS_TYPE_B2B;
+                    if (systemNamed) {
+                        leadRecord.Company = b2bCompany(leadRecord);
+                    }
+                } else if (systemNamed) {
+                    leadRecord.Business_Type__c = BUSINESS_TYPE_B2C;
+                    leadRecord.Company = b2cCompany(leadRecord);
+                }
+                continue;
+            }
+    
+            // Only system-named Companies are locked and follow the name.
+            if (!hasSystemCompany(oldLead)) {
+                continue;
+            }
+    
             if (leadRecord.Company != oldLead.Company) {
                 leadRecord.Company.addError(COMPANY_LOCKED);
                 continue;
             }
-
-            // Keep the Company in step with the person's name, as long as it
-            // is still the system's value.
+    
             Boolean nameChanged = leadRecord.FirstName != oldLead.FirstName || leadRecord.LastName != oldLead.LastName;
             if (nameChanged && oldLead.Company == b2cCompany(oldLead)) {
                 leadRecord.Company = b2cCompany(leadRecord);
+            } else if (nameChanged && oldLead.Company == b2bCompany(oldLead)) {
+                leadRecord.Company = b2bCompany(leadRecord);
             } else if (nameChanged && oldLead.Company == familyB2cCompany(oldLead)) {
                 leadRecord.Company = familyB2cCompany(leadRecord);
             } else if (nameChanged && oldLead.Company == legacyB2cCompany(oldLead)) {
                 leadRecord.Company = legacyB2cCompany(leadRecord);
             }
         }
-
+    
         blockTakenContactDetails(contactDetailsChanged, oldLeads);
     }
 
@@ -346,13 +311,222 @@ public without sharing class LeadTriggerHandler {
     }
 
     // =====================================================================
+    // Insert rules (Workbench, Data Loader, CLI and any other direct insert)
+    // =====================================================================
+
+    /**
+     * Existing tests insert Leads without a Phone or Product Description to
+     * exercise other rules, so the insert rules are off in tests unless a
+     * test switches them on.
+     */
+    @TestVisible
+    private static Boolean applyInsertRulesInTests = false;
+
+    @TestVisible
+    private static final String PHONE_REQUIRED = 'Phone is required.';
+    @TestVisible
+    private static final String PRODUCT_REQUIRED = 'Product Description is required.';
+    @TestVisible
+    private static final String BIRTH_DATE_IN_FUTURE = 'Date of Birth cannot be in the future.';
+    @TestVisible
+    private static final String CONVERTED_STATUS_REFUSED =
+        'A Lead cannot be created as Converted. It converts only with its first bill, through the Convert button. '
+        + 'Leave Status blank for New, or use another status.';
+    @TestVisible
+    private static final String SAME_AS_ANOTHER_IN_SAVE =
+        'Same phone, WhatsApp number or email as another Lead in this save.';
+
+    /**
+     * The checks Upload Leads makes on each row (LeadUploadService), applied
+     * to every new Lead so that a direct insert is held to them too. The New
+     * Lead screen, Upload Leads and the website API make the same checks
+     * before they save, so nothing changes for them.
+     *
+     * A Lead already refused (existing customer) is left alone. The phone
+     * format, the Anniversary Date and the email format are checked by the
+     * validation rules and the platform, after this.
+     */
+    private static void applyInsertRules(List<Lead> leads) {
+        if (Test.isRunningTest() && !applyInsertRulesInTests) {
+            return;
+        }
+
+        List<Lead> passed = new List<Lead>();
+        for (Lead leadRecord : leads) {
+            if (leadRecord.hasErrors()) {
+                continue;
+            }
+            String reason = insertRuleFailure(leadRecord);
+            if (reason != null) {
+                leadRecord.addError(reason);
+                continue;
+            }
+            // A typed Company is B2B, as on the New Lead screen and in Upload Leads.
+            // (A blank Company was made B2C in beforeInsert.)
+            if (String.isBlank(leadRecord.Business_Type__c) || leadRecord.Business_Type__c == BUSINESS_TYPE_UNKNOWN) {
+                leadRecord.Business_Type__c = BUSINESS_TYPE_B2B;
+            }
+            passed.add(leadRecord);
+        }
+
+        blockOpenLeadDuplicates(passed);
+    }
+
+    /**
+     * Why the Lead cannot be created, or null when it can. Picklist values
+     * written in another case are corrected to the stored value.
+     */
+    private static String insertRuleFailure(Lead leadRecord) {
+        if (String.isBlank(leadRecord.Phone)) {
+            return PHONE_REQUIRED;
+        }
+        if (String.isBlank(leadRecord.Description)) {
+            return PRODUCT_REQUIRED;
+        }
+        if (leadRecord.Date_of_Birth__c != null && leadRecord.Date_of_Birth__c > Date.today()) {
+            return BIRTH_DATE_IN_FUTURE;
+        }
+
+        if (String.isNotBlank(leadRecord.Status)) {
+            String status = activeValue(Lead.Status, leadRecord.Status);
+            if (status == null) {
+                List<String> allowed = new List<String>();
+                for (String value : activeValues(Lead.Status)) {
+                    if (!convertedStatuses.contains(value)) {
+                        allowed.add(value);
+                    }
+                }
+                return notValid(leadRecord.Status, 'Status', allowed);
+            }
+            // The website API (Apex REST) keeps the status it is sent; left as it is.
+            if (convertedStatuses.contains(status) && RestContext.request == null) {
+                return CONVERTED_STATUS_REFUSED;
+            }
+            leadRecord.Status = status;
+        }
+
+        Map<Schema.SObjectField, String> picklists = new Map<Schema.SObjectField, String>{
+            Lead.Salutation => 'Salutation',
+            Lead.Marital_Status__c => 'Marital Status',
+            Lead.LeadSource => 'Lead Source',
+            Lead.Industry => 'Industry'
+        };
+        for (Schema.SObjectField field : picklists.keySet()) {
+            String entered = (String) leadRecord.get(field);
+            if (String.isBlank(entered)) {
+                continue;
+            }
+            String value = activeValue(field, entered);
+            if (value == null) {
+                return notValid(entered, picklists.get(field), activeValues(field));
+            }
+            leadRecord.put(field, value);
+        }
+        return null;
+    }
+
+    /**
+     * Refuses a Lead whose phone, WhatsApp number or email belongs to an open
+     * Lead - compared as 10 digits, each number against every stored number,
+     * as on the New Lead screen and in Upload Leads - or to an earlier Lead of
+     * the same save. (The Lead Duplicate Check duplicate rule only finds a
+     * phone stored in exactly the same format.)
+     */
+    private static void blockOpenLeadDuplicates(List<Lead> leads) {
+        Set<String> phones = new Set<String>();
+        Set<String> emails = new Set<String>();
+        for (Lead leadRecord : leads) {
+            phones.addAll(phonesOf(leadRecord));
+            if (String.isNotBlank(leadRecord.Email)) {
+                emails.add(leadRecord.Email);
+            }
+        }
+        if (phones.isEmpty() && emails.isEmpty()) {
+            return;
+        }
+
+        Map<String, Lead> openLeads = findOpenLeads(phones, emails);
+        Set<String> takenInThisSave = new Set<String>();
+
+        for (Lead leadRecord : leads) {
+            List<String> keys = matchKeysOf(leadRecord);
+
+            Lead openLead;
+            Boolean repeated = false;
+            for (String key : keys) {
+                if (openLead == null && openLeads.containsKey(key)) {
+                    openLead = openLeads.get(key);
+                }
+                if (takenInThisSave.contains(key)) {
+                    repeated = true;
+                }
+            }
+
+            if (openLead != null) {
+                leadRecord.addError('A Lead with this phone, WhatsApp number or email already exists: ' + openLead.Name
+                    + ' (owner ' + openLead.Owner.Name + ').');
+            } else if (repeated) {
+                leadRecord.addError(SAME_AS_ANOTHER_IN_SAVE);
+            } else {
+                takenInThisSave.addAll(keys);
+            }
+        }
+    }
+
+    /** Lead Status values that mean converted, read once per transaction. */
+    private static Set<String> convertedStatuses {
+        get {
+            if (convertedStatuses == null) {
+                convertedStatuses = new Set<String>();
+                for (LeadStatus leadStatus : [SELECT ApiName FROM LeadStatus WHERE IsConverted = true WITH SYSTEM_MODE]) {
+                    convertedStatuses.add(leadStatus.ApiName);
+                }
+            }
+            return convertedStatuses;
+        }
+        set;
+    }
+
+    private static Map<Schema.SObjectField, List<String>> activeValuesByField = new Map<Schema.SObjectField, List<String>>();
+
+    /** The field's active picklist values, read once per transaction. */
+    private static List<String> activeValues(Schema.SObjectField field) {
+        if (!activeValuesByField.containsKey(field)) {
+            List<String> values = new List<String>();
+            for (Schema.PicklistEntry entry : field.getDescribe().getPicklistValues()) {
+                if (entry.isActive()) {
+                    values.add(entry.getValue());
+                }
+            }
+            activeValuesByField.put(field, values);
+        }
+        return activeValuesByField.get(field);
+    }
+
+    /** The active picklist value matching the text (ignoring case), or null. */
+    private static String activeValue(Schema.SObjectField field, String text) {
+        for (String value : activeValues(field)) {
+            if (value.equalsIgnoreCase(text.trim())) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static String notValid(String entered, String label, List<String> allowed) {
+        return '"' + entered + '" is not a valid ' + label + '. Allowed values: ' + String.join(allowed, ', ') + '.';
+    }
+
+    // =====================================================================
     // Company
     // =====================================================================
 
     /** Blank, or the New Lead screen's default "<Name> - B2C". */
     @TestVisible
-    private static Boolean isAutoCompany(String company) {
-        return String.isBlank(company) || company.trim().endsWithIgnoreCase(B2C_SUFFIX);
+    private static Boolean isAutoCompany(String company, Boolean isB2b) {
+        return String.isBlank(company)
+            || company.trim().endsWithIgnoreCase(B2C_SUFFIX)
+            || (isB2b && company.trim().endsWithIgnoreCase(B2B_SUFFIX));
     }
 
     /**
@@ -362,7 +536,24 @@ public without sharing class LeadTriggerHandler {
      */
     public static Boolean isSystemCompany(String company) {
         return String.isBlank(company)
-            || Pattern.matches('(?i).* - B2C(-[0-9]+)?|.* (B2C|Family) [(][0-9]+[)]', company.trim());
+            || Pattern.matches('(?i).* - B2[CB](-[0-9]+)?|.* (B2C|B2B|Family) [(][0-9]+[)]', company.trim());
+    }
+    
+    /** True when the Lead's Company is maintained by the system (B2C always, B2B only when system-named). */
+    private static Boolean hasSystemCompany(Lead leadRecord) {
+        return leadRecord.Business_Type__c == BUSINESS_TYPE_B2C
+            || (leadRecord.Business_Type__c == BUSINESS_TYPE_B2B && isSystemCompany(leadRecord.Company));
+    }
+    
+    /** "<First Name> <Last Name> - B2B": the placeholder until the Lead Number exists. */
+    @TestVisible
+    private static String b2bStem(Lead leadRecord) {
+        return personName(leadRecord) + B2B_SUFFIX;
+    }
+    
+    /** "<First Name> <Last Name> B2B (<Lead Number>)", e.g. Asha Mehta B2B (000123). */
+    public static String b2bCompany(Lead leadRecord) {
+        return personName(leadRecord) + ' B2B (' + leadRecord.Lead_Number__c + ')';
     }
 
     /** "<First Name> <Last Name>" */
@@ -743,16 +934,15 @@ public without sharing class LeadTriggerHandler {
      */
     private static Account newCustomerAccount(Lead leadRecord, Contact person) {
         Lead details = leadRecord == null ? new Lead() : leadRecord;
-        Boolean isBusiness = !isSystemCompany(details.Company);
+        Boolean isBusiness = details.B2B_Lead__c == true || !isSystemCompany(details.Company);
 
         Lead named = String.isBlank(details.LastName)
             ? new Lead(FirstName = person.FirstName, LastName = person.LastName)
             : details;
 
         Account accountRecord = new Account(
-            Name = isBusiness
-                ? details.Company.trim()
-                : LeadConversionTransactionService.familyAccountName(named.FirstName, named.LastName),
+            Name = !isBusiness ? LeadConversionTransactionService.familyAccountName(named.FirstName, named.LastName)
+            		: (isSystemCompany(details.Company) ? personName(named) + ' B2B' : details.Company.trim()),
             Business_Type__c = isBusiness ? BUSINESS_TYPE_B2B : BUSINESS_TYPE_B2C,
             OwnerId = UserInfo.getUserId(),
             Phone = firstNotBlank(details.Phone, firstNotBlank(person.Phone, person.MobilePhone)),

@@ -1,0 +1,250 @@
+{
+  "info": {
+    "name": "Shree Hari — Shopify Customer API (UAT)",
+    "description": "Token + Send Customer calls for the Shree Hari Website API External Client App (the same app and credentials as the Lead API). Fill client_id and client_secret in the collection variables, run '1. Get Access Token' first (it stores access_token), then any of the customer requests. Endpoint: POST {{instance_url}}/services/apexrest/shreehari/v1/customers.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "instance_url",
+      "value": "https://agility-efficiency-7306--uat.sandbox.my.salesforce.com"
+    },
+    {
+      "key": "client_id",
+      "value": ""
+    },
+    {
+      "key": "client_secret",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Get Access Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    pm.collectionVariables.set('access_token', pm.response.json().access_token);",
+              "    pm.test('Token received', function () { pm.expect(pm.response.json().access_token).to.be.a('string'); });",
+              "} else {",
+              "    console.log('Token request failed:', pm.response.text());",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/oauth2/token",
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "oauth2",
+            "token"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Send Customer — full",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+              "const r = pm.response.json();",
+              "pm.test('Stored as a Staging Customer', function () {",
+              "    pm.expect(r.success).to.eql(true);",
+              "    pm.expect(r.stagingCustomerNumber).to.match(/^SC-/);",
+              "    pm.expect(r.stagingCustomerId).to.be.a('string');",
+              "});",
+              "console.log('Stored as', r.stagingCustomerNumber, r.stagingCustomerId);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accepts_marketing\": true,\n  \"addresses\": [\n    {\n      \"address1\": \"12/1 Lake View Road\",\n      \"address2\": \"Flat 4B\",\n      \"city\": \"Kolkata\",\n      \"company\": null,\n      \"country\": {\n        \"name\": \"India\",\n        \"iso_code\": \"IN\"\n      },\n      \"country_code\": \"IN\",\n      \"first_name\": \"Ananya\",\n      \"id\": 8803457089729,\n      \"last_name\": \"Sharma\",\n      \"name\": \"Ananya Sharma\",\n      \"phone\": \"+919830012345\",\n      \"province\": \"West Bengal\",\n      \"province_code\": \"WB\",\n      \"street\": \"12/1 Lake View Road, Flat 4B\",\n      \"summary\": \"12/1 Lake View Road, Flat 4B, Kolkata, West Bengal, India\",\n      \"url\": \"/account/addresses/8803457089729\",\n      \"zip\": \"700029\"\n    },\n    {\n      \"address1\": \"Godrej Waterside, Tower 2\",\n      \"address2\": \"Sector V, Salt Lake\",\n      \"city\": \"Kolkata\",\n      \"company\": null,\n      \"country\": {\n        \"name\": \"India\",\n        \"iso_code\": \"IN\"\n      },\n      \"country_code\": \"IN\",\n      \"first_name\": \"Ananya\",\n      \"id\": 8803457122497,\n      \"last_name\": \"Sharma\",\n      \"name\": \"Ananya Sharma\",\n      \"phone\": \"+919830012345\",\n      \"province\": \"West Bengal\",\n      \"province_code\": \"WB\",\n      \"street\": \"Godrej Waterside, Tower 2, Sector V, Salt Lake\",\n      \"summary\": \"Godrej Waterside, Tower 2, Sector V, Salt Lake, Kolkata, West Bengal, India\",\n      \"url\": \"/account/addresses/8803457122497\",\n      \"zip\": \"700091\"\n    }\n  ],\n  \"addresses_count\": 2,\n  \"b2b?\": false,\n  \"company_available_locations\": [],\n  \"company_available_locations_count\": 0,\n  \"current_company\": null,\n  \"current_location\": null,\n  \"default_address\": {\n    \"address1\": \"12/1 Lake View Road\",\n    \"address2\": \"Flat 4B\",\n    \"city\": \"Kolkata\",\n    \"company\": null,\n    \"country\": {\n      \"name\": \"India\",\n      \"iso_code\": \"IN\"\n    },\n    \"country_code\": \"IN\",\n    \"first_name\": \"Ananya\",\n    \"id\": 8803457089729,\n    \"last_name\": \"Sharma\",\n    \"name\": \"Ananya Sharma\",\n    \"phone\": \"+919830012345\",\n    \"province\": \"West Bengal\",\n    \"province_code\": \"WB\",\n    \"street\": \"12/1 Lake View Road, Flat 4B\",\n    \"summary\": \"12/1 Lake View Road, Flat 4B, Kolkata, West Bengal, India\",\n    \"url\": \"/account/addresses/8803457089729\",\n    \"zip\": \"700029\"\n  },\n  \"email\": \"ananya.sharma@example.com\",\n  \"first_name\": \"Ananya\",\n  \"has_account\": true,\n  \"has_avatar?\": false,\n  \"id\": 7364019208385,\n  \"last_name\": \"Sharma\",\n  \"last_order\": {\n    \"id\": 6120384529601,\n    \"name\": \"#1031\",\n    \"order_number\": 1031,\n    \"created_at\": \"2026-10-28 18:42:10 +0530\",\n    \"financial_status\": \"paid\",\n    \"fulfillment_status\": \"fulfilled\",\n    \"total_price\": 9500000,\n    \"line_items\": [\n      {\n        \"title\": \"22K Gold Bridal Necklace Set\",\n        \"sku\": \"NKS-22K-BRD-01\",\n        \"quantity\": 1,\n        \"final_line_price\": 9500000\n      }\n    ]\n  },\n  \"metafields\": {\n    \"custom\": {\n      \"date_of_birth\": \"1992-08-25\",\n      \"anniversary_date\": \"2018-02-14\",\n      \"preferred_store\": \"Kolkata - Gariahat\"\n    }\n  },\n  \"name\": \"Ananya Sharma\",\n  \"orders\": [\n    {\n      \"id\": 6120384529601,\n      \"name\": \"#1031\",\n      \"order_number\": 1031,\n      \"created_at\": \"2026-10-28 18:42:10 +0530\",\n      \"financial_status\": \"paid\",\n      \"fulfillment_status\": \"fulfilled\",\n      \"total_price\": 9500000,\n      \"line_items\": [\n        {\n          \"title\": \"22K Gold Bridal Necklace Set\",\n          \"sku\": \"NKS-22K-BRD-01\",\n          \"quantity\": 1,\n          \"final_line_price\": 9500000\n        }\n      ]\n    },\n    {\n      \"id\": 6098812207297,\n      \"name\": \"#1018\",\n      \"order_number\": 1018,\n      \"created_at\": \"2026-08-14 12:05:44 +0530\",\n      \"financial_status\": \"paid\",\n      \"fulfillment_status\": \"fulfilled\",\n      \"total_price\": 6250000,\n      \"line_items\": [\n        {\n          \"title\": \"22K Gold Bangle Pair\",\n          \"sku\": \"BNG-22K-2.6\",\n          \"quantity\": 1,\n          \"final_line_price\": 6250000\n        }\n      ]\n    },\n    {\n      \"id\": 6071190458561,\n      \"name\": \"#1004\",\n      \"order_number\": 1004,\n      \"created_at\": \"2026-05-02 16:20:03 +0530\",\n      \"financial_status\": \"paid\",\n      \"fulfillment_status\": \"fulfilled\",\n      \"total_price\": 3000000,\n      \"line_items\": [\n        {\n          \"title\": \"18K Diamond Stud Earrings\",\n          \"sku\": \"EAR-18K-DS-03\",\n          \"quantity\": 1,\n          \"final_line_price\": 3000000\n        }\n      ]\n    }\n  ],\n  \"orders_count\": 3,\n  \"payment_methods\": [\n    {\n      \"id\": \"pm_7364019208385_1\",\n      \"payment_instrument_type\": \"credit_card\",\n      \"payment_instrument_display_name\": \"Visa ending in 4242\"\n    }\n  ],\n  \"phone\": \"+919830012345\",\n  \"store_credit_account\": {\n    \"id\": 50331649,\n    \"balance\": {\n      \"amount\": \"2500.00\",\n      \"currency_code\": \"INR\"\n    }\n  },\n  \"tags\": [\n    \"bridal\",\n    \"newsletter\",\n    \"vip\"\n  ],\n  \"tax_exempt\": false,\n  \"total_spent\": 18750000\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/apexrest/shreehari/v1/customers",
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "apexrest",
+            "shreehari",
+            "v1",
+            "customers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Send Customer — minimal",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+              "const r = pm.response.json();",
+              "pm.test('Stored as a Staging Customer', function () {",
+              "    pm.expect(r.success).to.eql(true);",
+              "    pm.expect(r.stagingCustomerNumber).to.match(/^SC-/);",
+              "    pm.expect(r.stagingCustomerId).to.be.a('string');",
+              "});",
+              "console.log('Stored as', r.stagingCustomerNumber, r.stagingCustomerId);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": 7364019208386,\n  \"first_name\": \"Rakesh\",\n  \"last_name\": \"Agarwal\",\n  \"name\": \"Rakesh Agarwal\",\n  \"email\": \"rakesh.agarwal@example.com\",\n  \"phone\": \"+919007712345\",\n  \"accepts_marketing\": false,\n  \"orders_count\": 0,\n  \"total_spent\": 0,\n  \"tags\": [\n    \"walk-in\"\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/apexrest/shreehari/v1/customers",
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "apexrest",
+            "shreehari",
+            "v1",
+            "customers"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Error — missing id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+              "const r = pm.response.json();",
+              "pm.test('Rejected for missing id', function () {",
+              "    pm.expect(r.success).to.eql(false);",
+              "    pm.expect(r.errorCode).to.eql('MISSING_REQUIRED_FIELD');",
+              "    pm.expect(r.field).to.eql('id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"first_name\": \"Ananya\",\n  \"last_name\": \"Sharma\",\n  \"email\": \"ananya.sharma@example.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/apexrest/shreehari/v1/customers",
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "apexrest",
+            "shreehari",
+            "v1",
+            "customers"
+          ]
+        }
+      }
+    }
+  ]
+}

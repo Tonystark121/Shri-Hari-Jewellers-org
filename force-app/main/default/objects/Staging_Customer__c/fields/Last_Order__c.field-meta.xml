@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Order__c</fullName>
+    <description>The last order placed by the customer, not including test orders (order object), stored as JSON.</description>
+    <inlineHelpText>Shopify customer.last_order</inlineHelpText>
+    <label>Last Order</label>
+    <length>131072</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Staging_Product__c</fullName>
+    <description>The Staging Product this variant was sent with (one entry of product.variants).</description>
+    <label>Staging Product</label>
+    <referenceTo>Staging_Product__c</referenceTo>
+    <relationshipLabel>Staging Product Variants</relationshipLabel>
+    <relationshipName>Staging_Product_Variants</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>true</writeRequiresMasterRead>
+</CustomField>

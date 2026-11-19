@@ -46,8 +46,8 @@
  */
 public without sharing class LeadConversionTransactionService {
 
-    // Database.convertLead accepts at most 100 Leads per call.
-    private static final Integer CONVERT_CHUNK_SIZE = 100;
+    // Database.convertLead accepts at most 200 Leads per call.
+    private static final Integer CONVERT_CHUNK_SIZE = 200;
     private static final Integer ACCOUNT_NAME_MAX_LENGTH = 255;
     /** The Account default: a placeholder, so it is replaced like a blank. */
     private static final String BUSINESS_TYPE_UNKNOWN = 'Unknown';
@@ -429,7 +429,7 @@ public without sharing class LeadConversionTransactionService {
         List<Account> updates = new List<Account>();
         List<Integer> updatedRequests = new List<Integer>();
         for (Account accountRecord : [
-            SELECT Id, Name, Email__c, WhatsApp_Number__c, Business_Type__c, Description,
+            SELECT Id, Name, Email__c, WhatsApp_Number__c, Business_Type__c, Description,AccountSource,
                    WA_Opt_In__c, SMS_Opt_In__c, Email_Opt_In__c
             FROM Account
             WHERE Id IN :accountIds
@@ -463,6 +463,10 @@ public without sharing class LeadConversionTransactionService {
 
             if (String.isBlank(accountRecord.Email__c) && String.isNotBlank(leadRecord.Email)) {
                 changes.Email__c = leadRecord.Email;
+                changed = true;
+            }
+            if (String.isBlank(accountRecord.AccountSource ) && String.isNotBlank(leadRecord.LeadSource)) {
+                changes.AccountSource = leadRecord.LeadSource;
                 changed = true;
             }
             if (String.isBlank(accountRecord.WhatsApp_Number__c) && String.isNotBlank(leadRecord.MobilePhone)) {
@@ -531,7 +535,8 @@ public without sharing class LeadConversionTransactionService {
             WA_Opt_In__c = leadRecord.WA_Opt_In__c,
             SMS_Opt_In__c = leadRecord.SMS_Opt_In__c,
             Email_Opt_In__c = leadRecord.Email_Opt_In__c,
-            Description = leadRecord.Description
+            Description = leadRecord.Description,
+            AccountSource = leadRecord.LeadSource
         );
         if (isOwnedByUser(leadRecord)) {
             accountRecord.OwnerId = leadRecord.OwnerId;
@@ -672,8 +677,8 @@ public without sharing class LeadConversionTransactionService {
     }
 
     /**
-     * Same first name, last name, phone and email (names and email ignoring
-     * case and spaces around them, phone as 10 digits on the Contact's Phone
+     * Same first name, last name, phone, MobilePhone and email (names and email ignoring
+     * case and spaces around them, phone, MobilePhone  as 10 digits on the Contact's Phone
      * or Mobile). A value blank on both counts as the same.
      */
     @TestVisible
@@ -683,13 +688,13 @@ public without sharing class LeadConversionTransactionService {
             || !sameText(contactRecord.Email, leadRecord.Email)) {
             return false;
         }
-
-        String phone = LeadTriggerHandler.normalizePhone(leadRecord.Phone);
-        if (String.isBlank(phone)) {
-            return String.isBlank(contactRecord.Phone) && String.isBlank(contactRecord.MobilePhone);
-        }
-        return phone == LeadTriggerHandler.normalizePhone(contactRecord.Phone)
-            || phone == LeadTriggerHandler.normalizePhone(contactRecord.MobilePhone);
+		String leadPhone = LeadTriggerHandler.normalizePhone(leadRecord.Phone);
+        String leadMobile = LeadTriggerHandler.normalizePhone(leadRecord.MobilePhone);
+    
+        String contactPhone = LeadTriggerHandler.normalizePhone(contactRecord.Phone);
+        String contactMobile = LeadTriggerHandler.normalizePhone(contactRecord.MobilePhone);
+    
+        return leadPhone == contactPhone && leadMobile == contactMobile;
     }
 
     private static Boolean sameText(String first, String second) {
@@ -761,7 +766,7 @@ public without sharing class LeadConversionTransactionService {
         return new Map<Id, Lead>([
             SELECT Id, FirstName, LastName, Company, Lead_Number__c, Business_Type__c, Phone, MobilePhone, Email, IsConverted, OwnerId,
                    Date_of_Birth__c, Anniversary_Date__c, Marital_Status__c, Description,
-                   Store_Association__c, Campaign_Attribution__c,
+                   Store_Association__c, Campaign_Attribution__c, LeadSource,
                    WA_Opt_In__c, SMS_Opt_In__c, Email_Opt_In__c
             FROM Lead
             WHERE Id IN :leadIds
@@ -780,8 +785,12 @@ public without sharing class LeadConversionTransactionService {
         if (String.isNotBlank(request.accountName)) {
             return request.accountName.trim();
         }
-        if (!LeadTriggerHandler.isSystemCompany(leadRecord.Company)) {
-            return leadRecord.Company.trim();
+        if (businessTypeOf(leadRecord) == BUSINESS_TYPE_B2B) {
+            // A typed Company is the business name; a system Company means a
+            // B2B Lead with no company name, so use the person's name.
+            return LeadTriggerHandler.isSystemCompany(leadRecord.Company)
+                ? LeadTriggerHandler.personName(leadRecord) + ' B2B'
+                : leadRecord.Company.trim();
         }
         return familyAccountName(leadRecord.FirstName, leadRecord.LastName);
     }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Selected_Or_First_Avail_Plan_Allocation__c</fullName>
+    <description>selling_plan_allocation object, stored as JSON.</description>
+    <inlineHelpText>Shopify product.selected_or_first_available_selling_plan_allocation</inlineHelpText>
+    <label>Selected/First Avail Plan Allocation</label>
+    <length>32768</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>
