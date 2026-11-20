@@ -37,8 +37,8 @@
  *   4xx/5xx {success:false, errorCode, message, field, httpStatus}
  *
  * Authentication is handled by the platform (Shree Hari Website API External
- * Client App); the integration user needs the Shree Hari Product API Access
- * permission set.
+ * Client App); the integration user gets its access from the Shree Hari Lead
+ * API Access permission set.
  */
 @RestResource(urlMapping='/shreehari/v1/products/*')
 global with sharing class ShreeHariProductRestResource {
@@ -219,8 +219,10 @@ global with sharing class ShreeHariProductRestResource {
 
         } catch (ApiException e) {
             writeError(response, e.errorCode, e.httpStatus, e.jsonField, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_PRODUCT, 'ShreeHariProductRestResource', 'receiveProduct', e);
         } catch (Exception e) {
             writeError(response, 'DML_EXCEPTION', 500, null, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_PRODUCT, 'ShreeHariProductRestResource', 'receiveProduct', e);
         }
     }
 

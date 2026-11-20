@@ -106,12 +106,14 @@ global with sharing class ShreeHariLeadRestResource {
 
         } catch (ApiException e) {
             writeError(response, e.errorCode, e.httpStatus, e.jsonField, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_LEAD, 'ShreeHariLeadRestResource', 'createLead', e);
 
         } catch (Exception e) {
             // Nothing below this point is expected. It is reported with the same
             // 500 code the specification gives platform failures, so the caller
             // still receives a parseable body and can retry.
             writeError(response, 'DML_EXCEPTION', 500, null, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_LEAD, 'ShreeHariLeadRestResource', 'createLead', e);
         }
     }
 

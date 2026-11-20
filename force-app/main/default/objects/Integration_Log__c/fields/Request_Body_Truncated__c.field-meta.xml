@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Request_Body_Truncated__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Ticked when the request body was longer than 131,072 characters and only the first part is stored in Request Body.</description>
+    <externalId>false</externalId>
+    <label>Request Body Truncated</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

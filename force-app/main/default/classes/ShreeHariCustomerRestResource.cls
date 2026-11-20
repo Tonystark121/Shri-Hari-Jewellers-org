@@ -123,8 +123,10 @@ global with sharing class ShreeHariCustomerRestResource {
 
         } catch (ApiException e) {
             writeError(response, e.errorCode, e.httpStatus, e.jsonField, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_CUSTOMER, 'ShreeHariCustomerRestResource', 'receiveCustomer', e);
         } catch (Exception e) {
             writeError(response, 'DML_EXCEPTION', 500, null, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_CUSTOMER, 'ShreeHariCustomerRestResource', 'receiveCustomer', e);
         }
     }
 

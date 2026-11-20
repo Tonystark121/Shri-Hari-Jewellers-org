@@ -40,8 +40,8 @@
  *   4xx/5xx {success:false, errorCode, message, field, httpStatus}
  *
  * Authentication is handled by the platform (Shree Hari Website API External
- * Client App); the integration user needs the Shree Hari Order API Access
- * permission set.
+ * Client App); the integration user gets its access from the Shree Hari Lead
+ * API Access permission set.
  */
 @RestResource(urlMapping='/shreehari/v1/orders/*')
 global with sharing class ShreeHariOrderRestResource {
@@ -154,8 +154,10 @@ global with sharing class ShreeHariOrderRestResource {
 
         } catch (ApiException e) {
             writeError(response, e.errorCode, e.httpStatus, e.jsonField, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_ORDER, 'ShreeHariOrderRestResource', 'receiveOrder', e);
         } catch (Exception e) {
             writeError(response, 'DML_EXCEPTION', 500, null, e.getMessage());
+            IntegrationLogService.logError(IntegrationLogService.API_ORDER, 'ShreeHariOrderRestResource', 'receiveOrder', e);
         }
     }
 

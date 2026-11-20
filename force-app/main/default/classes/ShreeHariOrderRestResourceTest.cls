@@ -3,8 +3,8 @@
  *
  * Each test drives the resource the way the sender does: a JSON body in, a
  * status code and JSON body out, then checks what was stored on
- * Staging_Order__c. Calls are made as a user whose only access is the
- * Shree Hari Order API Access permission set.
+ * Staging_Order__c. Calls are made as a Standard User whose only access to
+ * Staging Order is a permission set built in the test.
  */
 @IsTest
 private class ShreeHariOrderRestResourceTest {
@@ -28,7 +28,11 @@ private class ShreeHariOrderRestResourceTest {
 
     private static User apiUser;
 
-    /** A user whose only access to Staging Order is the Shree Hari Order API Access permission set. */
+    /**
+     * A Standard User given create and read on Staging Order and its fields
+     * through a permission set built here, so the tests do not depend on how
+     * access is granted in the org.
+     */
     private static User apiUser() {
         if (apiUser == null) {
             String unique = 'orderapi' + Crypto.getRandomInteger() + '@shreehari.test';
@@ -40,10 +44,28 @@ private class ShreeHariOrderRestResourceTest {
             );
             System.runAs(new User(Id = UserInfo.getUserId())) {
                 insert apiUser;
-                insert new PermissionSetAssignment(
-                    AssigneeId = apiUser.Id,
-                    PermissionSetId = [SELECT Id FROM PermissionSet WHERE Name = 'Shree_Hari_Order_API_Access' LIMIT 1].Id
+
+                PermissionSet access = new PermissionSet(
+                    Name = 'Test_Staging_Order_Access', Label = 'Test Staging Order Access'
                 );
+                insert access;
+                insert new ObjectPermissions(
+                    ParentId = access.Id, SobjectType = 'Staging_Order__c',
+                    PermissionsCreate = true, PermissionsRead = true
+                );
+                List<FieldPermissions> fieldAccess = new List<FieldPermissions>();
+                for (Schema.SObjectField field : Schema.SObjectType.Staging_Order__c.fields.getMap().values()) {
+                    Schema.DescribeFieldResult d = field.getDescribe();
+                    if (d.isCustom() && d.isPermissionable()) {
+                        fieldAccess.add(new FieldPermissions(
+                            ParentId = access.Id, SobjectType = 'Staging_Order__c',
+                            Field = 'Staging_Order__c.' + d.getName(),
+                            PermissionsRead = true, PermissionsEdit = true
+                        ));
+                    }
+                }
+                insert fieldAccess;
+                insert new PermissionSetAssignment(AssigneeId = apiUser.Id, PermissionSetId = access.Id);
             }
         }
         return apiUser;
