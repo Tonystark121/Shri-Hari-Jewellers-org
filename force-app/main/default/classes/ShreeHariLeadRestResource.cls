@@ -295,7 +295,7 @@ global with sharing class ShreeHariLeadRestResource {
         }
     }
 
-    private static void checkLength(
+    public static void checkLength(
         Schema.SObjectField field,
         String jsonName,
         String value
@@ -551,7 +551,7 @@ global with sharing class ShreeHariLeadRestResource {
         }
     }
 
-    private static Boolean hasActiveLeadAssignmentRule() {
+    public static Boolean hasActiveLeadAssignmentRule() {
         List<AssignmentRule> rules = [
             SELECT Id
             FROM AssignmentRule
@@ -562,7 +562,7 @@ global with sharing class ShreeHariLeadRestResource {
     }
 
     /** Maps a platform DML failure onto the documented error codes. */
-    private static ApiException translate(DmlException e) {
+    public static ApiException translate(DmlException e) {
         String message = e.getNumDml() > 0 ? e.getDmlMessage(0) : e.getMessage();
 
         if (e.getNumDml() > 0) {
@@ -646,7 +646,7 @@ global with sharing class ShreeHariLeadRestResource {
      * Renders the standard error envelope from section 06 of the specification,
      * in the documented key order.
      */
-    private static void writeError(
+    public static void writeError(
         RestResponse response,
         String errorCode,
         Integer httpStatus,
@@ -675,7 +675,7 @@ global with sharing class ShreeHariLeadRestResource {
     // members on exception classes, so ApiException is populated from here.
     // ---------------------------------------------------------------------
 
-    private static ApiException error(
+    public static ApiException error(
         String errorCode,
         Integer httpStatus,
         String jsonField,
@@ -688,7 +688,7 @@ global with sharing class ShreeHariLeadRestResource {
         return e;
     }
 
-    private static ApiException badRequest(String errorCode, String jsonField, String message) {
+    public static ApiException badRequest(String errorCode, String jsonField, String message) {
         return error(errorCode, 400, jsonField, message);
     }
 

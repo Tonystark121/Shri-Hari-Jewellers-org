@@ -1,0 +1,146 @@
+{
+  "event": {
+    "id": "cbv3x2k1abc",
+    "type": "checkout.abandoned",
+    "timestamp": 1756464700000,
+    "shop_id": "store-8821.myshopify.com",
+    "domain": "craftbazaar.in",
+    "version": "2.0",
+    "platform": "shopify"
+  },
+  "data": {
+    "consent": {
+      "whatsapp": true,
+      "email": true,
+      "sms": false
+    },
+    "notes": {
+      "client_id": "..."
+    },
+    "user": {
+      "user_id": "cust_abc123",
+      "contact": "+919876543210",
+      "email": "priya@example.com",
+      "first_name": "Priya",
+      "last_name": "Sharma",
+      "login_method": "otp",
+      "address": {
+        "line1": "221B Baker Street",
+        "line2": "Near City Mall",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "country": "India",
+        "pincode": "400067"
+      }
+    },
+    "session": {
+      "rzp_unified_session_id": "cbe817b5-b84e-4eb5-90a6-2efda5865315",
+      "device_type": "mobile",
+      "os": "android",
+      "browser": "chrome",
+      "utm_source": "facebook",
+      "utm_medium": "cpc",
+      "utm_campaign": "summer",
+      "utm_last_source": "facebook",
+      "utm_last_medium": "cpc",
+      "utm_last_campaign": "retarget",
+      "utm_first_source": "google",
+      "utm_first_medium": "organic",
+      "utm_first_campaign": "q1",
+      "utm_first_click_id": "FBCL1",
+      "utm_first_click_type": "fbclid",
+      "referrer": "https://instagram.com/",
+      "prior_sessions": {
+        "7d": 2,
+        "30d": 5,
+        "total": 6
+      },
+      "landing_page": "https://craftbazaar.in/collections/sarees",
+      "exit_page": "https://craftbazaar.in/checkout/payment",
+      "session_start_time": 1756461000,
+      "session_duration_seconds": 3700,
+      "total_pages_viewed": 7,
+      "pages_visited": [
+        {
+          "url": "https://craftbazaar.in/collections/sarees",
+          "duration_seconds": 45
+        }
+      ],
+      "products_viewed": [
+        {
+          "product_id": "10252876775744",
+          "title": "Paithani Silk Saree",
+          "price": 799900,
+          "viewed_at": 1756461600
+        }
+      ],
+      "time_in_checkout_ms": 142000
+    },
+    "geo": {
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India",
+      "country_code": "IN",
+      "pincode": "400067"
+    },
+    "enrichment": {
+      "customer_signals": {}
+    },
+    "checkout": {
+      "order_id": "order_NxJ4kP2mQ8rT5v",
+      "checkout_id": "chk_2xY8KpL3nW",
+      "cart_token": "hWNGXvgk9aJy9OaHlgH2zf9Q?key=769cb99593b6f5bf8c184caf992e8c36",
+      "magic_recovery_url": "https://checkout.razorpay.com/magic/recover/chk_2xY8",
+      "abandonment_stage": "payments_page",
+      "last_step_reached": "checkout.payment_failed",
+      "time_in_checkout_ms": 142000,
+      "currency": "INR",
+      "line_items_total": 799900,
+      "line_items": [
+        {
+          "product_id": "10252876775744",
+          "variant_id": "53096887550272",
+          "name": "Saanjh Paithani Silk Peacock Handloom Saree Deep Teal",
+          "variant_title": "Default Title",
+          "sku": "60902SGPS025",
+          "quantity": 1,
+          "price": 799900,
+          "taxable": false,
+          "tax_amount": 0,
+          "image_url": "https://cdn.shopify.com/s/files/1/0726/1454/3680/files/60902SGPS025a.jpg"
+        }
+      ],
+      "promotions": [],
+      "available_coupons": [
+        {
+          "coupon_code": "COMEBACK15",
+          "description": "15% off"
+        }
+      ],
+      "payment_context": {
+        "payment_failed": false,
+        "attempted_payment_method": "upi",
+        "payment_failure_code": ""
+      },
+      "tax_details": {
+        "taxes_included": false,
+        "total_tax": 0
+      },
+      "address_context": {
+        "has_complete_address": true,
+        "is_serviceable": true,
+        "cod_available": true,
+        "cod_restriction_reason": "",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400067"
+      },
+      "customer_history": {
+        "visit_frequency": "medium",
+        "sessions_last_30_days": 4,
+        "prior_orders_count": 0,
+        "has_prior_orders": false
+      }
+    }
+  }
+}

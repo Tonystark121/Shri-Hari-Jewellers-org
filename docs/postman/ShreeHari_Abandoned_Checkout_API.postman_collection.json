@@ -1,0 +1,231 @@
+{
+  "info": {
+    "name": "Shree Hari — Abandoned Checkout and Cart API (UAT)",
+    "description": "Token + abandoned checkout/cart calls for the Shree Hari Website API External Client App. Fill client_id and client_secret in the collection variables, run '1. Get Access Token' first, then any request. Endpoint: POST {{instance_url}}/services/apexrest/shreehari/v1/abandoned-checkouts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Get Access Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    pm.collectionVariables.set('access_token', pm.response.json().access_token);",
+              "    pm.test('Token received', function () { pm.expect(pm.response.json().access_token).to.be.a('string'); });",
+              "} else {",
+              "    console.log('Token request failed:', pm.response.text());",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{instance_url}}/services/oauth2/token",
+          "host": [
+            "{{instance_url}}"
+          ],
+          "path": [
+            "services",
+            "oauth2",
+            "token"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Checkout Abandoned",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Accepted', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{instance_url}}/services/apexrest/shreehari/v1/abandoned-checkouts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": {\n    \"id\": \"cbv3x2k1abc\",\n    \"type\": \"checkout.abandoned\",\n    \"timestamp\": 1756464700000,\n    \"shop_id\": \"store-8821.myshopify.com\",\n    \"domain\": \"craftbazaar.in\",\n    \"version\": \"2.0\",\n    \"platform\": \"shopify\"\n  },\n  \"data\": {\n    \"consent\": {\n      \"whatsapp\": true,\n      \"email\": true,\n      \"sms\": false\n    },\n    \"notes\": {\n      \"client_id\": \"...\"\n    },\n    \"user\": {\n      \"user_id\": \"cust_abc123\",\n      \"contact\": \"+919876543210\",\n      \"email\": \"priya@example.com\",\n      \"first_name\": \"Priya\",\n      \"last_name\": \"Sharma\",\n      \"login_method\": \"otp\",\n      \"address\": {\n        \"line1\": \"221B Baker Street\",\n        \"line2\": \"Near City Mall\",\n        \"city\": \"Mumbai\",\n        \"state\": \"Maharashtra\",\n        \"country\": \"India\",\n        \"pincode\": \"400067\"\n      }\n    },\n    \"session\": {\n      \"rzp_unified_session_id\": \"cbe817b5-b84e-4eb5-90a6-2efda5865315\",\n      \"device_type\": \"mobile\",\n      \"os\": \"android\",\n      \"browser\": \"chrome\",\n      \"utm_source\": \"facebook\",\n      \"utm_medium\": \"cpc\",\n      \"utm_campaign\": \"summer\",\n      \"utm_last_source\": \"facebook\",\n      \"utm_last_medium\": \"cpc\",\n      \"utm_last_campaign\": \"retarget\",\n      \"utm_first_source\": \"google\",\n      \"utm_first_medium\": \"organic\",\n      \"utm_first_campaign\": \"q1\",\n      \"utm_first_click_id\": \"FBCL1\",\n      \"utm_first_click_type\": \"fbclid\",\n      \"referrer\": \"https://instagram.com/\",\n      \"prior_sessions\": {\n        \"7d\": 2,\n        \"30d\": 5,\n        \"total\": 6\n      },\n      \"landing_page\": \"https://craftbazaar.in/collections/sarees\",\n      \"exit_page\": \"https://craftbazaar.in/checkout/payment\",\n      \"session_start_time\": 1756461000,\n      \"session_duration_seconds\": 3700,\n      \"total_pages_viewed\": 7,\n      \"pages_visited\": [\n        {\n          \"url\": \"https://craftbazaar.in/collections/sarees\",\n          \"duration_seconds\": 45\n        }\n      ],\n      \"products_viewed\": [\n        {\n          \"product_id\": \"10252876775744\",\n          \"title\": \"Paithani Silk Saree\",\n          \"price\": 799900,\n          \"viewed_at\": 1756461600\n        }\n      ],\n      \"time_in_checkout_ms\": 142000\n    },\n    \"geo\": {\n      \"city\": \"Mumbai\",\n      \"state\": \"Maharashtra\",\n      \"country\": \"India\",\n      \"country_code\": \"IN\",\n      \"pincode\": \"400067\"\n    },\n    \"enrichment\": {\n      \"customer_signals\": {}\n    },\n    \"checkout\": {\n      \"order_id\": \"order_NxJ4kP2mQ8rT5v\",\n      \"checkout_id\": \"chk_2xY8KpL3nW\",\n      \"cart_token\": \"hWNGXvgk9aJy9OaHlgH2zf9Q?key=769cb99593b6f5bf8c184caf992e8c36\",\n      \"magic_recovery_url\": \"https://checkout.razorpay.com/magic/recover/chk_2xY8\",\n      \"abandonment_stage\": \"payments_page\",\n      \"last_step_reached\": \"checkout.payment_failed\",\n      \"time_in_checkout_ms\": 142000,\n      \"currency\": \"INR\",\n      \"line_items_total\": 799900,\n      \"line_items\": [\n        {\n          \"product_id\": \"10252876775744\",\n          \"variant_id\": \"53096887550272\",\n          \"name\": \"Saanjh Paithani Silk Peacock Handloom Saree Deep Teal\",\n          \"variant_title\": \"Default Title\",\n          \"sku\": \"60902SGPS025\",\n          \"quantity\": 1,\n          \"price\": 799900,\n          \"taxable\": false,\n          \"tax_amount\": 0,\n          \"image_url\": \"https://cdn.shopify.com/s/files/1/0726/1454/3680/files/60902SGPS025a.jpg\"\n        }\n      ],\n      \"promotions\": [],\n      \"available_coupons\": [\n        {\n          \"coupon_code\": \"COMEBACK15\",\n          \"description\": \"15% off\"\n        }\n      ],\n      \"payment_context\": {\n        \"payment_failed\": false,\n        \"attempted_payment_method\": \"upi\",\n        \"payment_failure_code\": \"\"\n      },\n      \"tax_details\": {\n        \"taxes_included\": false,\n        \"total_tax\": 0\n      },\n      \"address_context\": {\n        \"has_complete_address\": true,\n        \"is_serviceable\": true,\n        \"cod_available\": true,\n        \"cod_restriction_reason\": \"\",\n        \"city\": \"Mumbai\",\n        \"state\": \"Maharashtra\",\n        \"pincode\": \"400067\"\n      },\n      \"customer_history\": {\n        \"visit_frequency\": \"medium\",\n        \"sessions_last_30_days\": 4,\n        \"prior_orders_count\": 0,\n        \"has_prior_orders\": false\n      }\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "3. Cart Abandoned",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Accepted', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{instance_url}}/services/apexrest/shreehari/v1/abandoned-checkouts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": {\n    \"id\": \"cbv3x2k1abc\",\n    \"type\": \"cart.abandoned\",\n    \"timestamp\": 1756464700000,\n    \"shop_id\": \"store-8821.myshopify.com\",\n    \"version\": \"2.0\",\n    \"platform\": \"shopify\"\n  },\n  \"data\": {\n    \"consent\": {\n      \"whatsapp\": true,\n      \"email\": true,\n      \"sms\": false\n    },\n    \"notes\": {\n      \"client_id\": \"...\"\n    },\n    \"user\": {\n      \"contact\": \"+918888888888\",\n      \"email\": \"user@example.com\"\n    },\n    \"session\": {\n      \"rzp_unified_session_id\": \"abc123-...\",\n      \"device_type\": \"mobile\",\n      \"pages_visited\": [\n        {\n          \"url\": \"https://store.com/collections/sarees\",\n          \"duration_seconds\": 45\n        }\n      ],\n      \"products_viewed\": [\n        {\n          \"product_id\": \"7652090314919\",\n          \"title\": \"Banarasi Saree\",\n          \"price\": 700000\n        }\n      ]\n    },\n    \"geo\": {\n      \"city\": \"Delhi\",\n      \"state\": \"Delhi\",\n      \"country_code\": \"IN\"\n    },\n    \"enrichment\": {\n      \"customer_signals\": {}\n    },\n    \"cart\": {\n      \"cart_token\": \"c1-68be3b...\",\n      \"cart_url\": \"https://store.myshopify.com/cart\",\n      \"magic_recovery_url\": \"https://checkout.razorpay.com/magic/recover/cart/c1-...\",\n      \"currency\": \"INR\",\n      \"line_items_total\": 700000,\n      \"line_items\": [\n        {\n          \"product_id\": \"7652090314919\",\n          \"variant_id\": \"43306810998951\",\n          \"name\": \"Sujatra Banarasi Saree\",\n          \"variant_title\": \"S / Blue\",\n          \"sku\": \"SJT-BNRS-001-S-BLU\",\n          \"quantity\": 1,\n          \"price\": 700000,\n          \"taxable\": true,\n          \"tax_amount\": 0,\n          \"image_url\": \"https://cdn.shopify.com/.../saree.jpg\"\n        }\n      ],\n      \"last_cart_activity\": \"item_added\",\n      \"last_cart_activity_timestamp\": 1756463500,\n      \"available_coupons\": [\n        {\n          \"coupon_code\": \"CARTBACK10\",\n          \"description\": \"10% off\"\n        }\n      ],\n      \"customer_history\": {\n        \"visit_frequency\": \"medium\",\n        \"sessions_last_30_days\": 2,\n        \"prior_orders_count\": 0,\n        \"has_prior_orders\": false\n      }\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "4. Smallest accepted event",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Accepted', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{instance_url}}/services/apexrest/shreehari/v1/abandoned-checkouts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": {\n    \"id\": \"evt_minimal_001\",\n    \"type\": \"cart.abandoned\"\n  },\n  \"data\": {\n    \"user\": {\n      \"contact\": \"+918888800001\"\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "5. Error — missing contact",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 MISSING_REQUIRED_FIELD', function () { pm.response.to.have.status(400); pm.expect(pm.response.json().errorCode).to.eql('MISSING_REQUIRED_FIELD'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{instance_url}}/services/apexrest/shreehari/v1/abandoned-checkouts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"event\": {\n    \"id\": \"cbv3x2k1abc\",\n    \"type\": \"cart.abandoned\",\n    \"timestamp\": 1756464700000,\n    \"shop_id\": \"store-8821.myshopify.com\",\n    \"version\": \"2.0\",\n    \"platform\": \"shopify\"\n  },\n  \"data\": {\n    \"consent\": {\n      \"whatsapp\": true,\n      \"email\": true,\n      \"sms\": false\n    },\n    \"notes\": {\n      \"client_id\": \"...\"\n    },\n    \"user\": {\n      \"contact\": \"\",\n      \"email\": \"user@example.com\"\n    },\n    \"session\": {\n      \"rzp_unified_session_id\": \"abc123-...\",\n      \"device_type\": \"mobile\",\n      \"pages_visited\": [\n        {\n          \"url\": \"https://store.com/collections/sarees\",\n          \"duration_seconds\": 45\n        }\n      ],\n      \"products_viewed\": [\n        {\n          \"product_id\": \"7652090314919\",\n          \"title\": \"Banarasi Saree\",\n          \"price\": 700000\n        }\n      ]\n    },\n    \"geo\": {\n      \"city\": \"Delhi\",\n      \"state\": \"Delhi\",\n      \"country_code\": \"IN\"\n    },\n    \"enrichment\": {\n      \"customer_signals\": {}\n    },\n    \"cart\": {\n      \"cart_token\": \"c1-68be3b...\",\n      \"cart_url\": \"https://store.myshopify.com/cart\",\n      \"magic_recovery_url\": \"https://checkout.razorpay.com/magic/recover/cart/c1-...\",\n      \"currency\": \"INR\",\n      \"line_items_total\": 700000,\n      \"line_items\": [\n        {\n          \"product_id\": \"7652090314919\",\n          \"variant_id\": \"43306810998951\",\n          \"name\": \"Sujatra Banarasi Saree\",\n          \"variant_title\": \"S / Blue\",\n          \"sku\": \"SJT-BNRS-001-S-BLU\",\n          \"quantity\": 1,\n          \"price\": 700000,\n          \"taxable\": true,\n          \"tax_amount\": 0,\n          \"image_url\": \"https://cdn.shopify.com/.../saree.jpg\"\n        }\n      ],\n      \"last_cart_activity\": \"item_added\",\n      \"last_cart_activity_timestamp\": 1756463500,\n      \"available_coupons\": [\n        {\n          \"coupon_code\": \"CARTBACK10\",\n          \"description\": \"10% off\"\n        }\n      ],\n      \"customer_history\": {\n        \"visit_frequency\": \"medium\",\n        \"sessions_last_30_days\": 2,\n        \"prior_orders_count\": 0,\n        \"has_prior_orders\": false\n      }\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "instance_url",
+      "value": "https://agility-efficiency-7306--uat.sandbox.my.salesforce.com"
+    },
+    {
+      "key": "client_id",
+      "value": ""
+    },
+    {
+      "key": "client_secret",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ]
+}

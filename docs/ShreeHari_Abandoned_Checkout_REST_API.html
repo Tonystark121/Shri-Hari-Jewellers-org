@@ -1,0 +1,729 @@
+<title>Shree Hari Abandoned Checkout and Cart API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap">
+<style>
+  :root{
+    --ground:#FBF8F5;
+    --paper:#FFFFFF;
+    --surface:#F5EEE7;
+    --surface-2:#EFE5DB;
+    --ink:#2A211C;
+    --ink-soft:#6B5B4E;
+    --ink-faint:#8C7B6E;
+    --rule:#E2D5C8;
+    --rule-strong:#C9B7A6;
+    --brand:#553F33;
+    --brand-deep:#3B2B22;
+    --on-brand:#F6EDE3;
+    --gold:#A07C3F;
+    --gold-soft:#F0E4CF;
+    --rust:#A33B2A;
+    --rust-soft:#F6E3DE;
+    --green:#3D6B4E;
+    --green-soft:#E1EDE4;
+    --code-bg:#241C17;
+    --code-ink:#EDE2D6;
+    --code-key:#D8B778;
+    --code-str:#B9CBA6;
+    --code-com:#9A8678;
+    --code-bar:#181210;
+    --shadow:0 1px 2px rgba(42,33,28,.06);
+    --maxw:960px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#171210;
+      --paper:#1E1815;
+      --surface:#262019;
+      --surface-2:#2F2720;
+      --ink:#F0E7DE;
+      --ink-soft:#C3B2A4;
+      --ink-faint:#9C8A7C;
+      --rule:#3A302A;
+      --rule-strong:#4E4139;
+      --brand:#D9BFA6;
+      --brand-deep:#E8D6C3;
+      --on-brand:#1A1310;
+      --gold:#D9B06B;
+      --gold-soft:#3A2F1E;
+      --rust:#E09480;
+      --rust-soft:#3B2420;
+      --green:#8FC29F;
+      --green-soft:#1F2E24;
+      --code-bg:#120E0C;
+      --code-bar:#0C0908;
+      --shadow:0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#171210;
+    --paper:#1E1815;
+    --surface:#262019;
+    --surface-2:#2F2720;
+    --ink:#F0E7DE;
+    --ink-soft:#C3B2A4;
+    --ink-faint:#9C8A7C;
+    --rule:#3A302A;
+    --rule-strong:#4E4139;
+    --brand:#D9BFA6;
+    --brand-deep:#E8D6C3;
+    --on-brand:#1A1310;
+    --gold:#D9B06B;
+    --gold-soft:#3A2F1E;
+    --rust:#E09480;
+    --rust-soft:#3B2420;
+    --green:#8FC29F;
+    --green-soft:#1F2E24;
+    --code-bg:#120E0C;
+    --code-bar:#0C0908;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+    font-size:14px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  *{box-sizing:border-box}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+
+  /* ---------- running header ---------- */
+  .runner{
+    background:var(--brand);
+    color:var(--on-brand);
+    padding:10px max(16px,calc((100% - var(--maxw))/2));
+    display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;
+    font-size:12px;letter-spacing:.02em;
+  }
+  .runner b{font-weight:600}
+  .runner .r{opacity:.8}
+
+  .wrap{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding-inline:16px;
+    padding-block:40px 64px;
+  }
+
+  /* ---------- masthead ---------- */
+  .eyebrow{
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;margin:0 0 10px;
+  }
+  h1{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:clamp(28px,5vw,42px);
+    line-height:1.12;font-weight:700;letter-spacing:-.01em;
+    margin:0 0 12px;color:var(--brand-deep);text-wrap:balance;
+  }
+  .standfirst{
+    font-size:16px;color:var(--ink-soft);margin:0 0 22px;max-width:62ch;
+  }
+  .hairline{height:3px;background:var(--brand);border:0;margin:0 0 22px;max-width:120px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+  .chip{
+    border:1px solid var(--rule-strong);background:var(--paper);
+    padding:8px 14px;font-size:12px;font-weight:600;color:var(--ink-soft);
+  }
+  .chip span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin-bottom:2px}
+  .chip.gold{border-color:var(--gold);background:var(--gold-soft);color:var(--brand-deep)}
+
+  /* ---------- sections ---------- */
+  section{margin-top:44px}
+  h2{
+    font-family:"IBM Plex Serif",Georgia,serif;
+    font-size:22px;font-weight:700;color:var(--brand-deep);
+    margin:0 0 4px;letter-spacing:-.01em;
+  }
+  h2 .num{color:var(--gold);font-family:"IBM Plex Mono",monospace;font-size:16px;margin-right:10px;font-weight:500}
+  h3{font-size:14px;font-weight:600;color:var(--ink);margin:26px 0 10px;letter-spacing:.01em}
+  h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:22px 0 8px}
+  .sect-rule{height:1px;background:var(--rule-strong);border:0;margin:8px 0 18px}
+  p{margin:0 0 14px;max-width:72ch}
+  a{color:var(--brand);text-decoration-thickness:1px;text-underline-offset:2px}
+  code:not(pre code){
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.90em;
+    background:var(--surface);border:1px solid var(--rule);padding:1px 5px;color:var(--brand-deep);
+  }
+  strong{font-weight:600}
+
+  /* ---------- callouts ---------- */
+  .note{
+    border-left:3px solid var(--brand);background:var(--surface);
+    padding:14px 16px;margin:0 0 18px;font-size:13.5px;
+  }
+  .note.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+  .note.stop{border-left-color:var(--rust);background:var(--rust-soft)}
+  .note p:last-child{margin-bottom:0}
+  .note .lbl{font-weight:600;color:var(--brand-deep)}
+
+  /* ---------- flow ---------- */
+  .flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:18px 0 22px}
+  .flow .box{
+    flex:1 1 150px;min-width:130px;border:1px solid var(--rule-strong);background:var(--paper);
+    padding:14px 12px;text-align:center;font-size:12.5px;font-weight:600;color:var(--ink);
+    display:flex;flex-direction:column;justify-content:center;gap:3px;
+  }
+  .flow .box em{display:block;font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:500}
+  .flow .box.accent{background:var(--surface);border-color:var(--brand);color:var(--brand-deep)}
+  .flow .arw{align-self:center;color:var(--gold);font-size:16px;font-weight:600}
+
+  /* ---------- tables ---------- */
+  .tbl{overflow-x:auto;margin:0 0 18px;border:1px solid var(--rule-strong)}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--paper);min-width:560px}
+  thead th{
+    background:var(--surface-2);color:var(--brand-deep);text-align:left;
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+    padding:10px 12px;border-bottom:1px solid var(--rule-strong);white-space:nowrap;
+  }
+  td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tbody tr:last-child td{border-bottom:0}
+  td.api,code.api{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--brand);word-break:break-word}
+  td.fld{font-weight:600;white-space:nowrap}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.tight{min-width:420px}
+
+  .req,.opt,.cond{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em;
+    font-weight:600;padding:2px 6px;white-space:nowrap;display:inline-block;
+  }
+  .req{background:var(--rust-soft);color:var(--rust);border:1px solid color-mix(in srgb,var(--rust) 35%,transparent)}
+  .opt{background:var(--surface);color:var(--ink-faint);border:1px solid var(--rule-strong)}
+  .cond{background:var(--gold-soft);color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+  .code-200{color:var(--green);font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+  .code-4xx{color:var(--rust);font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+
+  /* ---------- endpoint bar ---------- */
+  .endpoint{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    border:1px solid var(--rule-strong);border-left:3px solid var(--brand);
+    background:var(--paper);padding:12px 16px;margin:0 0 6px;
+  }
+  .verb{background:var(--green-soft);color:var(--green);font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:12px;padding:4px 10px;letter-spacing:.06em}
+  .path{font-family:"IBM Plex Mono",monospace;font-size:13.5px;font-weight:500;color:var(--brand-deep);word-break:break-all;flex:1 1 260px}
+  .endpoint .tag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600}
+
+  /* ---------- code ---------- */
+  .codeblock{margin:0 0 18px;border:1px solid var(--code-bar);background:var(--code-bg)}
+  .codeblock .bar{
+    background:var(--code-bar);color:#B9A695;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;letter-spacing:.08em;padding:7px 14px;text-transform:uppercase;
+  }
+  pre{
+    margin:0;padding:14px 16px;overflow-x:auto;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.65;
+    color:var(--code-ink);
+  }
+  pre .k{color:var(--code-key)}
+  pre .s{color:var(--code-str)}
+  pre .c{color:var(--code-com)}
+
+  /* ---------- lists ---------- */
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0 0 18px}
+  ol.steps li{
+    counter-increment:s;position:relative;padding:0 0 14px 34px;font-size:13.5px;max-width:72ch;
+  }
+  ol.steps li::before{
+    content:counter(s);position:absolute;left:0;top:0;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+    color:var(--gold);border:1px solid var(--gold);width:22px;height:22px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  ul.plain{margin:0 0 16px;padding-left:18px}
+  ul.plain li{margin-bottom:7px;max-width:72ch}
+
+  .values{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .val{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    background:var(--surface);border:1px solid var(--rule-strong);padding:3px 8px;color:var(--brand-deep);
+  }
+  .val.dflt{border-color:var(--gold);background:var(--gold-soft)}
+
+  footer{
+    margin-top:56px;border-top:1px solid var(--rule-strong);padding-top:18px;
+    font-size:12px;color:var(--ink-faint);
+  }
+
+  @media (max-width:520px){
+    .flow .arw{display:none}
+    .flow .box{flex:1 1 100%}
+  }
+
+  @media print{
+    :root{--ground:#fff;--paper:#fff}
+    body{font-size:10.5pt}
+    .runner{position:static}
+    .wrap{padding-block:18px}
+    section{break-inside:auto}
+    h2{break-after:avoid}
+    .tbl,.codeblock,.note,.endpoint,.flow{break-inside:avoid}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+
+<div class="runner">
+  <div><b>Shree Hari Jewellers &times; Salesforce</b> <span class="r">&mdash; Abandoned Checkout and Cart REST API</span></div>
+  <div class="r">Draft v1.0 &nbsp;|&nbsp; Nov 2026 &nbsp;|&nbsp; UAT</div>
+</div>
+
+<div class="wrap">
+
+  <p class="eyebrow">Integration Specification</p>
+  <h1>Abandoned Checkout and Cart &rarr; Salesforce REST API</h1>
+  <hr class="hairline">
+  <p class="standfirst">How the Shree Hari website team sends Magic Checkout <code>checkout.abandoned</code> and <code>cart.abandoned</code> events into Salesforce. Uses the same External Client App and access token as the Lead, Customer, Product and Order APIs. Prepared by Halsa Global for the Shree Hari Jewellers website team.</p>
+
+  <div class="chips">
+    <div class="chip"><span>Protocol</span>REST / JSON</div>
+    <div class="chip"><span>Auth</span>Same as Lead API &middot; OAuth 2.0</div>
+    <div class="chip"><span>Payload</span>Magic Checkout v2.0 event</div>
+    <div class="chip gold"><span>Environment</span>UAT Sandbox</div>
+  </div>
+
+  <section>
+    <h2><span class="num">01</span>Overview</h2>
+    <hr class="sect-rule">
+    <div class="note">
+      <p><span class="lbl">Integration pattern:</span> send one event per request, as one JSON object, without changing its keys. Both event types go to the same URL. Salesforce creates a Lead for a new person or an enquiry Case for an existing customer, and tells you which in the response.</p>
+    </div>
+    <div class="flow">
+      <div class="box"><em>Source</em>Magic Checkout<br>webhook</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Your server</em>Verify signature<br>Add Bearer token</div>
+      <div class="arw">&rarr;</div>
+      <div class="box accent"><em>Salesforce</em>Apex REST<br>/abandoned-checkouts</div>
+      <div class="arw">&rarr;</div>
+      <div class="box"><em>Result</em>Lead or<br>enquiry Case</div>
+    </div>
+    <div class="note stop">
+      <p><span class="lbl">Razorpay cannot post to this URL directly.</span> Salesforce requires an OAuth Bearer token, which a Razorpay webhook does not send. Your server must receive the webhook, verify <code>X-Razorpay-Signature</code>, and forward the unchanged JSON to Salesforce with a token.</p>
+    </div>
+    <h3>Environment</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Item</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="fld">Org</td><td>Shree Hari Jewellers &mdash; UAT Sandbox</td></tr>
+        <tr><td class="fld">Instance URL</td><td class="api">https://agility-efficiency-7306--uat.sandbox.my.salesforce.com</td></tr>
+        <tr><td class="fld">Endpoint</td><td class="api">POST /services/apexrest/shreehari/v1/abandoned-checkouts</td></tr>
+        <tr><td class="fld">Token endpoint</td><td class="api">POST /services/oauth2/token</td></tr>
+        <tr><td class="fld">External Client App</td><td>Shree Hari Website API &mdash; the same app as the Lead API</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn"><p><span class="lbl">Production cut-over:</span> only the instance URL and credentials change. The path and payload stay the same.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span>Authentication</h2>
+    <hr class="sect-rule">
+    <p>Use the <strong>OAuth 2.0 Client Credentials flow</strong> with the same Consumer Key and Consumer Secret as the Lead API. If you already call another Shree Hari API, you need no new credentials.</p>
+    <div class="codeblock"><div class="bar">Token request</div>
+<pre><span class="k">POST</span> https://agility-efficiency-7306--uat.sandbox.my.salesforce.com/services/oauth2/token
+<span class="k">Content-Type:</span> application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;client_id=<span class="s">{3MVG9Nm09gOGRa5Cfj84CC2IPJsONJWs_OXZeRMB6R.QIgxO_gfI7oo1J8tW3Bik7E3iqI.lSYN5yBsAE0jCJ}</span>
+&amp;client_secret=<span class="s">{FFFF54A591E99C14256954FA717ADA3025C72E3CD2D263426F711C011BC5B603}</span></pre></div>
+    <p>Send the <code>access_token</code> from the response as <code>Authorization: Bearer {{access_token}}</code>. Keep the key and secret on your server only.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span>Conventions</h2>
+    <hr class="sect-rule">
+    <div class="tbl"><table>
+      <thead><tr><th>Convention</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td class="fld">Content-Type</td><td class="api">application/json</td></tr>
+        <tr><td class="fld">Payload shape</td><td>One event per request, with <code>event</code> and <code>data</code> at the top level. The legacy <code>"event": "abandoned_checkout"</code> format is rejected</td></tr>
+        <tr><td class="fld">Accepted events</td><td><code>checkout.abandoned</code> and <code>cart.abandoned</code> only. Do not forward other events, such as <code>cart.session_abandoned</code>; they return 400</td></tr>
+        <tr><td class="fld">Key names</td><td>Exactly as in the event, and case-sensitive</td></tr>
+        <tr><td class="fld">Other keys</td><td>Accepted and ignored. They are not stored, so new Razorpay fields will not break the call</td></tr>
+        <tr><td class="fld">Phone</td><td>Indian number: 10 digits, optionally starting with <code>+91</code> or <code>91</code>. Spaces and dashes are allowed. Numbers from other countries are rejected</td></tr>
+        <tr><td class="fld">Consent</td><td>JSON <code>true</code> ticks the box. Anything else, including the text <code>"true"</code>, leaves it unticked</td></tr>
+        <tr><td class="fld">Repeats</td><td><strong>Salesforce does not store <code>event.id</code>.</strong> Please deduplicate on it before forwarding: a repeated event for an existing customer raises another Case</td></tr>
+        <tr><td class="fld">Retries</td><td>Retry only on <span class="code-4xx">401</span> (after getting a new token) and <span class="code-4xx">500</span>. Do not retry <span class="code-4xx">400</span> or <span class="code-4xx">409</span>; the same request will fail again</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span>Send Event</h2>
+    <hr class="sect-rule">
+    <div class="endpoint"><span class="verb">POST</span><span class="path">/services/apexrest/shreehari/v1/abandoned-checkouts</span><span class="tag">Both events</span></div>
+    <h3>Request headers</h3>
+    <div class="tbl"><table class="tight">
+      <thead><tr><th>Header</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="api">Authorization</td><td class="api">Bearer {{access_token}}</td></tr>
+        <tr><td class="api">Content-Type</td><td class="api">application/json</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Properties Salesforce reads</h3>
+    <p>Send the full event. These are the only keys used. A cart event normally has no name, <code>user_id</code> or address; that is fine.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Key</th><th>Required</th><th>Saved as</th><th>If not sent</th></tr></thead>
+      <tbody><tr><td class="api">event.type</td><td><span class="req">REQUIRED</span></td><td>Not stored. Must be <code>checkout.abandoned</code> or <code>cart.abandoned</code></td><td>Rejected: 400</td></tr><tr><td class="api">data.user.contact</td><td><span class="req">REQUIRED</span></td><td>Phone, exactly as sent (max 40)</td><td>Rejected: 400</td></tr><tr><td class="api">data.user.user_id</td><td><span class="opt">OPTIONAL</span></td><td>User Id (max 255)</td><td>Left blank</td></tr><tr><td class="api">data.user.email</td><td><span class="opt">OPTIONAL</span></td><td>Email (max 80)</td><td>Left blank. <code>""</code> is treated as not sent</td></tr><tr><td class="api">data.user.first_name</td><td><span class="opt">OPTIONAL</span></td><td>First Name (max 40)</td><td>Left blank</td></tr><tr><td class="api">data.user.last_name</td><td><span class="opt">OPTIONAL</span></td><td>Last Name (max 80)</td><td>The first name is used as Last Name. With no name at all, the phone number is used</td></tr><tr><td class="api">data.user.address.line1</td><td><span class="opt">OPTIONAL</span></td><td>Street, first line (both lines together max 255)</td><td>Left blank</td></tr><tr><td class="api">data.user.address.line2</td><td><span class="opt">OPTIONAL</span></td><td>Street, second line</td><td>Left blank</td></tr><tr><td class="api">data.user.address.city</td><td><span class="opt">OPTIONAL</span></td><td>City (max 40)</td><td>Left blank</td></tr><tr><td class="api">data.user.address.state</td><td><span class="opt">OPTIONAL</span></td><td>State. Must be a full state name, such as <code>Maharashtra</code></td><td>Left blank</td></tr><tr><td class="api">data.user.address.country</td><td><span class="opt">OPTIONAL</span></td><td>Country. Must be a full country name, such as <code>India</code>; <code>in</code> is rejected</td><td>Left blank</td></tr><tr><td class="api">data.user.address.pincode</td><td><span class="opt">OPTIONAL</span></td><td>Postal Code (max 20)</td><td>Left blank</td></tr><tr><td class="api">data.consent.whatsapp</td><td><span class="opt">OPTIONAL</span></td><td>WA Opt In</td><td>Unticked</td></tr><tr><td class="api">data.consent.email</td><td><span class="opt">OPTIONAL</span></td><td>Email Opt In</td><td>Unticked</td></tr><tr><td class="api">data.consent.sms</td><td><span class="opt">OPTIONAL</span></td><td>SMS Opt In</td><td>Unticked</td></tr><tr><td class="api">data.session.products_viewed[].title</td><td><span class="opt">OPTIONAL</span></td><td>Product Description: every title, comma separated, each title once</td><td><code>Abandon Checkout Lead</code></td></tr></tbody>
+    </table></div>
+    <p>Every new Lead also gets Lead Source <code>Shopify</code> and Status <code>New</code>, and is treated as B2C.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span>What Salesforce does with each event</h2>
+    <hr class="sect-rule">
+    <p>The phone and email are compared with existing Accounts, Contacts and open Leads, in this order:</p>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>Found in Salesforce</th><th>Result</th><th>Response</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Account with a matching Contact</td><td>Enquiry Case on both</td><td><span class="code-200">201</span> <code>ENQUIRY_CREATED</code></td></tr>
+        <tr><td class="num">2</td><td>Account only</td><td>New Contact under the Account, then Case on both</td><td><span class="code-200">201</span> <code>ENQUIRY_CREATED</code>, <code>contactCreated: true</code></td></tr>
+        <tr><td class="num">3</td><td>Contact only</td><td>New Account, Contact moved under it, then Case on both</td><td><span class="code-200">201</span> <code>ENQUIRY_CREATED</code>, <code>accountCreated: true</code></td></tr>
+        <tr><td class="num">4</td><td>Open Lead</td><td>Nothing is created or updated</td><td><span class="code-200">200</span> <code>DUPLICATE_LEAD</code></td></tr>
+        <tr><td class="num">5</td><td>No match</td><td>New Lead</td><td><span class="code-200">201</span> <code>CREATED</code></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span>Samples and responses</h2>
+    <hr class="sect-rule">
+    <p>The same JSON is in <code>Checkout_Abandoned_Sample_Full.json</code>, <code>Cart_Abandoned_Sample_Full.json</code> and <code>Abandoned_Sample_Minimal.json</code>.</p>
+    <details style="margin:0 0 18px"><summary style="cursor:pointer;font-weight:600;margin-bottom:10px">Sample request &mdash; checkout.abandoned</summary><div class="codeblock"><div class="bar">Sample request &mdash; checkout.abandoned</div>
+<pre>{
+  <span class="k">"event"</span>: {
+    <span class="k">"id"</span>: <span class="s">"cbv3x2k1abc"</span>,
+    <span class="k">"type"</span>: <span class="s">"checkout.abandoned"</span>,
+    <span class="k">"timestamp"</span>: 1756464700000,
+    <span class="k">"shop_id"</span>: <span class="s">"store-8821.myshopify.com"</span>,
+    <span class="k">"domain"</span>: <span class="s">"craftbazaar.in"</span>,
+    <span class="k">"version"</span>: <span class="s">"2.0"</span>,
+    <span class="k">"platform"</span>: <span class="s">"shopify"</span>
+  },
+  <span class="k">"data"</span>: {
+    <span class="k">"consent"</span>: {
+      <span class="k">"whatsapp"</span>: true,
+      <span class="k">"email"</span>: true,
+      <span class="k">"sms"</span>: false
+    },
+    <span class="k">"notes"</span>: {
+      <span class="k">"client_id"</span>: <span class="s">"..."</span>
+    },
+    <span class="k">"user"</span>: {
+      <span class="k">"user_id"</span>: <span class="s">"cust_abc123"</span>,
+      <span class="k">"contact"</span>: <span class="s">"+919876543210"</span>,
+      <span class="k">"email"</span>: <span class="s">"priya@example.com"</span>,
+      <span class="k">"first_name"</span>: <span class="s">"Priya"</span>,
+      <span class="k">"last_name"</span>: <span class="s">"Sharma"</span>,
+      <span class="k">"login_method"</span>: <span class="s">"otp"</span>,
+      <span class="k">"address"</span>: {
+        <span class="k">"line1"</span>: <span class="s">"221B Baker Street"</span>,
+        <span class="k">"line2"</span>: <span class="s">"Near City Mall"</span>,
+        <span class="k">"city"</span>: <span class="s">"Mumbai"</span>,
+        <span class="k">"state"</span>: <span class="s">"Maharashtra"</span>,
+        <span class="k">"country"</span>: <span class="s">"India"</span>,
+        <span class="k">"pincode"</span>: <span class="s">"400067"</span>
+      }
+    },
+    <span class="k">"session"</span>: {
+      <span class="k">"rzp_unified_session_id"</span>: <span class="s">"cbe817b5-b84e-4eb5-90a6-2efda5865315"</span>,
+      <span class="k">"device_type"</span>: <span class="s">"mobile"</span>,
+      <span class="k">"os"</span>: <span class="s">"android"</span>,
+      <span class="k">"browser"</span>: <span class="s">"chrome"</span>,
+      <span class="k">"utm_source"</span>: <span class="s">"facebook"</span>,
+      <span class="k">"utm_medium"</span>: <span class="s">"cpc"</span>,
+      <span class="k">"utm_campaign"</span>: <span class="s">"summer"</span>,
+      <span class="k">"utm_last_source"</span>: <span class="s">"facebook"</span>,
+      <span class="k">"utm_last_medium"</span>: <span class="s">"cpc"</span>,
+      <span class="k">"utm_last_campaign"</span>: <span class="s">"retarget"</span>,
+      <span class="k">"utm_first_source"</span>: <span class="s">"google"</span>,
+      <span class="k">"utm_first_medium"</span>: <span class="s">"organic"</span>,
+      <span class="k">"utm_first_campaign"</span>: <span class="s">"q1"</span>,
+      <span class="k">"utm_first_click_id"</span>: <span class="s">"FBCL1"</span>,
+      <span class="k">"utm_first_click_type"</span>: <span class="s">"fbclid"</span>,
+      <span class="k">"referrer"</span>: <span class="s">"https://instagram.com/"</span>,
+      <span class="k">"prior_sessions"</span>: {
+        <span class="k">"7d"</span>: 2,
+        <span class="k">"30d"</span>: 5,
+        <span class="k">"total"</span>: 6
+      },
+      <span class="k">"landing_page"</span>: <span class="s">"https://craftbazaar.in/collections/sarees"</span>,
+      <span class="k">"exit_page"</span>: <span class="s">"https://craftbazaar.in/checkout/payment"</span>,
+      <span class="k">"session_start_time"</span>: 1756461000,
+      <span class="k">"session_duration_seconds"</span>: 3700,
+      <span class="k">"total_pages_viewed"</span>: 7,
+      <span class="k">"pages_visited"</span>: [
+        {
+          <span class="k">"url"</span>: <span class="s">"https://craftbazaar.in/collections/sarees"</span>,
+          <span class="k">"duration_seconds"</span>: 45
+        }
+      ],
+      <span class="k">"products_viewed"</span>: [
+        {
+          <span class="k">"product_id"</span>: <span class="s">"10252876775744"</span>,
+          <span class="k">"title"</span>: <span class="s">"Paithani Silk Saree"</span>,
+          <span class="k">"price"</span>: 799900,
+          <span class="k">"viewed_at"</span>: 1756461600
+        }
+      ],
+      <span class="k">"time_in_checkout_ms"</span>: 142000
+    },
+    <span class="k">"geo"</span>: {
+      <span class="k">"city"</span>: <span class="s">"Mumbai"</span>,
+      <span class="k">"state"</span>: <span class="s">"Maharashtra"</span>,
+      <span class="k">"country"</span>: <span class="s">"India"</span>,
+      <span class="k">"country_code"</span>: <span class="s">"IN"</span>,
+      <span class="k">"pincode"</span>: <span class="s">"400067"</span>
+    },
+    <span class="k">"enrichment"</span>: {
+      <span class="k">"customer_signals"</span>: {}
+    },
+    <span class="k">"checkout"</span>: {
+      <span class="k">"order_id"</span>: <span class="s">"order_NxJ4kP2mQ8rT5v"</span>,
+      <span class="k">"checkout_id"</span>: <span class="s">"chk_2xY8KpL3nW"</span>,
+      <span class="k">"cart_token"</span>: <span class="s">"hWNGXvgk9aJy9OaHlgH2zf9Q?key=769cb99593b6f5bf8c184caf992e8c36"</span>,
+      <span class="k">"magic_recovery_url"</span>: <span class="s">"https://checkout.razorpay.com/magic/recover/chk_2xY8"</span>,
+      <span class="k">"abandonment_stage"</span>: <span class="s">"payments_page"</span>,
+      <span class="k">"last_step_reached"</span>: <span class="s">"checkout.payment_failed"</span>,
+      <span class="k">"time_in_checkout_ms"</span>: 142000,
+      <span class="k">"currency"</span>: <span class="s">"INR"</span>,
+      <span class="k">"line_items_total"</span>: 799900,
+      <span class="k">"line_items"</span>: [
+        {
+          <span class="k">"product_id"</span>: <span class="s">"10252876775744"</span>,
+          <span class="k">"variant_id"</span>: <span class="s">"53096887550272"</span>,
+          <span class="k">"name"</span>: <span class="s">"Saanjh Paithani Silk Peacock Handloom Saree Deep Teal"</span>,
+          <span class="k">"variant_title"</span>: <span class="s">"Default Title"</span>,
+          <span class="k">"sku"</span>: <span class="s">"60902SGPS025"</span>,
+          <span class="k">"quantity"</span>: 1,
+          <span class="k">"price"</span>: 799900,
+          <span class="k">"taxable"</span>: false,
+          <span class="k">"tax_amount"</span>: 0,
+          <span class="k">"image_url"</span>: <span class="s">"https://cdn.shopify.com/s/files/1/0726/1454/3680/files/60902SGPS025a.jpg"</span>
+        }
+      ],
+      <span class="k">"promotions"</span>: [],
+      <span class="k">"available_coupons"</span>: [
+        {
+          <span class="k">"coupon_code"</span>: <span class="s">"COMEBACK15"</span>,
+          <span class="k">"description"</span>: <span class="s">"15% off"</span>
+        }
+      ],
+      <span class="k">"payment_context"</span>: {
+        <span class="k">"payment_failed"</span>: false,
+        <span class="k">"attempted_payment_method"</span>: <span class="s">"upi"</span>,
+        <span class="k">"payment_failure_code"</span>: <span class="s">""</span>
+      },
+      <span class="k">"tax_details"</span>: {
+        <span class="k">"taxes_included"</span>: false,
+        <span class="k">"total_tax"</span>: 0
+      },
+      <span class="k">"address_context"</span>: {
+        <span class="k">"has_complete_address"</span>: true,
+        <span class="k">"is_serviceable"</span>: true,
+        <span class="k">"cod_available"</span>: true,
+        <span class="k">"cod_restriction_reason"</span>: <span class="s">""</span>,
+        <span class="k">"city"</span>: <span class="s">"Mumbai"</span>,
+        <span class="k">"state"</span>: <span class="s">"Maharashtra"</span>,
+        <span class="k">"pincode"</span>: <span class="s">"400067"</span>
+      },
+      <span class="k">"customer_history"</span>: {
+        <span class="k">"visit_frequency"</span>: <span class="s">"medium"</span>,
+        <span class="k">"sessions_last_30_days"</span>: 4,
+        <span class="k">"prior_orders_count"</span>: 0,
+        <span class="k">"has_prior_orders"</span>: false
+      }
+    }
+  }
+}</pre></div></details>
+    <details style="margin:0 0 18px"><summary style="cursor:pointer;font-weight:600;margin-bottom:10px">Sample request &mdash; cart.abandoned</summary><div class="codeblock"><div class="bar">Sample request &mdash; cart.abandoned</div>
+<pre>{
+  <span class="k">"event"</span>: {
+    <span class="k">"id"</span>: <span class="s">"cbv3x2k1abc"</span>,
+    <span class="k">"type"</span>: <span class="s">"cart.abandoned"</span>,
+    <span class="k">"timestamp"</span>: 1756464700000,
+    <span class="k">"shop_id"</span>: <span class="s">"store-8821.myshopify.com"</span>,
+    <span class="k">"version"</span>: <span class="s">"2.0"</span>,
+    <span class="k">"platform"</span>: <span class="s">"shopify"</span>
+  },
+  <span class="k">"data"</span>: {
+    <span class="k">"consent"</span>: {
+      <span class="k">"whatsapp"</span>: true,
+      <span class="k">"email"</span>: true,
+      <span class="k">"sms"</span>: false
+    },
+    <span class="k">"notes"</span>: {
+      <span class="k">"client_id"</span>: <span class="s">"..."</span>
+    },
+    <span class="k">"user"</span>: {
+      <span class="k">"contact"</span>: <span class="s">"+918888888888"</span>,
+      <span class="k">"email"</span>: <span class="s">"user@example.com"</span>
+    },
+    <span class="k">"session"</span>: {
+      <span class="k">"rzp_unified_session_id"</span>: <span class="s">"abc123-..."</span>,
+      <span class="k">"device_type"</span>: <span class="s">"mobile"</span>,
+      <span class="k">"pages_visited"</span>: [
+        {
+          <span class="k">"url"</span>: <span class="s">"https://store.com/collections/sarees"</span>,
+          <span class="k">"duration_seconds"</span>: 45
+        }
+      ],
+      <span class="k">"products_viewed"</span>: [
+        {
+          <span class="k">"product_id"</span>: <span class="s">"7652090314919"</span>,
+          <span class="k">"title"</span>: <span class="s">"Banarasi Saree"</span>,
+          <span class="k">"price"</span>: 700000
+        }
+      ]
+    },
+    <span class="k">"geo"</span>: {
+      <span class="k">"city"</span>: <span class="s">"Delhi"</span>,
+      <span class="k">"state"</span>: <span class="s">"Delhi"</span>,
+      <span class="k">"country_code"</span>: <span class="s">"IN"</span>
+    },
+    <span class="k">"enrichment"</span>: {
+      <span class="k">"customer_signals"</span>: {}
+    },
+    <span class="k">"cart"</span>: {
+      <span class="k">"cart_token"</span>: <span class="s">"c1-68be3b..."</span>,
+      <span class="k">"cart_url"</span>: <span class="s">"https://store.myshopify.com/cart"</span>,
+      <span class="k">"magic_recovery_url"</span>: <span class="s">"https://checkout.razorpay.com/magic/recover/cart/c1-..."</span>,
+      <span class="k">"currency"</span>: <span class="s">"INR"</span>,
+      <span class="k">"line_items_total"</span>: 700000,
+      <span class="k">"line_items"</span>: [
+        {
+          <span class="k">"product_id"</span>: <span class="s">"7652090314919"</span>,
+          <span class="k">"variant_id"</span>: <span class="s">"43306810998951"</span>,
+          <span class="k">"name"</span>: <span class="s">"Sujatra Banarasi Saree"</span>,
+          <span class="k">"variant_title"</span>: <span class="s">"S / Blue"</span>,
+          <span class="k">"sku"</span>: <span class="s">"SJT-BNRS-001-S-BLU"</span>,
+          <span class="k">"quantity"</span>: 1,
+          <span class="k">"price"</span>: 700000,
+          <span class="k">"taxable"</span>: true,
+          <span class="k">"tax_amount"</span>: 0,
+          <span class="k">"image_url"</span>: <span class="s">"https://cdn.shopify.com/.../saree.jpg"</span>
+        }
+      ],
+      <span class="k">"last_cart_activity"</span>: <span class="s">"item_added"</span>,
+      <span class="k">"last_cart_activity_timestamp"</span>: 1756463500,
+      <span class="k">"available_coupons"</span>: [
+        {
+          <span class="k">"coupon_code"</span>: <span class="s">"CARTBACK10"</span>,
+          <span class="k">"description"</span>: <span class="s">"10% off"</span>
+        }
+      ],
+      <span class="k">"customer_history"</span>: {
+        <span class="k">"visit_frequency"</span>: <span class="s">"medium"</span>,
+        <span class="k">"sessions_last_30_days"</span>: 2,
+        <span class="k">"prior_orders_count"</span>: 0,
+        <span class="k">"has_prior_orders"</span>: false
+      }
+    }
+  }
+}</pre></div></details>
+    <div class="codeblock"><div class="bar">Sample request &mdash; smallest accepted event</div>
+<pre>{
+  <span class="k">"event"</span>: {
+    <span class="k">"id"</span>: <span class="s">"evt_minimal_001"</span>,
+    <span class="k">"type"</span>: <span class="s">"cart.abandoned"</span>
+  },
+  <span class="k">"data"</span>: {
+    <span class="k">"user"</span>: {
+      <span class="k">"contact"</span>: <span class="s">"+918888800001"</span>
+    }
+  }
+}</pre></div>
+    <div class="codeblock"><div class="bar">201 &mdash; new Lead</div>
+<pre>{
+  <span class="k">"success"</span>: true,
+  <span class="k">"action"</span>: <span class="s">"CREATED"</span>,
+  <span class="k">"leadId"</span>: <span class="s">"00Qh20000007osyEAA"</span>,
+  <span class="k">"status"</span>: <span class="s">"New"</span>,
+  <span class="k">"company"</span>: <span class="s">"Priya Sharma B2C (100385)"</span>,
+  <span class="k">"ownerId"</span>: <span class="s">"005h2000000H2BtAAK"</span>,
+  <span class="k">"message"</span>: <span class="s">"Lead created successfully."</span>
+}</pre></div>
+    <div class="codeblock"><div class="bar">201 &mdash; enquiry for an existing customer</div>
+<pre>{
+  <span class="k">"success"</span>: true,
+  <span class="k">"action"</span>: <span class="s">"ENQUIRY_CREATED"</span>,
+  <span class="k">"caseId"</span>: <span class="s">"500h2000002BoN0AAK"</span>,
+  <span class="k">"caseNumber"</span>: <span class="s">"00101055"</span>,
+  <span class="k">"accountId"</span>: <span class="s">"001h2000000ji6nAAA"</span>,
+  <span class="k">"contactId"</span>: <span class="s">"003h2000000ZGBfAAO"</span>,
+  <span class="k">"accountCreated"</span>: true,
+  <span class="k">"contactCreated"</span>: false,
+  <span class="k">"message"</span>: <span class="s">"Customer already exists; an enquiry Case was created."</span>
+}</pre></div>
+    <div class="codeblock"><div class="bar">200 &mdash; open Lead already exists</div>
+<pre>{
+  <span class="k">"success"</span>: true,
+  <span class="k">"action"</span>: <span class="s">"DUPLICATE_LEAD"</span>,
+  <span class="k">"leadId"</span>: <span class="s">"00Qh20000007oszEAA"</span>,
+  <span class="k">"message"</span>: <span class="s">"A duplicate Lead already exists: Priya Sharma (00Qh20000007oszEAA)."</span>
+}</pre></div>
+    <h3>HTTP status codes</h3>
+    <div class="tbl"><table class="tight">
+      <thead><tr><th>Status</th><th>Meaning</th><th>Your action</th></tr></thead>
+      <tbody>
+        <tr><td class="code-200">201</td><td>Lead or enquiry Case created</td><td>Done</td></tr>
+        <tr><td class="code-200">200</td><td>Open Lead already exists; nothing changed</td><td>Done</td></tr>
+        <tr><td class="code-4xx">400</td><td>The payload was rejected</td><td>Fix the data; do not retry as is</td></tr>
+        <tr><td class="code-4xx">401</td><td>Token missing or expired</td><td>Get a new token and retry</td></tr>
+        <tr><td class="code-4xx">409</td><td>A Salesforce duplicate rule refused the record</td><td>Do not retry</td></tr>
+        <tr><td class="code-4xx">500</td><td>Salesforce could not save the record</td><td>Retry later; contact us if it continues</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span>Error responses</h2>
+    <hr class="sect-rule">
+    <div class="codeblock"><div class="bar">Error format</div>
+<pre>{
+  <span class="k">"success"</span>: false,
+  <span class="k">"errorCode"</span>: <span class="s">"INVALID_PHONE"</span>,
+  <span class="k">"message"</span>: <span class="s">"'+14155550100' is not a valid phone. Send a 10-digit number, optionally starting with +91 or 91."</span>,
+  <span class="k">"field"</span>: <span class="s">"data.user.contact"</span>,
+  <span class="k">"httpStatus"</span>: 400
+}</pre></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Error code</th><th>HTTP</th><th>When</th><th>Example message</th></tr></thead>
+      <tbody>
+        <tr><td class="api">INVALID_JSON</td><td class="code-4xx">400</td><td>Body is empty, is not valid JSON, or is not an object</td><td>Request body must be a JSON object.</td></tr>
+        <tr><td class="api">UNSUPPORTED_EVENT</td><td class="code-4xx">400</td><td><code>event.type</code> is missing or is another event</td><td>event.type must be checkout.abandoned or cart.abandoned; 'checkout.completed' was sent.</td></tr>
+        <tr><td class="api">MISSING_REQUIRED_FIELD</td><td class="code-4xx">400</td><td><code>data.user</code> or <code>data.user.contact</code> is missing or empty</td><td>data.user.contact is required: a 10-digit phone number, optionally starting with +91 or 91.</td></tr>
+        <tr><td class="api">INVALID_PHONE</td><td class="code-4xx">400</td><td>Not a valid Indian number</td><td>'+14155550100' is not a valid phone. Send a 10-digit number, optionally starting with +91 or 91.</td></tr>
+        <tr><td class="api">INVALID_EMAIL_FORMAT</td><td class="code-4xx">400</td><td>Email is not a valid address</td><td>'priya@example' is not a valid email address.</td></tr>
+        <tr><td class="api">VALUE_TOO_LONG</td><td class="code-4xx">400</td><td>A value is longer than its field</td><td>data.user.user_id is 256 characters. The maximum is 255.</td></tr>
+        <tr><td class="api">INVALID_ADDRESS</td><td class="code-4xx">400</td><td>State or country is not a recognised name. <code>field</code> shows <code>state</code> for both</td><td>The address was rejected by Salesforce: There's a problem with this state&hellip;</td></tr>
+        <tr><td class="api">DUPLICATE_DETECTED</td><td class="code-4xx">409</td><td>A Salesforce duplicate rule refused the record</td><td>A Salesforce duplicate rule blocked this record: Use one of these records?</td></tr>
+        <tr><td class="api">DML_EXCEPTION</td><td class="code-4xx">500</td><td>Salesforce could not save the record</td><td>The Salesforce error text</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><p><span class="lbl">401 is different.</span> Salesforce rejects an expired or missing token before the endpoint runs, so the body is <code>[{"message": "Session expired or invalid", "errorCode": "INVALID_SESSION_ID"}]</code>.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="num">08</span>Testing in Postman</h2>
+    <hr class="sect-rule">
+    <p>Import <code>ShreeHari_Abandoned_Checkout_API.postman_collection.json</code>.</p>
+    <ol class="steps">
+      <li>Open the collection&rsquo;s <em>Variables</em> tab and fill in <code>client_id</code> and <code>client_secret</code>. <code>instance_url</code> is already set to UAT.</li>
+      <li>Send <strong>1. Get Access Token</strong>. It saves <code>access_token</code> automatically.</li>
+      <li>Send <strong>2. Checkout Abandoned</strong> or <strong>3. Cart Abandoned</strong>. A <span class="code-200">201</span> means Salesforce created a Lead or Case.</li>
+      <li>Send the same request again. It returns <span class="code-200">200</span> <code>DUPLICATE_LEAD</code> if the first call created a Lead.</li>
+      <li><strong>5. Error &mdash; missing contact</strong> should return <span class="code-4xx">400 MISSING_REQUIRED_FIELD</span> with nothing created.</li>
+    </ol>
+  </section>
+
+  <footer>
+    Prepared by Halsa Global for Shree Hari Jewellers &mdash; Draft v1.0, 23 November 2026.<br>
+    Payload keys follow the Magic Checkout Webhooks Integration Guide, envelope version 2.0. Sample values are illustrative.
+  </footer>
+</div>
+

@@ -1,0 +1,84 @@
+{
+  "event": {
+    "id": "cbv3x2k1abc",
+    "type": "cart.abandoned",
+    "timestamp": 1756464700000,
+    "shop_id": "store-8821.myshopify.com",
+    "version": "2.0",
+    "platform": "shopify"
+  },
+  "data": {
+    "consent": {
+      "whatsapp": true,
+      "email": true,
+      "sms": false
+    },
+    "notes": {
+      "client_id": "..."
+    },
+    "user": {
+      "contact": "+918888888888",
+      "email": "user@example.com"
+    },
+    "session": {
+      "rzp_unified_session_id": "abc123-...",
+      "device_type": "mobile",
+      "pages_visited": [
+        {
+          "url": "https://store.com/collections/sarees",
+          "duration_seconds": 45
+        }
+      ],
+      "products_viewed": [
+        {
+          "product_id": "7652090314919",
+          "title": "Banarasi Saree",
+          "price": 700000
+        }
+      ]
+    },
+    "geo": {
+      "city": "Delhi",
+      "state": "Delhi",
+      "country_code": "IN"
+    },
+    "enrichment": {
+      "customer_signals": {}
+    },
+    "cart": {
+      "cart_token": "c1-68be3b...",
+      "cart_url": "https://store.myshopify.com/cart",
+      "magic_recovery_url": "https://checkout.razorpay.com/magic/recover/cart/c1-...",
+      "currency": "INR",
+      "line_items_total": 700000,
+      "line_items": [
+        {
+          "product_id": "7652090314919",
+          "variant_id": "43306810998951",
+          "name": "Sujatra Banarasi Saree",
+          "variant_title": "S / Blue",
+          "sku": "SJT-BNRS-001-S-BLU",
+          "quantity": 1,
+          "price": 700000,
+          "taxable": true,
+          "tax_amount": 0,
+          "image_url": "https://cdn.shopify.com/.../saree.jpg"
+        }
+      ],
+      "last_cart_activity": "item_added",
+      "last_cart_activity_timestamp": 1756463500,
+      "available_coupons": [
+        {
+          "coupon_code": "CARTBACK10",
+          "description": "10% off"
+        }
+      ],
+      "customer_history": {
+        "visit_frequency": "medium",
+        "sessions_last_30_days": 2,
+        "prior_orders_count": 0,
+        "has_prior_orders": false
+      }
+    }
+  }
+}

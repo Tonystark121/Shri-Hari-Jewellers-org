@@ -1,0 +1,11 @@
+{
+  "event": {
+    "id": "evt_minimal_001",
+    "type": "cart.abandoned"
+  },
+  "data": {
+    "user": {
+      "contact": "+918888800001"
+    }
+  }
+}

@@ -1,4 +1,3 @@
-
 public without sharing class LeadTriggerHandler {
 
     @TestVisible
@@ -40,8 +39,11 @@ public without sharing class LeadTriggerHandler {
             }
         }
 
-        blockExistingCustomers(leads);
-        applyInsertRules(leads);
+        if (insertRulesApply()) {
+            applyInsertRules(leads);
+        } else {
+            blockExistingCustomers(leads);
+        }
     }
 
     /** Adds the Lead Number to the Company of every new B2C Lead. */
@@ -325,9 +327,21 @@ public without sharing class LeadTriggerHandler {
     @TestVisible
     private static final String PHONE_REQUIRED = 'Phone is required.';
     @TestVisible
+    private static final String PHONE_INVALID = 'Phone must be a 10-digit number, optionally starting with +91 or 91.';
+    @TestVisible
+    private static final String WHATSAPP_INVALID =
+        'WhatsApp Number must be a 10-digit number, optionally starting with +91 or 91.';
+    @TestVisible
     private static final String PRODUCT_REQUIRED = 'Product Description is required.';
     @TestVisible
     private static final String BIRTH_DATE_IN_FUTURE = 'Date of Birth cannot be in the future.';
+    @TestVisible
+    private static final String ANNIVERSARY_NOT_MARRIED =
+        'Anniversary Date can only be given when Marital Status is Married.';
+    @TestVisible
+    private static final String ANNIVERSARY_IN_FUTURE = 'Anniversary Date cannot be in the future.';
+    @TestVisible
+    private static final String ANNIVERSARY_BEFORE_BIRTH = 'Anniversary Date must be after the Date of Birth.';
     @TestVisible
     private static final String CONVERTED_STATUS_REFUSED =
         'A Lead cannot be created as Converted. It converts only with its first bill, through the Convert button. '
@@ -335,41 +349,102 @@ public without sharing class LeadTriggerHandler {
     @TestVisible
     private static final String SAME_AS_ANOTHER_IN_SAVE =
         'Same phone, WhatsApp number or email as another Lead in this save.';
+    @TestVisible
+    private static final String USE_UPLOAD_BUTTON =
+        'No Lead was created. Upload this customer through the Upload Leads button on the Lead list, '
+        + 'which raises an enquiry (Case) for the existing customer instead.';
+
+    private static final String MARRIED = 'Married';
+
+    private static Boolean insertRulesApply() {
+        return !Test.isRunningTest() || applyInsertRulesInTests;
+    }
 
     /**
-     * The checks Upload Leads makes on each row (LeadUploadService), applied
-     * to every new Lead so that a direct insert is held to them too. The New
-     * Lead screen, Upload Leads and the website API make the same checks
-     * before they save, so nothing changes for them.
+     * What Upload Leads does with each row (LeadUploadService), applied to
+     * every new Lead so that a direct insert is treated the same way, in the
+     * same order:
+     *   1. the row's own values - Last Name (the platform), Phone and Product
+     *      Description required; everything else optional and checked only
+     *      when given;
+     *   2. the same person twice in one save - the later one is refused;
+     *   3. an existing customer - refused, with a message to use the Upload
+     *      Leads button, which raises the enquiry Case;
+     *   4. an open Lead with the same phone, WhatsApp number or email - refused,
+     *      with that Lead's Id.
      *
-     * A Lead already refused (existing customer) is left alone. The phone
-     * format, the Anniversary Date and the email format are checked by the
-     * validation rules and the platform, after this.
+     * The New Lead screen, Upload Leads and the website API make the same
+     * checks before they save, so nothing changes for them.
      */
     private static void applyInsertRules(List<Lead> leads) {
-        if (Test.isRunningTest() && !applyInsertRulesInTests) {
-            return;
-        }
 
-        List<Lead> passed = new List<Lead>();
+        // 1. The Lead's own values ---------------------------------------
+        List<Lead> valid = new List<Lead>();
         for (Lead leadRecord : leads) {
-            if (leadRecord.hasErrors()) {
-                continue;
-            }
             String reason = insertRuleFailure(leadRecord);
             if (reason != null) {
                 leadRecord.addError(reason);
                 continue;
             }
             // A typed Company is B2B, as on the New Lead screen and in Upload Leads.
-            // (A blank Company was made B2C in beforeInsert.)
+            // (A blank Company was made B2C, or B2B by the B2B Lead checkbox, in beforeInsert.)
             if (String.isBlank(leadRecord.Business_Type__c) || leadRecord.Business_Type__c == BUSINESS_TYPE_UNKNOWN) {
                 leadRecord.Business_Type__c = BUSINESS_TYPE_B2B;
             }
-            passed.add(leadRecord);
+            valid.add(leadRecord);
         }
 
-        blockOpenLeadDuplicates(passed);
+        // 2. The same person twice in this save -----------------------------
+        List<Lead> firstOfEach = new List<Lead>();
+        Set<String> takenInThisSave = new Set<String>();
+        Set<String> phones = new Set<String>();
+        Set<String> emails = new Set<String>();
+        for (Lead leadRecord : valid) {
+            List<String> keys = matchKeysOf(leadRecord);
+            Boolean repeated = false;
+            for (String key : keys) {
+                if (takenInThisSave.contains(key)) {
+                    repeated = true;
+                }
+            }
+            if (repeated) {
+                leadRecord.addError(SAME_AS_ANOTHER_IN_SAVE);
+                continue;
+            }
+            takenInThisSave.addAll(keys);
+            firstOfEach.add(leadRecord);
+            phones.addAll(phonesOf(leadRecord));
+            if (String.isNotBlank(leadRecord.Email)) {
+                emails.add(leadRecord.Email);
+            }
+        }
+        if (firstOfEach.isEmpty()) {
+            return;
+        }
+
+        // 3. Existing customers, 4. open Leads ------------------------------
+        Map<String, Customer> customers = findCustomers(phones, emails);
+        Map<String, Lead> openLeads = findOpenLeads(phones, emails);
+
+        for (Lead leadRecord : firstOfEach) {
+            Customer customer;
+            Lead openLead;
+            for (String key : matchKeysOf(leadRecord)) {
+                if (customer == null && customers.containsKey(key)) {
+                    customer = customers.get(key);
+                }
+                if (openLead == null && openLeads.containsKey(key)) {
+                    openLead = openLeads.get(key);
+                }
+            }
+            if (customer != null) {
+                leadRecord.addError('An existing customer has this phone, WhatsApp number or email: '
+                    + customer.accountName + '. ' + USE_UPLOAD_BUTTON);
+            } else if (openLead != null) {
+                leadRecord.addError('A Lead with this phone, WhatsApp number or email already exists: ' + openLead.Name
+                    + ' (owner ' + openLead.Owner.Name + ', Lead Id ' + openLead.Id + ').');
+            }
+        }
     }
 
     /**
@@ -380,6 +455,12 @@ public without sharing class LeadTriggerHandler {
         if (String.isBlank(leadRecord.Phone)) {
             return PHONE_REQUIRED;
         }
+        if (!isValidPhone(normalizePhone(leadRecord.Phone))) {
+            return PHONE_INVALID;
+        }
+        if (String.isNotBlank(leadRecord.MobilePhone) && !isValidPhone(normalizePhone(leadRecord.MobilePhone))) {
+            return WHATSAPP_INVALID;
+        }
         if (String.isBlank(leadRecord.Description)) {
             return PRODUCT_REQUIRED;
         }
@@ -387,7 +468,10 @@ public without sharing class LeadTriggerHandler {
             return BIRTH_DATE_IN_FUTURE;
         }
 
-        if (String.isNotBlank(leadRecord.Status)) {
+        // Status: New when blank (the default Lead Status), else an active value that is not Converted.
+        if (String.isBlank(leadRecord.Status)) {
+            leadRecord.Status = defaultStatus;
+        } else {
             String status = activeValue(Lead.Status, leadRecord.Status);
             if (status == null) {
                 List<String> allowed = new List<String>();
@@ -405,6 +489,7 @@ public without sharing class LeadTriggerHandler {
             leadRecord.Status = status;
         }
 
+        // Marital Status is a restricted picklist: the platform refuses an unknown value before this runs.
         Map<Schema.SObjectField, String> picklists = new Map<Schema.SObjectField, String>{
             Lead.Salutation => 'Salutation',
             Lead.Marital_Status__c => 'Marital Status',
@@ -422,69 +507,58 @@ public without sharing class LeadTriggerHandler {
             }
             leadRecord.put(field, value);
         }
+
+        if (leadRecord.Anniversary_Date__c != null) {
+            if (leadRecord.Marital_Status__c != MARRIED) {
+                return ANNIVERSARY_NOT_MARRIED;
+            }
+            if (leadRecord.Anniversary_Date__c > Date.today()) {
+                return ANNIVERSARY_IN_FUTURE;
+            }
+            if (leadRecord.Date_of_Birth__c != null && leadRecord.Anniversary_Date__c <= leadRecord.Date_of_Birth__c) {
+                return ANNIVERSARY_BEFORE_BIRTH;
+            }
+        }
         return null;
     }
 
-    /**
-     * Refuses a Lead whose phone, WhatsApp number or email belongs to an open
-     * Lead - compared as 10 digits, each number against every stored number,
-     * as on the New Lead screen and in Upload Leads - or to an earlier Lead of
-     * the same save. (The Lead Duplicate Check duplicate rule only finds a
-     * phone stored in exactly the same format.)
-     */
-    private static void blockOpenLeadDuplicates(List<Lead> leads) {
-        Set<String> phones = new Set<String>();
-        Set<String> emails = new Set<String>();
-        for (Lead leadRecord : leads) {
-            phones.addAll(phonesOf(leadRecord));
-            if (String.isNotBlank(leadRecord.Email)) {
-                emails.add(leadRecord.Email);
-            }
-        }
-        if (phones.isEmpty() && emails.isEmpty()) {
-            return;
-        }
-
-        Map<String, Lead> openLeads = findOpenLeads(phones, emails);
-        Set<String> takenInThisSave = new Set<String>();
-
-        for (Lead leadRecord : leads) {
-            List<String> keys = matchKeysOf(leadRecord);
-
-            Lead openLead;
-            Boolean repeated = false;
-            for (String key : keys) {
-                if (openLead == null && openLeads.containsKey(key)) {
-                    openLead = openLeads.get(key);
-                }
-                if (takenInThisSave.contains(key)) {
-                    repeated = true;
-                }
-            }
-
-            if (openLead != null) {
-                leadRecord.addError('A Lead with this phone, WhatsApp number or email already exists: ' + openLead.Name
-                    + ' (owner ' + openLead.Owner.Name + ').');
-            } else if (repeated) {
-                leadRecord.addError(SAME_AS_ANOTHER_IN_SAVE);
-            } else {
-                takenInThisSave.addAll(keys);
-            }
-        }
-    }
+    // =====================================================================
+    // Insert rules: Status and picklist values
+    // =====================================================================
 
     /** Lead Status values that mean converted, read once per transaction. */
     private static Set<String> convertedStatuses {
         get {
             if (convertedStatuses == null) {
-                convertedStatuses = new Set<String>();
-                for (LeadStatus leadStatus : [SELECT ApiName FROM LeadStatus WHERE IsConverted = true WITH SYSTEM_MODE]) {
-                    convertedStatuses.add(leadStatus.ApiName);
-                }
+                readLeadStatuses();
             }
             return convertedStatuses;
         }
         set;
+    }
+
+    /** The default Lead Status (New), read once per transaction. */
+    private static String defaultStatus {
+        get {
+            if (convertedStatuses == null) {
+                readLeadStatuses();
+            }
+            return defaultStatus;
+        }
+        set;
+    }
+
+    private static void readLeadStatuses() {
+        Set<String> converted = new Set<String>();
+        for (LeadStatus leadStatus : [SELECT ApiName, IsConverted, IsDefault FROM LeadStatus WITH SYSTEM_MODE]) {
+            if (leadStatus.IsConverted) {
+                converted.add(leadStatus.ApiName);
+            }
+            if (leadStatus.IsDefault) {
+                defaultStatus = leadStatus.ApiName;
+            }
+        }
+        convertedStatuses = converted;
     }
 
     private static Map<Schema.SObjectField, List<String>> activeValuesByField = new Map<Schema.SObjectField, List<String>>();

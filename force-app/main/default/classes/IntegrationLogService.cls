@@ -1,7 +1,8 @@
 /**
  * Writes Integration_Log__c records for the inbound REST APIs
  * (ShreeHariLeadRestResource, ShreeHariCustomerRestResource,
- * ShreeHariProductRestResource, ShreeHariOrderRestResource).
+ * ShreeHariProductRestResource, ShreeHariOrderRestResource,
+ * ShreeHariCheckoutRestResource).
  *
  * Each API calls logError() from its catch blocks, after the error response
  * has been written, so one log is created for every failed call: what was
@@ -22,6 +23,7 @@ public without sharing class IntegrationLogService {
     public static final String API_CUSTOMER = 'Customer';
     public static final String API_PRODUCT = 'Product';
     public static final String API_ORDER = 'Order';
+    public static final String API_ABANDONED_CHECKOUT = 'Abandoned Checkout';
 
     @TestVisible
     private static final String UNREADABLE = '[The request body could not be read as text]';

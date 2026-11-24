@@ -30,6 +30,11 @@
                 <default>false</default>
                 <label>Order</label>
             </value>
+            <value>
+                <fullName>Abandoned Checkout</fullName>
+                <default>false</default>
+                <label>Abandoned Checkout</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
